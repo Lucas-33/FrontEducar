@@ -1,0 +1,1346 @@
+/* quienes-somos */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 1440px;
+height: 2065px;
+
+background: #FDFBF9;
+
+
+/* navbar */
+
+box-sizing: border-box;
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px 80px;
+
+width: 1440px;
+height: 90px;
+
+background: #FFFFFF;
+border-bottom: 1px solid #EAE6E1;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 12px;
+
+width: 264px;
+height: 40px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+background: #0D6E6E;
+border-radius: 20px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* graduation-cap */
+
+width: 20px;
+height: 20px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 8.34%;
+right: 8.27%;
+top: 20.83%;
+bottom: 20.83%;
+
+border: 2px solid #FFFFFF;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 2px;
+
+width: 212px;
+height: 38px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Educar para Transformar */
+
+width: 212px;
+height: 23px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 700;
+font-size: 18px;
+line-height: 23px;
+/* idéntico a la altura del cuadro */
+
+color: #0B4F4F;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Resistencia · K-12 */
+
+width: 101px;
+height: 13px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 500;
+font-size: 11px;
+line-height: 13px;
+text-transform: uppercase;
+
+color: #5C6B69;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 32px;
+
+width: 648px;
+height: 41px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Inicio */
+
+width: 37px;
+height: 18px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 500;
+font-size: 15px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+
+color: #1E2A29;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Quiénes Somos */
+
+width: 107px;
+height: 18px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 600;
+font-size: 15px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+
+color: #0D6E6E;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Niveles */
+
+width: 50px;
+height: 18px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 500;
+font-size: 15px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+
+color: #1E2A29;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Inscripción */
+
+width: 75px;
+height: 18px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 500;
+font-size: 15px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+
+color: #1E2A29;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Noticias */
+
+width: 57px;
+height: 18px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 500;
+font-size: 15px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+
+color: #1E2A29;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 4;
+flex-grow: 0;
+
+
+/* button */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 12px 24px;
+
+width: 162px;
+height: 41px;
+
+background: #E6F2F2;
+border-radius: 8px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 5;
+flex-grow: 0;
+
+
+/* Portal Acceso */
+
+width: 114px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 600;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+text-transform: uppercase;
+
+color: #0B4F4F;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 96px 80px;
+gap: 64px;
+
+width: 1440px;
+height: 572px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 24px;
+
+width: 666px;
+height: 301px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 666px;
+height: 71px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Conocenos */
+
+width: 666px;
+height: 18px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 600;
+font-size: 14px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+text-transform: uppercase;
+
+color: #D97736;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Nuestra Historia y Filosofía */
+
+width: 666px;
+height: 45px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 700;
+font-size: 36px;
+line-height: 45px;
+
+color: #0B4F4F;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Fundado en la ciudad de Resistencia, Chaco, el Colegio Privado "Educar para Transformar" nació con el firme propósito de redefinir el paradigma educativo tradicional. Creemos en una educación activa, donde el alumno sea protagonista de su propio aprendizaje y desarrolle valores sólidos para ser un ciudadano global ético. */
+
+width: 666px;
+height: 104px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 160%;
+/* o 26px */
+
+color: #5C6B69;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Nuestra institución se destaca por su propuesta de jornada extendida, inmersión lingüística en múltiples idiomas (inglés, portugués y francés), y una robusta infraestructura deportiva y tecnológica que prepara a los líderes del mañana. */
+
+width: 666px;
+height: 78px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 160%;
+/* o 26px */
+
+color: #5C6B69;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+
+width: 550px;
+height: 380px;
+
+border-radius: 16px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Rectangle */
+
+width: 550px;
+height: 380px;
+
+background: url(A vintage, warm architectural photo of a beautiful brick school building with large windows and lush green gardens, captured with a wide-angle lens in natural warm light.);
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 1;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 80px;
+gap: 32px;
+
+width: 1440px;
+height: 369px;
+
+background: #0B4F4F;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 40px;
+gap: 16px;
+
+width: 624px;
+height: 209px;
+
+background: #0D6E6E;
+border-radius: 16px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Nuestra Misión */
+
+width: 193px;
+height: 35px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 700;
+font-size: 28px;
+line-height: 35px;
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Inspiramos, desafiamos y empoderamos a todos nuestros alumnos a ser miembros comprometidos y éticos de una comunidad global. Buscamos formar mentes abiertas y corazones solidarios listos para el futuro. */
+
+width: 544px;
+height: 78px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 160%;
+/* o 26px */
+
+color: #E6F2F2;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 40px;
+gap: 16px;
+
+width: 624px;
+height: 209px;
+
+background: #0D6E6E;
+border-radius: 16px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Nuestra Visión */
+
+width: 189px;
+height: 35px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 700;
+font-size: 28px;
+line-height: 35px;
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Ser reconocidos como el centro educativo líder en el nordeste argentino por nuestra innovación pedagógica, excelencia académica, bilingüismo, y el alto compromiso social y medioambiental de nuestros egresados. */
+
+width: 544px;
+height: 78px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 160%;
+/* o 26px */
+
+color: #E6F2F2;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 96px 80px;
+gap: 40px;
+
+width: 1440px;
+height: 703px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 3;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+width: 1280px;
+height: 71px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Galería */
+
+width: 1280px;
+height: 18px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 600;
+font-size: 14px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+text-align: center;
+text-transform: uppercase;
+
+color: #D97736;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* La Vida en Nuestro Campus */
+
+width: 1280px;
+height: 45px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 700;
+font-size: 36px;
+line-height: 45px;
+text-align: center;
+
+color: #0B4F4F;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 32px;
+
+width: 1280px;
+height: 400px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Rectangle */
+
+width: 405px;
+height: 400px;
+
+background: url(A realistic photo of a group of children collaborating over a tablet screen in a bright, modern classroom. A cheerful young female teacher is guiding and assisting them. The scene should have natural lighting and a warm color palette, captured from an eye-level, slightly wide perspective with a standard lens and sharp focus. Aspect ratio 16:9..png);
+border-radius: 16px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Rectangle */
+
+width: 515px;
+height: 400px;
+
+background: url(Realistic photography of students (children or teenagers) training and playing soccer drills on an outdoor soccer field on a school campus. The scene is under a bright, natural sunny sky with warm lighting and vivid green grass. Dynamic shot from the sidelines or slightly elevated, capturing multiple students in action. Vibrant colors, educational institution ambiance. 3:2 aspect ratio..png);
+border-radius: 16px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Rectangle */
+
+width: 296px;
+height: 400px;
+
+background: url(Realistic photograph of students dining and socializing in a modern and clean school cafeteria. The scene prominently features abundant healthy fresh fruits displayed on tables. The atmosphere is cheerful with bright, natural lighting and vibrant colors, especially highlighting the fresh fruits. Captured from an eye-level or slightly elevated perspective with a standard lens. 16:9 aspect ratio..png);
+border-radius: 16px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* footer */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 64px 80px;
+gap: 48px;
+
+width: 1440px;
+height: 331px;
+
+background: #0B4F4F;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 4;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: flex-start;
+padding: 0px;
+
+width: 1280px;
+height: 115px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 20px;
+
+width: 400px;
+height: 115px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 12px;
+
+width: 279px;
+height: 32px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 32px;
+height: 32px;
+
+background: #D97736;
+border-radius: 16px;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* book-open */
+
+width: 16px;
+height: 16px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 8.33%;
+right: 8.33%;
+top: 12.5%;
+bottom: 12.5%;
+
+border: 2px solid #FFFFFF;
+
+
+/* Educar para Transformar */
+
+width: 235px;
+height: 25px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 25px;
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Inspiramos, desafiamos y empoderamos a todos nuestros alumnos a ser miembros comprometidos y éticos de una comunidad global. */
+
+width: 400px;
+height: 63px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 150%;
+/* o 21px */
+
+color: #E6F2F2;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 12px;
+
+width: 88px;
+height: 105px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Niveles */
+
+width: 57px;
+height: 18px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 600;
+font-size: 14px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+text-transform: uppercase;
+
+color: #D97736;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Inicial (Jardín) */
+
+width: 88px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Primario */
+
+width: 52px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Secundario */
+
+width: 71px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 12px;
+
+width: 170px;
+height: 105px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Servicios */
+
+width: 72px;
+height: 18px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 600;
+font-size: 14px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+text-transform: uppercase;
+
+color: #D97736;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Comedor Escolar */
+
+width: 108px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Gabinete Psicopedagógico */
+
+width: 170px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Transporte Escolar */
+
+width: 117px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Frame */
+
+/* Diseño automático */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 12px;
+
+width: 201px;
+height: 105px;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Contacto */
+
+width: 77px;
+height: 18px;
+
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 600;
+font-size: 14px;
+line-height: 18px;
+/* idéntico a la altura del cuadro */
+text-transform: uppercase;
+
+color: #D97736;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Av. Sarmiento 1200, Resistencia */
+
+width: 201px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* +54 362 445-8900 */
+
+width: 122px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* administracion@educar.edu.ar */
+
+width: 191px;
+height: 17px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 17px;
+/* idéntico a la altura del cuadro */
+
+color: #FFFFFF;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Frame */
+
+box-sizing: border-box;
+
+/* Diseño automático */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: flex-start;
+padding: 24px 0px 0px;
+
+width: 1280px;
+height: 40px;
+
+border-top: 1px solid #0D6E6E;
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* © 2024 Colegio Privado Educar para Transformar. Todos los derechos reservados. */
+
+width: 473px;
+height: 16px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 13px;
+line-height: 16px;
+/* idéntico a la altura del cuadro */
+
+color: #E6F2F2;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Resistencia, Chaco, Argentina */
+
+width: 174px;
+height: 16px;
+
+font-family: 'Figtree';
+font-style: normal;
+font-weight: 400;
+font-size: 13px;
+line-height: 16px;
+/* idéntico a la altura del cuadro */
+
+color: #E6F2F2;
+
+
+/* Dentro del diseño automático */
+flex: none;
+order: 1;
+flex-grow: 0;
