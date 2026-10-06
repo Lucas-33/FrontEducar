@@ -1,5 +1,8 @@
 # MyApp app
 
+##IMPORTANT requires python 3.12.x (python 3.13 is not supported)
+
+
 ## Run the app
 
 ### uv
