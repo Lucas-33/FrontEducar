@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancela ejecuciones viejas de la misma rama (menos espera)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check .
+
+  build-test:            # corre en paralelo con "lint"
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: sqlite:///./test.db
+      SECRET_KEY: clave-solo-para-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip          # cache de dependencias
+      - run: pip install -r requirements.txt pytest pytest-cov httpx
+      - run: python -m compileall -q .
+      - run: >
+          pytest --cov=. --cov-report=xml --cov-fail-under=50
+          --junitxml=reporte-tests.xml
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-ci
+          path: |
+            coverage.xml
+            reporte-tests.xml
