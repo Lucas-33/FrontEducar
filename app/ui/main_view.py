@@ -11,6 +11,7 @@ from app.ui.pages.noticias import get_noticias_view
 from app.ui.pages.login import get_login_view
 from app.ui.pages.niveles import get_niveles_view
 from app.ui.pages.admin_dashboard import get_admin_dashboard_view
+from app.ui.pages.admin_alumnos import get_admin_alumnos_view
 
 
 async def main(page: ft.Page):
@@ -21,13 +22,25 @@ async def main(page: ft.Page):
         page.views.clear()
         ruta = page.route if page.route else "/"
 
+        from app.ui.pages.admin_alumnos import get_admin_alumnos_view
+
+# route_change ryepýpe:
         if ruta == "/admin/dashboard":
-            # Las vistas de administración no usan el navbar ni el footer público
             page.views.append(
                 ft.View(
                     route=ruta,
                     padding=0,
                     controls=[get_admin_dashboard_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/alumnos":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_alumnos_view(page)],
                 )
             )
             page.update()
