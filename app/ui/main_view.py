@@ -12,6 +12,8 @@ from app.ui.pages.login import get_login_view
 from app.ui.pages.niveles import get_niveles_view
 from app.ui.pages.admin_dashboard import get_admin_dashboard_view
 from app.ui.pages.admin_alumnos import get_admin_alumnos_view
+from app.ui.pages.admin_alumno_form import get_admin_alumno_form_view
+from app.ui.pages.admin_profesores import get_admin_profesores_view
 
 
 async def main(page: ft.Page):
@@ -20,11 +22,11 @@ async def main(page: ft.Page):
 
     def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
-        ruta = page.route if page.route else "/"
+        ruta = (page.route or "/").rstrip("/")
+        if not ruta:
+            ruta = "/"
 
-        from app.ui.pages.admin_alumnos import get_admin_alumnos_view
-
-# route_change ryepýpe:
+    # 1. RUTAS ADMINISTRATIVAS (Sin navbar ni footer público)
         if ruta == "/admin/dashboard":
             page.views.append(
                 ft.View(
@@ -35,6 +37,7 @@ async def main(page: ft.Page):
             )
             page.update()
             return
+
         elif ruta == "/admin/alumnos":
             page.views.append(
                 ft.View(
@@ -46,6 +49,30 @@ async def main(page: ft.Page):
             page.update()
             return
 
+        elif ruta == "/admin/alumnos/nuevo":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_alumno_form_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/profesores":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_profesores_view(page)],
+                )
+            )
+            page.update()
+            return
+
+
+            
+        # 2. RUTAS PÚBLICAS
         if ruta == "/quienes-somos":
             contenido_central = get_quienes_somos_view(page)
         elif ruta == "/inscripcion":
@@ -54,7 +81,7 @@ async def main(page: ft.Page):
             contenido_central = get_noticias_view(page)
         elif ruta == "/niveles":
             contenido_central = get_niveles_view(page)
-        elif ruta == "/portal":                        # <--- Agregar ruta
+        elif ruta == "/portal":
             contenido_central = get_login_view(page)
         else:
             contenido_central = home_view(page)
@@ -71,7 +98,7 @@ async def main(page: ft.Page):
                 ],
             )
         )
-        page.update()
+    page.update()
 
     def view_pop(e: ft.ViewPopEvent):
         page.views.pop()
