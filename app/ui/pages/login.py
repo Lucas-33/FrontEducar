@@ -120,10 +120,13 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
     )
 
     def on_submit(e):
-        # Lógica de autenticación vinculable a FastAPI / backend
+        # Lógica de depuración / conexión futura con el backend
         print(f"Rol: {rol_seleccionado['valor']}")
         print(f"Usuario: {usuario_field.value}")
         print(f"Password ingresado: {'*' * len(password_field.value or '')}")
+        
+        # Redirigir a la vista de administración después del login
+        page.go("/admin/dashboard")
 
     # Tarjeta de inicio de sesión (480px ancho, border-radius 16px)
     login_card = ft.Container(
