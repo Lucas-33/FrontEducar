@@ -8,6 +8,7 @@ from app.ui.pages.home import home_view
 from app.ui.pages.quienes_somos import get_quienes_somos_view
 from app.ui.pages.inscripciones import get_inscripcion_view
 from app.ui.pages.noticias import get_noticias_view
+from app.ui.pages.login import get_login_view
 
 
 async def main(page: ft.Page):
@@ -24,6 +25,8 @@ async def main(page: ft.Page):
             contenido_central = get_inscripcion_view(page)
         elif ruta == "/noticias":
             contenido_central = get_noticias_view(page)
+        elif ruta == "/portal":                        # <--- Agregar ruta
+            contenido_central = get_login_view(page)
         else:
             contenido_central = home_view(page)
 
