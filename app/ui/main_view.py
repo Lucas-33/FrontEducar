@@ -10,6 +10,7 @@ from app.ui.pages.inscripciones import get_inscripcion_view
 from app.ui.pages.noticias import get_noticias_view
 from app.ui.pages.login import get_login_view
 from app.ui.pages.niveles import get_niveles_view
+from app.ui.pages.admin_dashboard import get_admin_dashboard_view
 
 
 async def main(page: ft.Page):
@@ -19,6 +20,18 @@ async def main(page: ft.Page):
     def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
         ruta = page.route if page.route else "/"
+
+        if ruta == "/admin/dashboard":
+            # Las vistas de administración no usan el navbar ni el footer público
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_dashboard_view(page)],
+                )
+            )
+            page.update()
+            return
 
         if ruta == "/quienes-somos":
             contenido_central = get_quienes_somos_view(page)
