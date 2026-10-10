@@ -18,6 +18,7 @@ from app.ui.pages.admin_profesor_form import get_admin_profesor_form_view
 from app.ui.pages.admin_reportes import get_admin_reportes_view
 from app.ui.pages.admin_deportes import get_admin_deportes_view
 from app.ui.pages.admin_transporte import get_admin_transporte_view
+from app.ui.pages.admin_comedor import get_admin_comedor_view
 
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
@@ -112,8 +113,17 @@ async def main(page: ft.Page):
             )
             page.update()
             return
-        
-            
+        elif ruta == "/admin/comedor":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_comedor_view(page)],
+                )
+            )
+            page.update()
+            return
+
 
         # 2. RUTAS PÚBLICAS
         if ruta == "/quienes-somos":
