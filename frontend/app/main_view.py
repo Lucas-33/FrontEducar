@@ -26,6 +26,11 @@ from app.ui.pages.admin_horarios import get_admin_horarios_view
 from app.ui.pages.admin_incripciones import get_admin_inscripciones_view
 from app.ui.pages.admin_usuarios import get_admin_usuarios_view
 
+from app.ui.pages.admin_reporte_alumnos_docentes import get_admin_reporte_alumnos_docentes_view
+from app.ui.pages.admin_reporte_cursos_materias import get_admin_reporte_cursos_materias_view
+from app.ui.pages.admin_reporte_deportes_avanzado import get_admin_reporte_deportes_avanzado_view
+from app.ui.pages.admin_reporte_transporte_pasajeros import get_admin_reporte_transporte_pasajeros_view
+
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0
@@ -189,6 +194,47 @@ async def main(page: ft.Page):
             )
             page.update()
             return
+        elif ruta == "/admin/reporte-alumnos-docentes":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_reporte_alumnos_docentes_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/reporte-cursos-materias":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_reporte_cursos_materias_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/reporte-deportes-avanzado":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_reporte_deportes_avanzado_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/reporte-transporte-pasajeros":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_reporte_transporte_pasajeros_view(page)],
+                )
+            )
+            page.update()
+            return
+
 
         # 2. RUTAS PÚBLICAS
         if ruta == "/quienes-somos":
