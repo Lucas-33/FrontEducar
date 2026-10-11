@@ -20,6 +20,11 @@ from app.ui.pages.admin_deportes import get_admin_deportes_view
 from app.ui.pages.admin_transporte import get_admin_transporte_view
 from app.ui.pages.admin_comedor import get_admin_comedor_view
 from app.ui.pages.admin_niveles import get_admin_niveles_view
+from app.ui.pages.admin_cursos import get_admin_cursos_view
+from app.ui.pages.admin_materias import get_admin_materias_view
+from app.ui.pages.admin_horarios import get_admin_horarios_view
+from app.ui.pages.admin_incripciones import get_admin_inscripciones_view
+from app.ui.pages.admin_usuarios import get_admin_usuarios_view
 
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
@@ -130,6 +135,56 @@ async def main(page: ft.Page):
                     route=ruta,
                     padding=0,
                     controls=[get_admin_niveles_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/cursos":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_cursos_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/materias":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_materias_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/horarios":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_horarios_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/inscripciones":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_inscripciones_view(page)],
+                )
+            )
+            page.update()
+            return
+        elif ruta == "/admin/usuarios":
+            page.views.append(
+                ft.View(
+                    route=ruta,
+                    padding=0,
+                    controls=[get_admin_usuarios_view(page)],
                 )
             )
             page.update()
