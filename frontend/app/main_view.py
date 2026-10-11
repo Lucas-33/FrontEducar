@@ -1,36 +1,39 @@
 import flet as ft
-from app.ui.pages.home import home_view
 
-import flet as ft
-from app.ui.components.navbar import create_navbar
-from app.ui.components.footer import create_footer
-from app.ui.pages.home import home_view
-from app.ui.pages.quienes_somos import get_quienes_somos_view
-from app.ui.pages.inscripciones import get_inscripcion_view
-from app.ui.pages.noticias import get_noticias_view
-from app.ui.pages.login import get_login_view
-from app.ui.pages.niveles import get_niveles_view
-from app.ui.pages.admin_dashboard import get_admin_dashboard_view
-from app.ui.pages.admin_alumnos import get_admin_alumnos_view
-from app.ui.pages.admin_alumno_form import get_admin_alumno_form_view
-from app.ui.pages.admin_profesores import get_admin_profesores_view
-from app.ui.pages.admin_profesor_form import get_admin_profesor_form_view
-from app.ui.pages.admin_reportes import get_admin_reportes_view
-from app.ui.pages.admin_deportes import get_admin_deportes_view
-from app.ui.pages.admin_transporte import get_admin_transporte_view
-from app.ui.pages.admin_comedor import get_admin_comedor_view
-from app.ui.pages.admin_niveles import get_admin_niveles_view
-from app.ui.pages.admin_cursos import get_admin_cursos_view
-from app.ui.pages.admin_materias import get_admin_materias_view
-from app.ui.pages.admin_horarios import get_admin_horarios_view
-from app.ui.pages.admin_incripciones import get_admin_inscripciones_view
-from app.ui.pages.admin_usuarios import get_admin_usuarios_view
+# Componentes públicos
+from frontend.app.components.navbar import create_navbar
+from frontend.app.components.footer import create_footer
 
-from app.ui.pages.admin_reporte_alumnos_docentes import get_admin_reporte_alumnos_docentes_view
-from app.ui.pages.admin_reporte_cursos_materias import get_admin_reporte_cursos_materias_view
-from app.ui.pages.admin_reporte_deportes_avanzado import get_admin_reporte_deportes_avanzado_view
-from app.ui.pages.admin_reporte_transporte_pasajeros import get_admin_reporte_transporte_pasajeros_view
+# Páginas públicas
+from frontend.app.pages.home import home_view
+from frontend.app.pages.quienes_somos import get_quienes_somos_view
+from frontend.app.pages.inscripciones import get_inscripcion_view
+from frontend.app.pages.noticias import get_noticias_view
+from frontend.app.pages.login import get_login_view
+from frontend.app.pages.niveles import get_niveles_view
 
+# Páginas administrativas
+from frontend.app.pages.admin_dashboard import get_admin_dashboard_view
+from frontend.app.pages.admin_alumnos import get_admin_alumnos_view
+from frontend.app.pages.admin_alumno_form import get_admin_alumno_form_view
+from frontend.app.pages.admin_profesores import get_admin_profesores_view
+from frontend.app.pages.admin_profesor_form import get_admin_profesor_form_view
+from frontend.app.pages.admin_reportes import get_admin_reportes_view
+from frontend.app.pages.admin_deportes import get_admin_deportes_view
+from frontend.app.pages.admin_transporte import get_admin_transporte_view
+from frontend.app.pages.admin_comedor import get_admin_comedor_view
+from frontend.app.pages.admin_niveles import get_admin_niveles_view
+from frontend.app.pages.admin_cursos import get_admin_cursos_view
+from frontend.app.pages.admin_materias import get_admin_materias_view
+from frontend.app.pages.admin_horarios import get_admin_horarios_view
+from frontend.app.pages.admin_inscripciones import get_admin_inscripciones_view
+from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
+
+# Reportes
+from frontend.app.pages.admin_reporte_alumnos_docentes import get_admin_reporte_alumnos_docentes_view
+from frontend.app.pages.admin_reporte_cursos_materias import get_admin_reporte_cursos_materias_view
+from frontend.app.pages.admin_reporte_deportes_avanzado import get_admin_reporte_deportes_avanzado_view
+from frontend.app.pages.admin_reporte_transporte_pasajeros import get_admin_reporte_transporte_pasajeros_view
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0

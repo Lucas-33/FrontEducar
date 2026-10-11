@@ -1,6 +1,6 @@
 import flet as ft
-from app.ui.components.sidebar import create_sidebar
-from app.ui.components.topbar import create_topbar
+from frontend.app.components.sidebar import create_sidebar
+from frontend.app.components.topbar import create_topbar
 
 # Paleta cromática del sistema
 BG_PAGE = "#F5F7F7"

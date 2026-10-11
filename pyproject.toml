@@ -8,7 +8,14 @@ authors = [
     { name = "Flet developer", email = "you@example.com" }
 ]
 dependencies = [
-    "flet>=0.86.5"
+    "flet>=0.86.5",
+    "passlib[bcrypt]>=1.7.4",
+    "psycopg2-binary>=2.9.13",
+    "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.1",
+    "python-dotenv>=1.2.3",
+    "python-multipart>=0.0.32",
+    "sqlalchemy>=2.0.54",
 ]
 
 [dependency-groups]
