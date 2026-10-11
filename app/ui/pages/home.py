@@ -1,6 +1,4 @@
 import flet as ft
-import httpx
-
 
 TEAL_DARK = "#0B4F4F"
 TEAL = "#0D6E6E"
