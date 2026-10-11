@@ -1,13 +1,11 @@
 import flet as ft
-from app.ui.pages.home import home_view
 
-import flet as ft
-from app.ui.components.navbar import create_navbar
 from app.ui.components.footer import create_footer
+from app.ui.components.navbar import create_navbar
 from app.ui.pages.home import home_view
-from app.ui.pages.quienes_somos import get_quienes_somos_view
 from app.ui.pages.inscripciones import get_inscripcion_view
 from app.ui.pages.noticias import get_noticias_view
+from app.ui.pages.quienes_somos import get_quienes_somos_view
 
 
 async def main(page: ft.Page):
