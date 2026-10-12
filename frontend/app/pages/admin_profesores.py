@@ -1,36 +1,34 @@
 import flet as ft
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
-
-# Paleta cromática de la identidad visual
-BG_PAGE = "#F5F7F7"
-BG_WHITE = "#FFFFFF"
-BORDER_COLOR = "#EAE6E1"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-
-# Badges de estado
-BADGE_GREEN_BG = "#EBFEE6"
-BADGE_GREEN_TXT = "#10B981"
-BADGE_YELLOW_BG = "#FFF9E6"
-BADGE_YELLOW_TXT = "#F59E0B"
-BADGE_RED_BG = "#FEEBEB"
-BADGE_RED_TXT = "#EF4444"
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BADGE_RED_TXT,
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CONTROL_HEIGHT,
+    MUTED,
+    TEAL,
+    TEAL_DARK,
+    TEXT_COLOR,
+)
+from frontend.app.components.form_controls import status_badge
+from frontend.app.components.table_view import (
+    create_pagination_bar,
+    create_table_container,
+    create_table_header,
+)
 
 
 def get_admin_profesores_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa de la Nómina del Personal Docente."""
+    """Retorna la vista completa de la Nómina del Personal Docente con AdminLayout."""
 
     # ==================== 1. BARRA DE BÚSQUEDA Y FILTROS ====================
     search_input = ft.Container(
         width=280,
-        height=41,
+        height=CONTROL_HEIGHT,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=8,
+        border_radius=BORDER_RADIUS,
         padding=ft.Padding(12, 0, 12, 0),
         content=ft.Row(
             spacing=10,
@@ -53,10 +51,10 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
     def filtro_dropdown(hint: str, width: int, opciones: list[str]) -> ft.Container:
         return ft.Container(
             width=width,
-            height=41,
+            height=CONTROL_HEIGHT,
             bgcolor=BG_WHITE,
             border=ft.Border.all(1, BORDER_COLOR),
-            border_radius=8,
+            border_radius=BORDER_RADIUS,
             content=ft.Dropdown(
                 hint_text=hint,
                 hint_style=ft.TextStyle(size=14, color=TEXT_COLOR),
@@ -77,9 +75,9 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
             ],
         ),
         bgcolor=TEAL,
-        height=41,
+        height=CONTROL_HEIGHT,
         style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=8),
+            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
             padding=ft.Padding(24, 12, 24, 12),
         ),
         on_click=lambda _: page.go("/admin/profesores/nuevo"),
@@ -164,41 +162,20 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
         },
     ]
 
-    header_table = ft.Container(
-        height=48,
-        bgcolor=TEAL_LIGHT,
-        padding=ft.Padding(16, 0, 16, 0),
-        content=ft.Row(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Container(width=90, content=ft.Text("Legajo", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=120, content=ft.Text("DNI", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=150, content=ft.Text("Apellido", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=150, content=ft.Text("Nombre", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=220, content=ft.Text("Especialidad Principal", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=220, content=ft.Text("Correo Electrónico", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=120, content=ft.Text("Teléfono", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=100, content=ft.Text("Estado", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(expand=True, alignment=ft.Alignment(1, 0), content=ft.Text("Acciones", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-            ],
-        ),
-    )
+    # Tuplas: (Título, Ancho px, Alineación derecha)
+    columnas_profesores = [
+        ("Legajo", 90, False),
+        ("DNI", 120, False),
+        ("Apellido", 150, False),
+        ("Nombre", 150, False),
+        ("Especialidad Principal", 220, False),
+        ("Correo Electrónico", 220, False),
+        ("Teléfono", 120, False),
+        ("Estado", 100, False),
+        ("Acciones", None, True),
+    ]
 
-    def estado_badge(estado: str) -> ft.Container:
-        if estado == "Activo":
-            bg, color = BADGE_GREEN_BG, BADGE_GREEN_TXT
-        elif estado == "Licencia":
-            bg, color = BADGE_YELLOW_BG, BADGE_YELLOW_TXT
-        else:
-            bg, color = BADGE_RED_BG, BADGE_RED_TXT
-
-        return ft.Container(
-            padding=ft.Padding(8, 4, 8, 4),
-            bgcolor=bg,
-            border_radius=4,
-            content=ft.Text(estado, size=12, weight=ft.FontWeight.W_600, color=color),
-        )
+    header_table = create_table_header(columnas_profesores)
 
     def profesor_row(item: dict) -> ft.Container:
         return ft.Container(
@@ -216,7 +193,7 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                     ft.Container(width=220, content=ft.Text(item["especialidad"], size=14, color=TEXT_COLOR)),
                     ft.Container(width=220, content=ft.Text(item["email"], size=14, color=MUTED)),
                     ft.Container(width=120, content=ft.Text(item["telefono"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=100, content=estado_badge(item["estado"])),
+                    ft.Container(width=100, content=status_badge(item["estado"])),
                     ft.Container(
                         expand=True,
                         alignment=ft.Alignment(1, 0),
@@ -245,59 +222,25 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    table_container = ft.Container(
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
-        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                header_table,
-                *[profesor_row(p) for p in profesores_data],
-            ],
-        ),
+    table_container = create_table_container(
+        header=header_table,
+        rows=[profesor_row(p) for p in profesores_data],
     )
 
-    # ==================== 3. ENSAMBLE DEL LAYOUT ====================
-    sidebar = create_sidebar(page, active_route="/admin/profesores")
-    topbar = create_topbar(page, titulo="Nómina del Personal Docente")
-
-    main_content = ft.Container(
-        expand=True,
-        bgcolor=BG_PAGE,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                topbar,
-                ft.Container(
-                    expand=True,
-                    padding=32,
-                    content=ft.Column(
-                        spacing=24,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            filters_bar,
-                            table_container,
-                        ],
-                    ),
-                ),
-            ],
-        ),
+    pagination_bar = create_pagination_bar(
+        texto_info="Mostrando 1-5 de 86 docentes registrados",
+        pagina_actual=1,
+        total_paginas=2,
     )
 
-    return ft.Row(
-        expand=True,
-        spacing=0,
-        controls=[sidebar, main_content],
+    # ==================== 3. RETORNO CON ADMIN_LAYOUT ====================
+    return admin_layout(
+        page=page,
+        titulo="Nómina del Personal Docente",
+        active_route="/admin/profesores",
+        content_controls=[
+            filters_bar,
+            table_container,
+            pagination_bar,
+        ],
     )
-
-
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Personal Docente"
-        page.padding = 0
-        page.bgcolor = BG_PAGE
-        page.add(get_admin_profesores_view(page))
-
-    ft.run(main)
