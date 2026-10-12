@@ -5,6 +5,7 @@ import flet.fastapi as flet_fastapi
 from backend.app.core.database import engine, Base
 import backend.app.models  # Importa todos los modelos a través del __init__.py
 from frontend.app.main_view import main as flet_main
+from backend.app.api.v1.api import api_router
 
 # 1. Crear automáticamente las tablas en PostgreSQL si no existen
 Base.metadata.create_all(bind=engine)
@@ -31,7 +32,8 @@ app.add_middleware(
 def health_check():
     return {"status": "ok", "message": "API REST funcionando correctamente"}
 
-# (Aquí se irán incluyendo los routers con app.include_router en los próximos pasos)
+# Conectar routers REST
+app.include_router(api_router, prefix="/api/v1")
 
 # 5. Montar la interfaz de Flet en la raíz
 # NOTA: Se monta AL FINAL para que las rutas de la API (/api/... y /docs) tengan prioridad
