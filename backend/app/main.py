@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import flet.fastapi as flet_fastapi
 
 from backend.app.core.database import engine, Base
-import backend.app.models.alumno  # Asegura que el modelo se registre en SQLAlchemy
+import backend.app.models  # Importa todos los modelos a través del __init__.py
 from frontend.app.main_view import main as flet_main
 
 # 1. Crear automáticamente las tablas en PostgreSQL si no existen
