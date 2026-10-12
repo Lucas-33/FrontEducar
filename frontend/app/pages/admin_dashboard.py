@@ -1,34 +1,31 @@
 import flet as ft
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
-
-# Paleta cromática del sistema
-BG_PAGE = "#F5F7F7"
-BG_WHITE = "#FFFFFF"
-BORDER_COLOR = "#EAE6E1"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-ORANGE = "#D97736"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-
-# Colores de badges y estados
-GREEN_LIGHT = "#E6FAF2"
-GREEN_STATE = "#10B981"
-ORANGE_LIGHT = "#FFEAD2"
-AMBER_STATE = "#F59E0B"
-GRAY_LIGHT = "#EAEAEA"
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    AMBER_STATE,
+    BADGE_YELLOW_BG,
+    BG_PAGE,
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CARD_RADIUS,
+    MUTED,
+    ONLINE_GREEN,
+    ORANGE,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
 
 
 def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa del panel interno Educar SGE (Sidebar + TopBar + Contenido)."""
+    """Retorna la vista completa del panel interno Educar SGE usando AdminLayout."""
 
     # ==================== 1. BANNER INSTITUCIONAL ====================
     welcome_banner = ft.Container(
         height=110,
         bgcolor=TEAL_DARK,
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=ft.Padding(20, 20, 20, 20),
         content=ft.Row(
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -61,7 +58,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                     bgcolor=ORANGE,
                     height=36,
                     style=ft.ButtonStyle(
-                        shape=ft.RoundedRectangleBorder(radius=8),
+                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
                         padding=ft.Padding(20, 10, 20, 10),
                     ),
                     on_click=lambda _: page.go("/admin/inscripciones"),
@@ -77,7 +74,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
             height=158,
             bgcolor=BG_WHITE,
             border=ft.Border.all(1, BORDER_COLOR),
-            border_radius=16,
+            border_radius=CARD_RADIUS,
             padding=24,
             content=ft.Column(
                 spacing=16,
@@ -124,7 +121,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                 "86",
                 "3 profesores con licencia activa",
                 ft.Icons.WORK_OUTLINE,
-                ORANGE_LIGHT,
+                BADGE_YELLOW_BG,
             ),
             kpi_card(
                 "INSCRIPCIONES PENDIENTES",
@@ -138,7 +135,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                 "32",
                 "Salas iniciales a secundarios completos",
                 ft.Icons.FOLDER_OPEN_OUTLINED,
-                GREEN_LIGHT,
+                TEAL_LIGHT,
             ),
         ],
     )
@@ -155,7 +152,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
         return ft.Container(
             height=60,
             bgcolor=BG_PAGE,
-            border_radius=8,
+            border_radius=BORDER_RADIUS,
             padding=12,
             on_click=lambda _: page.go(ruta),
             content=ft.Row(
@@ -166,7 +163,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                         width=36,
                         height=36,
                         bgcolor=bg_icon,
-                        border_radius=8,
+                        border_radius=BORDER_RADIUS,
                         alignment=ft.Alignment(0, 0),
                         content=ft.Icon(icono, size=18, color=color_icon),
                     ),
@@ -187,7 +184,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
         height=367,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=24,
         content=ft.Column(
             spacing=20,
@@ -213,7 +210,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                             "Cargar Calificaciones",
                             "Boletines de trimestre en curso",
                             ft.Icons.MENU_BOOK_OUTLINED,
-                            ORANGE_LIGHT,
+                            BADGE_YELLOW_BG,
                             ORANGE,
                             "/admin/calificaciones",
                         ),
@@ -221,15 +218,15 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                             "Asignar Ruta de Transporte",
                             "Zonas norte, sur y centro",
                             ft.Icons.DIRECTIONS_BUS_OUTLINED,
-                            GREEN_LIGHT,
-                            GREEN_STATE,
+                            TEAL_LIGHT,
+                            ONLINE_GREEN,
                             "/admin/transporte",
                         ),
                         shortcut_item(
                             "Emitir Boletín General",
                             "Reportes consolidados por nivel",
                             ft.Icons.PRINT_OUTLINED,
-                            GRAY_LIGHT,
+                            BG_PAGE,
                             MUTED,
                             "/admin/reportes/boletines",
                         ),
@@ -252,7 +249,6 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
             spacing=16,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                # Línea indicadora vertical
                 ft.Container(
                     width=4,
                     height=40,
@@ -294,7 +290,7 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
         height=367,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=24,
         content=ft.Column(
             spacing=20,
@@ -331,8 +327,8 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                             "Aprobó el pago de arancel e inscripción 2025 para alumno ingresante Legajo #4928.",
                             "Hace 45 mins",
                             "Inscripción",
-                            GREEN_STATE,
-                            GREEN_STATE,
+                            ONLINE_GREEN,
+                            ONLINE_GREEN,
                         ),
                         activity_item(
                             "Secretaría Inicial",
@@ -362,47 +358,14 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
         controls=[shortcuts_card, activities_card],
     )
 
-    # ==================== ENSAMBLE DE PANTALLA COMPLETA ====================
-    sidebar = create_sidebar(page, active_route="/admin/dashboard")
-    topbar = create_topbar(page, titulo="Tablero Principal de Control")
-
-    dashboard_body = ft.Container(
-        expand=True,
-        bgcolor=BG_PAGE,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                topbar,
-                ft.Container(
-                    expand=True,
-                    padding=32,
-                    content=ft.Column(
-                        spacing=24,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            welcome_banner,
-                            kpis_row,
-                            bottom_row,
-                        ],
-                    ),
-                ),
-            ],
-        ),
+    # ==================== 5. RETORNO CON ADMIN_LAYOUT ====================
+    return admin_layout(
+        page=page,
+        titulo="Tablero Principal de Control",
+        active_route="/admin/dashboard",
+        content_controls=[
+            welcome_banner,
+            kpis_row,
+            bottom_row,
+        ],
     )
-
-    return ft.Row(
-        expand=True,
-        spacing=0,
-        controls=[sidebar, dashboard_body],
-    )
-
-
-# Bloque de ejecución independiente para prueba directa
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Dashboard Administrativo"
-        page.padding = 0
-        page.bgcolor = BG_PAGE
-        page.add(get_admin_dashboard_view(page))
-
-    ft.run(main)

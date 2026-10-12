@@ -1,36 +1,34 @@
 import flet as ft
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
-
-# Sa'ykuéra ha tokens visuales Figma-gui
-BG_PAGE = "#F5F7F7"
-BG_WHITE = "#FFFFFF"
-BORDER_COLOR = "#EAE6E1"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-
-# Sa'y estado-pe g̃uarã
-BADGE_GREEN_BG = "#EBFEE6"
-BADGE_GREEN_TXT = "#10B981"
-BADGE_YELLOW_BG = "#FFF9E6"
-BADGE_YELLOW_TXT = "#F59E0B"
-BADGE_RED_BG = "#FEEBEB"
-BADGE_RED_TXT = "#EF4444"
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BADGE_RED_TXT,
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CONTROL_HEIGHT,
+    MUTED,
+    TEAL,
+    TEAL_DARK,
+    TEXT_COLOR,
+)
+from frontend.app.components.form_controls import status_badge
+from frontend.app.components.table_view import (
+    create_pagination_bar,
+    create_table_container,
+    create_table_header,
+)
 
 
 def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
-    """Omoheñói ha omoĩmba tembiapo lista de alumnos rehegua (Sidebar + TopBar + Tabla)."""
+    """Retorna la vista completa de administración de alumnos usando AdminLayout."""
 
-    # 1. Barra de Búsqueda ha Filtros
+    # ==================== 1. BARRA DE BÚSQUEDA Y FILTROS ====================
     search_input = ft.Container(
         width=280,
-        height=41,
+        height=CONTROL_HEIGHT,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=8,
+        border_radius=BORDER_RADIUS,
         padding=ft.Padding(12, 0, 12, 0),
         content=ft.Row(
             spacing=10,
@@ -53,10 +51,10 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
     def filtro_dropdown(hint: str, width: int, opciones: list[str]) -> ft.Container:
         return ft.Container(
             width=width,
-            height=41,
+            height=CONTROL_HEIGHT,
             bgcolor=BG_WHITE,
             border=ft.Border.all(1, BORDER_COLOR),
-            border_radius=8,
+            border_radius=BORDER_RADIUS,
             content=ft.Dropdown(
                 hint_text=hint,
                 hint_style=ft.TextStyle(size=14, color=TEXT_COLOR),
@@ -77,9 +75,9 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
             ],
         ),
         bgcolor=TEAL,
-        height=41,
+        height=CONTROL_HEIGHT,
         style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=8),
+            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
             padding=ft.Padding(24, 12, 24, 12),
         ),
         on_click=lambda _: page.go("/admin/alumnos/nuevo"),
@@ -103,7 +101,7 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    # 2. Datos ha Tabla de Alumnos
+    # ==================== 2. TABLA DE ALUMNOS ====================
     alumnos_data = [
         {"legajo": "#10245", "dni": "44.120.942", "apellido": "Almirón", "nombre": "Santiago", "nivel": "Secundario", "curso": "5to Año B", "estado": "Regular"},
         {"legajo": "#10246", "dni": "45.892.110", "apellido": "Benítez", "nombre": "Martina", "nivel": "Secundario", "curso": "3er Año A", "estado": "Regular"},
@@ -113,40 +111,19 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
         {"legajo": "#10250", "dni": "45.102.399", "apellido": "Giménez", "nombre": "Camila Belén", "nivel": "Primario", "curso": "4to Grado A", "estado": "Inactivo"},
     ]
 
-    header_table = ft.Container(
-        height=48,
-        bgcolor=TEAL_LIGHT,
-        padding=ft.Padding(16, 0, 16, 0),
-        content=ft.Row(
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Container(width=100, content=ft.Text("Legajo", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=140, content=ft.Text("DNI", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=180, content=ft.Text("Apellido", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=180, content=ft.Text("Nombre", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=160, content=ft.Text("Nivel Educativo", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=140, content=ft.Text("Curso", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=120, content=ft.Text("Estado", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-                ft.Container(width=64, alignment=ft.Alignment(1, 0), content=ft.Text("Acciones", size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK)),
-            ],
-        ),
-    )
+    # Columnas: (Nombre, Ancho px, Alinear a la derecha)
+    columnas_definicion = [
+        ("Legajo", 100, False),
+        ("DNI", 140, False),
+        ("Apellido", 180, False),
+        ("Nombre", 180, False),
+        ("Nivel Educativo", 160, False),
+        ("Curso", 140, False),
+        ("Estado", 120, False),
+        ("Acciones", 64, True),
+    ]
 
-    def estado_badge(estado: str) -> ft.Container:
-        if estado == "Regular":
-            bg, color = BADGE_GREEN_BG, BADGE_GREEN_TXT
-        elif estado == "Pendiente":
-            bg, color = BADGE_YELLOW_BG, BADGE_YELLOW_TXT
-        else:
-            bg, color = BADGE_RED_BG, BADGE_RED_TXT
-
-        return ft.Container(
-            padding=ft.Padding(8, 4, 8, 4),
-            bgcolor=bg,
-            border_radius=4,
-            content=ft.Text(estado, size=12, weight=ft.FontWeight.W_600, color=color),
-        )
+    header_table = create_table_header(columnas_definicion)
 
     def alumno_row(item: dict) -> ft.Container:
         return ft.Container(
@@ -163,7 +140,7 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
                     ft.Container(width=180, content=ft.Text(item["nombre"], size=14, color=TEXT_COLOR)),
                     ft.Container(width=160, content=ft.Text(item["nivel"], size=14, color=MUTED)),
                     ft.Container(width=140, content=ft.Text(item["curso"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=120, content=estado_badge(item["estado"])),
+                    ft.Container(width=120, content=status_badge(item["estado"])),
                     ft.Container(
                         width=64,
                         alignment=ft.Alignment(1, 0),
@@ -181,96 +158,26 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    table_container = ft.Container(
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
-        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                header_table,
-                *[alumno_row(a) for a in alumnos_data],
-            ],
-        ),
+    table_container = create_table_container(
+        header=header_table,
+        rows=[alumno_row(a) for a in alumnos_data],
     )
 
-    # 3. Paginación Inferior
-    def btn_pagina(texto: str, activo: bool = False, icon: ft.IconData = None) -> ft.Container:
-        return ft.Container(
-            width=36,
-            height=36,
-            bgcolor=TEAL if activo else BG_WHITE,
-            border=None if activo else ft.Border.all(1, BORDER_COLOR),
-            border_radius=8,
-            alignment=ft.Alignment(0, 0),
-            content=ft.Icon(icon, size=16, color=TEXT_COLOR) if icon else ft.Text(
-                texto,
-                size=14,
-                weight=ft.FontWeight.W_600 if activo else ft.FontWeight.W_400,
-                color=BG_WHITE if activo else TEXT_COLOR,
-            ),
-        )
+    # ==================== 3. BARRA DE PAGINACIÓN ====================
+    pagination_bar = create_pagination_bar(
+        texto_info="Mostrando 1-6 de 1,248 alumnos matriculados",
+        pagina_actual=1,
+        total_paginas=3,
+    )
 
-    pagination_bar = ft.Row(
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        controls=[
-            ft.Text("Mostrando 1-6 de 1,248 alumnos matriculados", size=14, color=MUTED),
-            ft.Row(
-                spacing=8,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    btn_pagina("", icon=ft.Icons.CHEVRON_LEFT),
-                    btn_pagina("1", activo=True),
-                    btn_pagina("2"),
-                    btn_pagina("3"),
-                    btn_pagina("", icon=ft.Icons.CHEVRON_RIGHT),
-                ],
-            ),
+    # ==================== 4. LAYOUT ADMINISTRATIVO ====================
+    return admin_layout(
+        page=page,
+        titulo="Directorio de Alumnos Matriculados",
+        active_route="/admin/alumnos",
+        content_controls=[
+            filters_bar,
+            table_container,
+            pagination_bar,
         ],
     )
-
-    # 4. Ensamble General
-    sidebar = create_sidebar(page, active_route="/admin/alumnos")
-    topbar = create_topbar(page, titulo="Directorio de Alumnos Matriculados")
-
-    main_content = ft.Container(
-        expand=True,
-        bgcolor=BG_PAGE,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                topbar,
-                ft.Container(
-                    expand=True,
-                    padding=32,
-                    content=ft.Column(
-                        spacing=24,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            filters_bar,
-                            table_container,
-                            pagination_bar,
-                        ],
-                    ),
-                ),
-            ],
-        ),
-    )
-
-    return ft.Row(
-        expand=True,
-        spacing=0,
-        controls=[sidebar, main_content],
-    )
-
-
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Directorio de Alumnos"
-        page.padding = 0
-        page.bgcolor = BG_PAGE
-        page.add(get_admin_alumnos_view(page))
-
-    ft.run(main)
