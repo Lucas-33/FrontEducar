@@ -1,20 +1,21 @@
-# src/components/navbar.py
 import flet as ft
+from frontend.app.components.constants import (
+    BG_WHITE,
+    BORDER_COLOR,
+    MUTED,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
 
-GREEN = "#0B4F4F"
-TEAL = "#117C7C"
-TEAL_LIGHT = "#E6F2F2"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-BORDER_COLOR = "#EAE6E1"
-BG_WHITE = "#FFFFFF"
 
 def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
     def navegar(ruta: str):
         page.run_task(page.push_route, ruta)
 
     def nav_button(texto: str, ruta: str):
-        es_activo = (active_route == ruta)
+        es_activo = active_route == ruta
         return ft.Button(
             content=ft.Text(texto),
             bgcolor="transparent",
@@ -55,7 +56,7 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
                                 spacing=0,
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 controls=[
-                                    ft.Text("Educar para Transformar", weight=ft.FontWeight.BOLD, size=18, color=GREEN),
+                                    ft.Text("Educar para Transformar", weight=ft.FontWeight.BOLD, size=18, color=TEAL_DARK),
                                     ft.Text("RESISTENCIA · K-12", size=11, color=MUTED),
                                 ],
                             ),
@@ -63,18 +64,21 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
                     ),
                 ),
                 ft.Row(
-                    spacing=8,
+                    spacing=4,
                     scroll=ft.ScrollMode.AUTO,
                     controls=[
                         nav_button("Inicio", "/"),
                         nav_button("Quiénes Somos", "/quienes-somos"),
                         nav_button("Niveles", "/niveles"),
+                        nav_button("Bienestar", "/bienestar-estudiantil"),
                         nav_button("Inscripción", "/inscripcion"),
                         nav_button("Noticias", "/noticias"),
+                        nav_button("Opiniones", "/opiniones"),
+                        nav_button("Contacto", "/contacto"),
                         ft.Button(
                             "PORTAL ACCESO",
                             bgcolor=TEAL_LIGHT,
-                            color=GREEN,
+                            color=TEAL_DARK,
                             elevation=0,
                             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
                             on_click=lambda _: navegar("/portal"),
