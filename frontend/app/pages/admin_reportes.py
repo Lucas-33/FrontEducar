@@ -1,26 +1,26 @@
 import flet as ft
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
-
-# Paleta cromática y tokens visuales
-BG_PAGE = "#F5F7F7"
-BG_WHITE = "#FFFFFF"
-BORDER_COLOR = "#EAE6E1"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-ORANGE = "#D97736"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-GREEN_STATE = "#10B981"
-RED_STATE = "#EF4444"
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BG_PAGE,
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CARD_RADIUS,
+    MUTED,
+    ONLINE_GREEN,
+    ORANGE,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
 
 
 def get_admin_reportes_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa del Módulo General de Reportes y Estadísticas."""
+    """Retorna la vista completa del Módulo General de Reportes y Estadísticas usando AdminLayout."""
 
     # ==================== 1. TARJETAS DE CATEGORÍAS DE REPORTES ====================
-    def categoria_card(titulo: str, descripcion: str, icono: ft.IconData) -> ft.Container:
+    def categoria_card(titulo: str, descripcion: str, icono: ft.IconData, ruta: str | None = None) -> ft.Container:
         return ft.Container(
             width=360,
             height=116,
@@ -28,7 +28,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
             border=ft.Border.all(1, BORDER_COLOR),
             border_radius=12,
             padding=20,
-            on_click=lambda _: None,
+            on_click=lambda _: page.go(ruta) if ruta else None,
             content=ft.Column(
                 spacing=12,
                 alignment=ft.MainAxisAlignment.START,
@@ -41,7 +41,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                                 width=32,
                                 height=32,
                                 bgcolor=TEAL_LIGHT,
-                                border_radius=8,
+                                border_radius=BORDER_RADIUS,
                                 alignment=ft.Alignment(0, 0),
                                 content=ft.Icon(icono, size=16, color=TEAL_DARK),
                             ),
@@ -65,12 +65,12 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
         )
 
     categorias_data = [
-        ("Reporte por Alumno", "Progreso individual, inasistencias y comportamiento consolidado.", ft.Icons.PERSON_OUTLINE),
-        ("Reporte por Docente", "Horas cátedra dictadas, asignaciones de materias y licencias.", ft.Icons.WORK_OUTLINE),
-        ("Listado por Curso", "Nóminas completas filtradas por grado, turno y nivel académico.", ft.Icons.PEOPLE_OUTLINE),
-        ("Listado por Materia", "Estadísticas de rendimiento, promedios y aprobados por trimestre.", ft.Icons.MENU_BOOK_OUTLINED),
-        ("Listado por Deporte", "Alumnos inscriptos por disciplina deportiva para control médico.", ft.Icons.FITNESS_CENTER_OUTLINED),
-        ("Listado por Transporte", "Hojas de ruta por zona con datos de tutores y teléfonos.", ft.Icons.DIRECTIONS_BUS_OUTLINED),
+        ("Reporte por Alumno", "Progreso individual, inasistencias y comportamiento consolidado.", ft.Icons.PERSON_OUTLINE, "/admin/reporte-alumnos-docentes"),
+        ("Reporte por Docente", "Horas cátedra dictadas, asignaciones de materias y licencias.", ft.Icons.WORK_OUTLINE, "/admin/reporte-alumnos-docentes"),
+        ("Listado por Curso", "Nóminas completas filtradas por grado, turno y nivel académico.", ft.Icons.PEOPLE_OUTLINE, "/admin/reporte-cursos-materias"),
+        ("Listado por Materia", "Estadísticas de rendimiento, promedios y aprobados por trimestre.", ft.Icons.MENU_BOOK_OUTLINED, "/admin/reporte-cursos-materias"),
+        ("Listado por Deporte", "Alumnos inscriptos por disciplina deportiva para control médico.", ft.Icons.FITNESS_CENTER_OUTLINED, "/admin/reporte-deportes-avanzado"),
+        ("Listado por Transporte", "Hojas de ruta por recorrido con datos de tutores y teléfonos.", ft.Icons.DIRECTIONS_BUS_OUTLINED, "/admin/reporte-transporte-pasajeros"),
     ]
 
     seccion_categorias = ft.Column(
@@ -86,7 +86,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                 wrap=True,
                 spacing=16,
                 run_spacing=16,
-                controls=[categoria_card(t, d, i) for t, d, i in categorias_data],
+                controls=[categoria_card(t, d, i, r) for t, d, i, r in categorias_data],
             ),
         ],
     )
@@ -98,7 +98,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
             "alumno": "Almirón, Santiago",
             "curso": "5to Año B",
             "ficha": "Aprobada (Vence Oct 25)",
-            "ficha_color": GREEN_STATE,
+            "ficha_color": ONLINE_GREEN,
             "seguro": "Al Día",
         },
         {
@@ -106,7 +106,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
             "alumno": "Flores, Facundo Joaquín",
             "curso": "6to Año A",
             "ficha": "Aprobada (Vence Nov 25)",
-            "ficha_color": GREEN_STATE,
+            "ficha_color": ONLINE_GREEN,
             "seguro": "Al Día",
         },
         {
@@ -114,7 +114,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
             "alumno": "Pérez, Juan Manuel",
             "curso": "2do Año C",
             "ficha": "Pendiente Presentar",
-            "ficha_color": RED_STATE,
+            "ficha_color": "#EF4444",
             "seguro": "Al Día",
         },
     ]
@@ -176,7 +176,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
     preview_card = ft.Container(
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=24,
         content=ft.Column(
             spacing=20,
@@ -217,7 +217,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                                     bgcolor=TEAL_LIGHT,
                                     height=32,
                                     style=ft.ButtonStyle(
-                                        shape=ft.RoundedRectangleBorder(radius=8),
+                                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
                                         padding=ft.Padding(16, 8, 16, 8),
                                     ),
                                     on_click=lambda _: None,
@@ -234,7 +234,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                                     bgcolor=ORANGE,
                                     height=32,
                                     style=ft.ButtonStyle(
-                                        shape=ft.RoundedRectangleBorder(radius=8),
+                                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
                                         padding=ft.Padding(16, 8, 16, 8),
                                     ),
                                     on_click=lambda _: None,
@@ -248,45 +248,14 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
         ),
     )
 
-    # ==================== 3. ENSAMBLE DEL LAYOUT ====================
-    sidebar = create_sidebar(page, active_route="/admin/reportes")
-    topbar = create_topbar(page, titulo="Módulo General de Reportes y Estadísticas")
-
-    main_content = ft.Container(
-        expand=True,
-        bgcolor=BG_PAGE,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                topbar,
-                ft.Container(
-                    expand=True,
-                    padding=32,
-                    content=ft.Column(
-                        spacing=32,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            seccion_categorias,
-                            preview_card,
-                        ],
-                    ),
-                ),
-            ],
-        ),
+    # ==================== 3. RETORNO CON ADMIN_LAYOUT ====================
+    return admin_layout(
+        page=page,
+        titulo="Módulo General de Reportes y Estadísticas",
+        active_route="/admin/reportes",
+        spacing=32,
+        content_controls=[
+            seccion_categorias,
+            preview_card,
+        ],
     )
-
-    return ft.Row(
-        expand=True,
-        spacing=0,
-        controls=[sidebar, main_content],
-    )
-
-
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Reportes y Estadísticas"
-        page.padding = 0
-        page.bgcolor = BG_PAGE
-        page.add(get_admin_reportes_view(page))
-
-    ft.run(main)

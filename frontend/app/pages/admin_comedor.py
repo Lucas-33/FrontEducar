@@ -1,25 +1,23 @@
 import flet as ft
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
-
-# Paleta cromática y tokens visuales del sistema
-BG_PAGE = "#F5F7F7"
-BG_WHITE = "#FFFFFF"
-BORDER_COLOR = "#EAE6E1"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-ORANGE = "#D97736"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-
-# Badges y avisos específicos
-BADGE_WARN_BG = "#FFF3E7"
-BADGE_WARN_TXT = "#9A5427"
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BADGE_WARN_BG,
+    BADGE_WARN_TXT,
+    BG_PAGE,
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CARD_RADIUS,
+    MUTED,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
 
 
 def get_admin_comedor_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa de Inscripción y Control del Servicio de Comedor."""
+    """Retorna la vista completa de Inscripción y Control del Servicio de Comedor usando AdminLayout."""
 
     # ==================== 1. ENCABEZADO Y ESTADO ====================
     encabezado_seccion = ft.Row(
@@ -62,13 +60,12 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
     alumno_card = ft.Container(
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=18,
         content=ft.Row(
             spacing=20,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                # Buscador de alumno rápido
                 ft.Column(
                     spacing=6,
                     width=290,
@@ -77,7 +74,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                         ft.Container(
                             height=38,
                             border=ft.Border.all(1, BORDER_COLOR),
-                            border_radius=8,
+                            border_radius=BORDER_RADIUS,
                             padding=ft.Padding(10, 0, 10, 0),
                             content=ft.Row(
                                 spacing=8,
@@ -91,7 +88,6 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                         ),
                     ],
                 ),
-                # Avatar con iniciales
                 ft.Container(
                     width=44,
                     height=44,
@@ -100,7 +96,6 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                     alignment=ft.Alignment(0, 0),
                     content=ft.Text("SA", size=16, weight=ft.FontWeight.W_600, color=TEAL_DARK),
                 ),
-                # Ficha breve de datos
                 ft.Column(
                     spacing=4,
                     expand=True,
@@ -109,7 +104,6 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                         ft.Text("5to Año B · Turno Mañana · Legajo #10245 · Ficha Médica Aprobada", size=13, color=MUTED),
                     ],
                 ),
-                # Estado de matrícula
                 ft.Container(
                     padding=ft.Padding(8, 4, 8, 4),
                     bgcolor=TEAL_LIGHT,
@@ -124,7 +118,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
     estado_servicio_banner = ft.Container(
         height=84,
         bgcolor=TEAL_LIGHT,
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=20,
         content=ft.Row(
             spacing=16,
@@ -162,14 +156,13 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         width=732,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=24,
         content=ft.Column(
             spacing=16,
             controls=[
                 ft.Text("Datos de Alta en el Comedor", size=18, weight=ft.FontWeight.W_600, color=TEAL_DARK),
                 ft.Text("Complete la información administrativa para la habilitación de la vianda institucional.", size=13, color=MUTED),
-                # Fila 1: Inicio y Turno
                 ft.Row(
                     spacing=16,
                     controls=[
@@ -182,7 +175,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                                     height=44,
                                     bgcolor=BG_WHITE,
                                     border=ft.Border.all(1, BORDER_COLOR),
-                                    border_radius=8,
+                                    border_radius=BORDER_RADIUS,
                                     padding=ft.Padding(12, 0, 12, 0),
                                     content=ft.Row(
                                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -204,7 +197,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                                     height=44,
                                     bgcolor=BG_PAGE,
                                     border=ft.Border.all(1, BORDER_COLOR),
-                                    border_radius=8,
+                                    border_radius=BORDER_RADIUS,
                                     padding=ft.Padding(12, 0, 12, 0),
                                     alignment=ft.Alignment(-1, 0),
                                     content=ft.Text("Turno Intermedio (12:30 a 13:30 hs)", size=14, color=MUTED),
@@ -213,7 +206,6 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                         ),
                     ],
                 ),
-                # Fila 2: Nivel y Curso
                 ft.Row(
                     spacing=16,
                     controls=[
@@ -226,7 +218,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                                     height=44,
                                     bgcolor=BG_PAGE,
                                     border=ft.Border.all(1, BORDER_COLOR),
-                                    border_radius=8,
+                                    border_radius=BORDER_RADIUS,
                                     padding=ft.Padding(12, 0, 12, 0),
                                     alignment=ft.Alignment(-1, 0),
                                     content=ft.Text("Nivel Secundario", size=14, color=MUTED),
@@ -242,7 +234,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                                     height=44,
                                     bgcolor=BG_PAGE,
                                     border=ft.Border.all(1, BORDER_COLOR),
-                                    border_radius=8,
+                                    border_radius=BORDER_RADIUS,
                                     padding=ft.Padding(12, 0, 12, 0),
                                     alignment=ft.Alignment(-1, 0),
                                     content=ft.Text("5to Año División B", size=14, color=MUTED),
@@ -260,14 +252,13 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         width=732,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=24,
         content=ft.Column(
             spacing=16,
             controls=[
                 ft.Text("Información Nutricional y Médica", size=18, weight=ft.FontWeight.W_600, color=TEAL_DARK),
                 ft.Text("Detalle de restricciones, menú asignado y notas bromatológicas obligatorias.", size=13, color=MUTED),
-                # Selector de Menú
                 ft.Column(
                     spacing=6,
                     controls=[
@@ -276,7 +267,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                             height=44,
                             bgcolor=BG_WHITE,
                             border=ft.Border.all(1, BORDER_COLOR),
-                            border_radius=8,
+                            border_radius=BORDER_RADIUS,
                             padding=ft.Padding(12, 0, 12, 0),
                             content=ft.Row(
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -289,7 +280,6 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                         ),
                     ],
                 ),
-                # Campo de Alergias
                 ft.Column(
                     spacing=6,
                     controls=[
@@ -298,14 +288,13 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                             height=70,
                             bgcolor=BG_PAGE,
                             border=ft.Border.all(1, BORDER_COLOR),
-                            border_radius=8,
+                            border_radius=BORDER_RADIUS,
                             padding=12,
                             alignment=ft.Alignment(-1, -1),
                             content=ft.Text("Sin alergias declaradas en la ficha médica de admisión.", size=14, color=MUTED),
                         ),
                     ],
                 ),
-                # Observaciones
                 ft.Column(
                     spacing=6,
                     controls=[
@@ -314,7 +303,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                             height=82,
                             bgcolor=BG_PAGE,
                             border=ft.Border.all(1, BORDER_COLOR),
-                            border_radius=8,
+                            border_radius=BORDER_RADIUS,
                             padding=12,
                             alignment=ft.Alignment(-1, -1),
                             content=ft.Text("El estudiante cuenta con apto médico general. No requiere menús diferenciados por celiaquía o intolerancia a la lactosa.", size=14, color=MUTED),
@@ -346,7 +335,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         width=360,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
+        border_radius=CARD_RADIUS,
         padding=24,
         content=ft.Column(
             spacing=16,
@@ -369,10 +358,9 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                 ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
                 fila_resumen("Sede:", "Resistencia Central"),
                 fila_resumen("Facturación:", "Débito con cuota"),
-                # Mensaje de validación
                 ft.Container(
                     bgcolor=TEAL_LIGHT,
-                    border_radius=8,
+                    border_radius=BORDER_RADIUS,
                     padding=14,
                     content=ft.Row(
                         spacing=10,
@@ -402,7 +390,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                     bgcolor=TEAL,
                     height=40,
                     style=ft.ButtonStyle(
-                        shape=ft.RoundedRectangleBorder(radius=8),
+                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
                         padding=ft.Padding(16, 11, 16, 11),
                     ),
                     on_click=lambda _: None,
@@ -416,7 +404,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
     card_aviso_bromatologico = ft.Container(
         width=360,
         bgcolor=TEAL_LIGHT,
-        border_radius=8,
+        border_radius=BORDER_RADIUS,
         padding=14,
         content=ft.Row(
             spacing=10,
@@ -453,48 +441,17 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         color=MUTED,
     )
 
-    # ==================== 6. ENSAMBLE DEL LAYOUT GENERAL ====================
-    sidebar = create_sidebar(page, active_route="/admin/comedor")
-    topbar = create_topbar(page, titulo="Comedor — Inscripción al servicio")
-
-    main_content = ft.Container(
-        expand=True,
-        bgcolor=BG_PAGE,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                topbar,
-                ft.Container(
-                    expand=True,
-                    padding=32,
-                    content=ft.Column(
-                        spacing=20,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            encabezado_seccion,
-                            alumno_card,
-                            estado_servicio_banner,
-                            fila_principal_modulo,
-                            nota_pie,
-                        ],
-                    ),
-                ),
-            ],
-        ),
+    # ==================== 6. RETORNO CON ADMIN_LAYOUT ====================
+    return admin_layout(
+        page=page,
+        titulo="Comedor — Inscripción al servicio",
+        active_route="/admin/comedor",
+        spacing=20,
+        content_controls=[
+            encabezado_seccion,
+            alumno_card,
+            estado_servicio_banner,
+            fila_principal_modulo,
+            nota_pie,
+        ],
     )
-
-    return ft.Row(
-        expand=True,
-        spacing=0,
-        controls=[sidebar, main_content],
-    )
-
-
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Comedor Escolar"
-        page.padding = 0
-        page.bgcolor = BG_PAGE
-        page.add(get_admin_comedor_view(page))
-
-    ft.run(main)
