@@ -1,401 +1,193 @@
 import flet as ft
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
-
-# Paleta cromática y tokens visuales del sistema
-BG_PAGE = "#F5F7F7"
-BG_WHITE = "#FFFFFF"
-BORDER_COLOR = "#EAE6E1"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-BADGE_NEUTRAL_BG = "#EEF1F0"
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BADGE_RED_TXT,
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CARD_RADIUS,
+    CONTROL_HEIGHT,
+    MUTED,
+    ORANGE,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
+from frontend.app.components.form_controls import status_badge
+from frontend.app.components.table_view import (
+    create_table_container,
+    create_table_header,
+)
 
 
 def get_admin_niveles_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa de Niveles Educativos y Estructura Académica."""
+    """Retorna la vista de configuración y control de Niveles Educativos."""
 
-    # ==================== 1. ENCABEZADO Y ACCIÓN SUPERIOR ====================
-    encabezado_modulo = ft.Row(
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        controls=[
-            ft.Column(
-                spacing=6,
-                expand=True,
-                controls=[
-                    ft.Text(
-                        "Configuración del Sistema Educativo K-12",
-                        size=12,
-                        weight=ft.FontWeight.W_400,
-                        color=MUTED,
-                    ),
-                    ft.Text(
-                        "Niveles Educativos y Estructura Académica",
-                        size=26,
-                        weight=ft.FontWeight.W_600,
-                        color=TEAL_DARK,
-                    ),
-                    ft.Text(
-                        "Supervise la jerarquía de ciclos lectivos, cursos asociados y cupos de matrícula por nivel formativo.",
-                        size=14,
-                        color=MUTED,
-                    ),
-                ],
-            ),
-            ft.Button(
-                content=ft.Row(
-                    spacing=8,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    controls=[
-                        ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                        ft.Text("Nuevo Nivel", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
-                    ],
-                ),
-                bgcolor=TEAL,
-                height=41,
-                style=ft.ButtonStyle(
-                    shape=ft.RoundedRectangleBorder(radius=8),
-                    padding=ft.Padding(16, 11, 16, 11),
-                ),
-                on_click=lambda _: None,
-            ),
-        ],
-    )
-
-    # ==================== 2. RESUMEN INSTITUCIONAL ====================
-    def indicador_kpi(valor: str, rotulo: str, ancho: int) -> ft.Column:
-        return ft.Column(
-            spacing=3,
-            width=ancho,
-            controls=[
-                ft.Text(valor, size=26, weight=ft.FontWeight.W_600, color=BG_WHITE),
-                ft.Text(rotulo, size=12, color=TEAL_LIGHT),
-            ],
-        )
-
-    resumen_institucional = ft.Container(
-        height=98,
-        bgcolor=TEAL_DARK,
-        border_radius=16,
-        padding=22,
-        content=ft.Row(
-            spacing=32,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Column(
-                    spacing=4,
-                    expand=True,
-                    controls=[
-                        ft.Text("Ciclo Lectivo 2025 — Activo y Homologado", size=20, weight=ft.FontWeight.W_600, color=BG_WHITE),
-                        ft.Text("Estructura curricular completa conforme al Ministerio de Educación y normativas provinciales.", size=13, color=TEAL_LIGHT),
-                    ],
-                ),
-                indicador_kpi("3", "Niveles K-12", 79),
-                indicador_kpi("32", "Cursos totales", 77),
-                indicador_kpi("1,248", "Matrícula total", 118),
-            ],
-        ),
-    )
-
-    # ==================== 3. TARJETAS DE NIVELES Y CURSOS ====================
-    def curso_item(nombre: str, detalle: str) -> ft.Container:
-        return ft.Container(
-            height=62,
-            bgcolor=BG_PAGE,
-            border_radius=8,
-            padding=12,
-            content=ft.Row(
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Column(
-                        spacing=3,
-                        expand=True,
-                        controls=[
-                            ft.Text(nombre, size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                            ft.Text(detalle, size=12, color=MUTED),
-                        ],
-                    ),
-                    ft.Icon(ft.Icons.CHEVRON_RIGHT, size=16, color=TEAL),
-                ],
-            ),
-        )
-
-    def nivel_card(
-        icono: ft.IconData,
+    # ==================== 1. TARJETAS DE NIVELES (KPIS RESUMEN) ====================
+    def nivel_kpi_card(
         titulo: str,
-        descripcion: str,
-        alumnos: str,
+        edades: str,
+        jornada: str,
         cursos: str,
-        turno_info: str,
-        cursos_asociados: list[tuple[str, str]],
+        alumnos: str,
+        coordinador: str,
+        icono: ft.IconData,
     ) -> ft.Container:
         return ft.Container(
-            width=358.67,
-            height=546,
+            expand=True,
             bgcolor=BG_WHITE,
             border=ft.Border.all(1, BORDER_COLOR),
-            border_radius=16,
+            border_radius=CARD_RADIUS,
+            padding=24,
             content=ft.Column(
-                spacing=0,
+                spacing=14,
                 controls=[
-                    # Presentación del nivel (280 px)
-                    ft.Container(
-                        padding=24,
-                        content=ft.Column(
-                            spacing=16,
-                            controls=[
-                                ft.Row(
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                                    controls=[
-                                        ft.Container(
-                                            width=44,
-                                            height=44,
-                                            bgcolor=TEAL_LIGHT,
-                                            border_radius=12,
-                                            alignment=ft.Alignment(0, 0),
-                                            content=ft.Icon(icono, size=22, color=TEAL),
-                                        ),
-                                        ft.Container(
-                                            padding=ft.Padding(8, 4, 8, 4),
-                                            bgcolor=TEAL_LIGHT,
-                                            border_radius=4,
-                                            content=ft.Text("Activo", size=12, weight=ft.FontWeight.W_600, color=TEAL),
-                                        ),
-                                    ],
-                                ),
-                                ft.Column(
-                                    spacing=6,
-                                    controls=[
-                                        ft.Text(titulo, size=24, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-                                        ft.Text(descripcion, size=13, color=MUTED),
-                                    ],
-                                ),
-                                ft.Row(
-                                    spacing=24,
-                                    controls=[
-                                        ft.Column(
-                                            spacing=3,
-                                            expand=True,
-                                            controls=[
-                                                ft.Text(alumnos, size=30, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-                                                ft.Text("Alumnos", size=12, color=MUTED),
-                                            ],
-                                        ),
-                                        ft.Column(
-                                            spacing=3,
-                                            expand=True,
-                                            controls=[
-                                                ft.Text(cursos, size=30, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-                                                ft.Text("Cursos", size=12, color=MUTED),
-                                            ],
-                                        ),
-                                    ],
-                                ),
-                                ft.Container(
-                                    padding=ft.Padding(8, 4, 8, 4),
-                                    bgcolor=BADGE_NEUTRAL_BG,
-                                    border_radius=4,
-                                    content=ft.Text(turno_info, size=12, weight=ft.FontWeight.W_600, color=MUTED),
-                                ),
-                            ],
-                        ),
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Container(
+                                width=42,
+                                height=42,
+                                bgcolor=TEAL_LIGHT,
+                                border_radius=BORDER_RADIUS,
+                                alignment=ft.Alignment(0, 0),
+                                content=ft.Icon(icono, size=22, color=TEAL_DARK),
+                            ),
+                            status_badge("Activo"),
+                        ],
                     ),
+                    ft.Column(
+                        spacing=2,
+                        controls=[
+                            ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(edades, size=12, color=ORANGE, weight=ft.FontWeight.W_600),
+                        ],
+                    ),
+                    ft.Text(f"Régimen: {jornada}", size=12, color=MUTED),
                     ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
-                    # Cursos asociados y acciones (265 px)
-                    ft.Container(
-                        padding=24,
-                        content=ft.Column(
-                            spacing=12,
-                            controls=[
-                                ft.Text("Cursos destacados del ciclo", size=12, weight=ft.FontWeight.W_600, color=MUTED),
-                                *[curso_item(nombre, detalle) for nombre, detalle in cursos_asociados],
-                                ft.Row(
-                                    spacing=12,
-                                    alignment=ft.MainAxisAlignment.START,
-                                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                                    controls=[
-                                        ft.Container(
-                                            height=41,
-                                            bgcolor=BG_WHITE,
-                                            border=ft.Border.all(1, BORDER_COLOR),
-                                            border_radius=8,
-                                            padding=ft.Padding(16, 11, 16, 11),
-                                            alignment=ft.Alignment(0, 0),
-                                            content=ft.Text("Editar", size=14, weight=ft.FontWeight.W_600, color=TEAL),
-                                            on_click=lambda _: None,
-                                        ),
-                                        ft.TextButton(
-                                            "Ver todos",
-                                            style=ft.ButtonStyle(color=TEAL, padding=0),
-                                            on_click=lambda _: None,
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        controls=[
+                            ft.Text("Cursos Activos:", size=12, color=MUTED),
+                            ft.Text(cursos, size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+                        ],
+                    ),
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        controls=[
+                            ft.Text("Matrícula:", size=12, color=MUTED),
+                            ft.Text(alumnos, size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+                        ],
+                    ),
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        controls=[
+                            ft.Text("Coordinación:", size=12, color=MUTED),
+                            ft.Text(coordinador, size=12, weight=ft.FontWeight.W_500, color=TEXT_COLOR),
+                        ],
                     ),
                 ],
             ),
         )
 
-    fila_niveles = ft.Row(
+    niveles_cards_row = ft.Row(
         spacing=20,
-        vertical_alignment=ft.CrossAxisAlignment.START,
         controls=[
-            nivel_card(
-                icono=ft.Icons.CHILD_CARE_OUTLINED,
-                titulo="Nivel Inicial",
-                descripcion="Salas de 3, 4 y 5 años (Jardín)",
-                alumnos="214",
-                cursos="6",
-                turno_info="Turno Mañana y Tarde",
-                cursos_asociados=[
-                    ("Sala de 4 años — Turno Tarde", "Cupo: 28 / 30 alumnos (93%)"),
-                    ("Sala de 5 años B — Turno Mañana", "Cupo: 25 / 25 alumnos (Lleno)"),
-                ],
+            nivel_kpi_card(
+                "Nivel Inicial",
+                "Salas de 3, 4 y 5 años",
+                "Jornada Extendida (08:00 a 16:00 hs)",
+                "6 salas",
+                "148 alumnos",
+                "Prof. Mariana Benítez",
+                ft.Icons.CHILD_CARE,
             ),
-            nivel_card(
-                icono=ft.Icons.SCHOOL_OUTLINED,
-                titulo="Nivel Primario",
-                descripcion="1ro a 7mo Grado (Educación General)",
-                alumnos="582",
-                cursos="14",
-                turno_info="Jornada Completa",
-                cursos_asociados=[
-                    ("4to Grado A — Turno Mañana", "Cupo: 32 / 35 alumnos (91%)"),
-                    ("6to Grado C — Turno Tarde", "Cupo: 30 / 35 alumnos (85%)"),
-                ],
+            nivel_kpi_card(
+                "Nivel Primario",
+                "1er a 6to Grado",
+                "Doble Escolaridad (07:30 a 16:30 hs)",
+                "14 divisiones",
+                "512 alumnos",
+                "Lic. Andrea Romero",
+                ft.Icons.MENU_BOOK_OUTLINED,
             ),
-            nivel_card(
-                icono=ft.Icons.ACCOUNT_BALANCE_OUTLINED,
-                titulo="Nivel Secundario",
-                descripcion="1ro a 6to Año (Ciclo Orientado)",
-                alumnos="452",
-                cursos="12",
-                turno_info="Turno Mañana y Tarde",
-                cursos_asociados=[
-                    ("3er Año A — Turno Mañana", "Cupo: 34 / 35 alumnos (97%)"),
-                    ("5to Año B — Turno Tarde", "Cupo: 31 / 35 alumnos (88%)"),
-                ],
+            nivel_kpi_card(
+                "Nivel Secundario",
+                "1er a 6to Año (Ciclo Superior)",
+                "Doble Turno y Deportes (07:30 a 17:30 hs)",
+                "12 divisiones",
+                "588 alumnos",
+                "Prof. Carlos Maidana",
+                ft.Icons.SCHOOL_OUTLINED,
             ),
         ],
     )
 
-    # ==================== 4. PANEL DE GESTIÓN Y JERARQUÍA ====================
-    def estado_jerarquia(texto: str) -> ft.Container:
+    # ==================== 2. DETALLE DE AUTORIDADES Y PLANES ====================
+    niveles_data = [
+        {"codigo": "NIV-INI", "nombre": "Nivel Inicial", "idiomas": "Inglés Inicial, Portugués", "horario": "08:00 a 16:00 hs", "servicios": "Comedor, Apoyo, Transporte", "estado": "Activo"},
+        {"codigo": "NIV-PRI", "nombre": "Nivel Primario", "idiomas": "Inglés Intensivo, Portugués, Francés", "horario": "07:30 a 16:30 hs", "servicios": "Comedor, Deportes, Transporte", "estado": "Activo"},
+        {"codigo": "NIV-SEC", "nombre": "Nivel Secundario", "idiomas": "Inglés Bilingüe, Francés, Portugués", "horario": "07:30 a 17:30 hs", "servicios": "Comedor, Deportes Competición, Transporte", "estado": "Activo"},
+    ]
+
+    columnas_niveles = [
+        ("Código", 110, False),
+        ("Nivel Institucional", 180, False),
+        ("Oferta de Idiomas", 260, False),
+        ("Franja Horaria", 190, False),
+        ("Servicios Incluidos", 280, False),
+        ("Estado", 100, False),
+        ("Acciones", None, True),
+    ]
+
+    header_table = create_table_header(columnas_niveles)
+
+    def nivel_row(item: dict) -> ft.Container:
         return ft.Container(
-            padding=ft.Padding(8, 4, 8, 4),
-            bgcolor=TEAL_LIGHT,
-            border_radius=4,
-            content=ft.Text(texto, size=12, weight=ft.FontWeight.W_600, color=TEAL),
+            height=54,
+            padding=ft.Padding(16, 0, 16, 0),
+            border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(width=110, content=ft.Text(item["codigo"], size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                    ft.Container(width=180, content=ft.Text(item["nombre"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
+                    ft.Container(width=260, content=ft.Text(item["idiomas"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=190, content=ft.Text(item["horario"], size=13, color=MUTED)),
+                    ft.Container(width=280, content=ft.Text(item["servicios"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=100, content=status_badge(item["estado"])),
+                    ft.Container(
+                        expand=True,
+                        alignment=ft.Alignment(1, 0),
+                        content=ft.Row(
+                            spacing=12,
+                            alignment=ft.MainAxisAlignment.END,
+                            controls=[
+                                ft.IconButton(icon=ft.Icons.EDIT_OUTLINED, icon_size=16, icon_color=TEAL, tooltip="Modificar Nivel", padding=0),
+                                ft.IconButton(icon=ft.Icons.INFO_OUTLINE, icon_size=16, icon_color=MUTED, tooltip="Ver Currícula", padding=0),
+                            ],
+                        ),
+                    ),
+                ],
+            ),
         )
 
-    panel_gestion = ft.Container(
-        height=112,
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
-        padding=24,
-        content=ft.Column(
-            spacing=16,
-            controls=[
-                ft.Text("Jerarquía del Sistema Educativo Institucional", size=18, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-                ft.Row(
-                    spacing=20,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        estado_jerarquia("Nivel Inicial"),
-                        ft.Icon(ft.Icons.ARROW_FORWARD, size=18, color=TEAL),
-                        estado_jerarquia("Nivel Primario"),
-                        ft.Icon(ft.Icons.ARROW_FORWARD, size=18, color=TEAL),
-                        estado_jerarquia("Nivel Secundario"),
-                        ft.Text(
-                            "Continuidad pedagógica asegurada con articulación directa entre directores de nivel.",
-                            size=13,
-                            color=MUTED,
-                            expand=True,
-                        ),
-                    ],
-                ),
-            ],
-        ),
+    table_container = create_table_container(
+        header=header_table,
+        rows=[nivel_row(n) for n in niveles_data],
     )
 
-    # ==================== 5. BANNER INFORMATIVO Y NOTA AL PIE ====================
-    banner_info = ft.Container(
-        height=50,
-        bgcolor=TEAL_LIGHT,
-        border_radius=8,
-        padding=16,
-        content=ft.Row(
-            spacing=12,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Icon(ft.Icons.INFO_OUTLINE, size=18, color=TEAL),
-                ft.Text(
-                    "Las modificaciones en las orientaciones o planes de estudio del nivel secundario deben ser informadas a Supervisión Pedagógica.",
-                    size=13,
-                    color=TEAL_DARK,
-                    expand=True,
-                ),
-            ],
-        ),
+    # ==================== 3. RETORNO CON ADMIN_LAYOUT ====================
+    return admin_layout(
+        page=page,
+        titulo="Estructura Académica — Niveles Educativos K-12",
+        active_route="/admin/niveles",
+        content_controls=[
+            niveles_cards_row,
+            ft.Text("Detalle Pedagógico y Servicios por Nivel", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+            table_container,
+        ],
     )
-
-    nota_pie = ft.Text(
-        "* La apertura o cierre de divisiones está sujeta a la aprobación de cupos por parte del Consejo General de Educación.",
-        size=11,
-        color=MUTED,
-    )
-
-    # ==================== 6. ENSAMBLE DEL LAYOUT GENERAL ====================
-    sidebar = create_sidebar(page, active_route="/admin/niveles")
-    topbar = create_topbar(page, titulo="Niveles Educativos — Estructura académica")
-
-    main_content = ft.Container(
-        expand=True,
-        bgcolor=BG_PAGE,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                topbar,
-                ft.Container(
-                    expand=True,
-                    padding=32,
-                    content=ft.Column(
-                        spacing=20,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            encabezado_modulo,
-                            resumen_institucional,
-                            fila_niveles,
-                            panel_gestion,
-                            banner_info,
-                            nota_pie,
-                        ],
-                    ),
-                ),
-            ],
-        ),
-    )
-
-    return ft.Row(
-        expand=True,
-        spacing=0,
-        controls=[sidebar, main_content],
-    )
-
-
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Niveles Educativos"
-        page.padding = 0
-        page.bgcolor = BG_PAGE
-        page.add(get_admin_niveles_view(page))
-
-    ft.run(main)
