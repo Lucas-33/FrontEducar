@@ -1,86 +1,44 @@
 import flet as ft
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
-
-# Paleta cromática y tokens visuales del sistema
-BG_PAGE = "#F5F7F7"
-BG_WHITE = "#FFFFFF"
-BORDER_COLOR = "#EAE6E1"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-BADGE_WARN_BG = "#FFF3E7"
-BADGE_WARN_TXT = "#A94C16"
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BADGE_RED_TXT,
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CONTROL_HEIGHT,
+    MUTED,
+    ORANGE,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
+from frontend.app.components.form_controls import status_badge
+from frontend.app.components.table_view import (
+    create_pagination_bar,
+    create_table_container,
+    create_table_header,
+)
 
 
 def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa de Gestión de Usuarios, Roles y Permisos de Acceso."""
+    """Retorna la vista de Usuarios, Control de Acceso RBAC y Permisos Familiares."""
 
-    # ==================== 1. ENCABEZADO Y ACCIÓN PRINCIPAL ====================
-    encabezado_modulo = ft.Row(
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        controls=[
-            ft.Column(
-                spacing=6,
-                expand=True,
-                controls=[
-                    ft.Text(
-                        "Seguridad, Roles y Control de Accesos al Sistema",
-                        size=12,
-                        weight=ft.FontWeight.W_400,
-                        color=MUTED,
-                    ),
-                    ft.Text(
-                        "Usuarios, Permisos y Credenciales",
-                        size=26,
-                        weight=ft.FontWeight.W_600,
-                        color=TEAL_DARK,
-                    ),
-                    ft.Text(
-                        "Gestione los niveles de acceso de directivos, docentes, preceptores, personal administrativo y cuentas del Portal de Familias.",
-                        size=14,
-                        color=MUTED,
-                    ),
-                ],
-            ),
-            ft.Button(
-                content=ft.Row(
-                    spacing=8,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    controls=[
-                        ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                        ft.Text("Nuevo Usuario", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
-                    ],
-                ),
-                bgcolor=TEAL,
-                height=41,
-                style=ft.ButtonStyle(
-                    shape=ft.RoundedRectangleBorder(radius=8),
-                    padding=ft.Padding(16, 11, 16, 11),
-                ),
-                on_click=lambda _: None,
-            ),
-        ],
-    )
-
-    # ==================== 2. BÚSQUEDA Y FILTROS ====================
-    search_bar = ft.Container(
-        height=43,
+    # ==================== 1. FILTROS Y ACCIÓN ====================
+    search_input = ft.Container(
+        width=280,
+        height=CONTROL_HEIGHT,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=8,
+        border_radius=BORDER_RADIUS,
         padding=ft.Padding(12, 0, 12, 0),
-        expand=True,
         content=ft.Row(
-            spacing=8,
+            spacing=10,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.SEARCH, size=16, color=MUTED),
                 ft.TextField(
-                    hint_text="Buscar usuario por nombre, correo electrónico o rol asignado...",
+                    hint_text="Buscar usuario, email o DNI...",
                     hint_style=ft.TextStyle(size=14, color=MUTED),
                     text_size=14,
                     color=TEXT_COLOR,
@@ -92,125 +50,128 @@ def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         ),
     )
 
-    def filtro_desplegable(texto: str, ancho: int) -> ft.Container:
+    def filtro_dropdown(hint: str, width: int, opciones: list[str]) -> ft.Container:
         return ft.Container(
-            width=ancho,
-            height=43,
+            width=width,
+            height=CONTROL_HEIGHT,
             bgcolor=BG_WHITE,
             border=ft.Border.all(1, BORDER_COLOR),
-            border_radius=8,
-            padding=ft.Padding(12, 0, 12, 0),
-            content=ft.Row(
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Text(texto, size=14, color=TEXT_COLOR),
-                    ft.Icon(ft.Icons.KEYBOARD_ARROW_DOWN, size=14, color=MUTED),
-                ],
+            border_radius=BORDER_RADIUS,
+            content=ft.Dropdown(
+                hint_text=hint,
+                hint_style=ft.TextStyle(size=14, color=TEXT_COLOR),
+                text_size=14,
+                border=ft.InputBorder.NONE,
+                content_padding=ft.Padding(12, 0, 8, 12),
+                options=[ft.dropdown.Option(opc) for opc in opciones],
             ),
         )
 
-    filtros_fila = ft.Row(
-        spacing=12,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        controls=[
-            search_bar,
-            filtro_desplegable("Rol: Todos", 111),
-            filtro_desplegable("Estado: Activo", 135),
-        ],
-    )
-
-    # ==================== 3. TABLA DE REGISTROS DE USUARIOS ====================
-    cabecera_tabla_usuarios = ft.Container(
-        height=42,
-        bgcolor=TEAL_LIGHT,
-        padding=ft.Padding(16, 13, 16, 13),
+    btn_nuevo_usuario = ft.Button(
         content=ft.Row(
-            spacing=12,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=8,
+            alignment=ft.MainAxisAlignment.CENTER,
             controls=[
-                ft.Container(width=451, expand=True, content=ft.Text("Usuario e Identidad", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                ft.Container(width=135, content=ft.Text("Rol del Sistema", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                ft.Container(width=275, content=ft.Text("Último Acceso Registrado", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                ft.Container(width=100, content=ft.Text("Estado", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                ft.Container(width=75, content=ft.Text("Acciones", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                ft.Icon(ft.Icons.PERSON_ADD_ALT_1_OUTLINED, size=16, color=BG_WHITE),
+                ft.Text("Nuevo Usuario", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
             ],
         ),
+        bgcolor=TEAL,
+        height=CONTROL_HEIGHT,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
+            padding=ft.Padding(24, 12, 24, 12),
+        ),
+        on_click=lambda _: None,
     )
 
-    usuarios_data = [
-        {"nombre": "Gómez, María Estela", "email": "m.gomez@educar.edu.ar", "rol": "Super Administrador", "acceso": "Hoy, 09:42 hs (Sesión actual)", "estado": "Activo", "seleccionado": False},
-        {"nombre": "Sánchez, Guillermina", "email": "g.sanchez@educar.edu.ar", "rol": "Cuerpo Docente", "acceso": "Ayer, 18:30 hs", "estado": "Activo", "seleccionado": False},
-        {"nombre": "Martínez, Román Alberto", "email": "r.martinez@educar.edu.ar", "rol": "Cuerpo Docente", "acceso": "Ayer, 14:15 hs", "estado": "Activo", "seleccionado": False},
-        {"nombre": "Benítez, Roberto", "email": "r.benitez@educar.edu.ar", "rol": "Preceptor / Tutor", "acceso": "Hoy, 07:45 hs", "estado": "Activo", "seleccionado": True},
-        {"nombre": "Almirón, Carlos Alberto", "email": "c.almiron@tutor.com", "rol": "Familias / Tutores", "acceso": "10/10/2026 09:14 hs", "estado": "Activo", "seleccionado": False},
-        {"nombre": "Capra, Jorge Andrés", "email": "j.capra@educar.edu.ar", "rol": "Cuerpo Docente", "acceso": "Pendiente de primer ingreso", "estado": "Pendiente", "seleccionado": False},
-    ]
-
-    def usuario_row(item: dict) -> ft.Container:
-        es_activo = item["estado"] == "Activo"
-        badge_bg = TEAL_LIGHT if es_activo else BADGE_WARN_BG
-        badge_txt = TEAL if es_activo else BADGE_WARN_TXT
-
-        return ft.Container(
-            height=64,
-            bgcolor=TEAL_LIGHT if item["seleccionado"] else BG_WHITE,
-            border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
-            padding=ft.Padding(16, 14, 16, 14),
-            content=ft.Row(
+    filters_bar = ft.Row(
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            ft.Row(
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
+                    search_input,
+                    filtro_dropdown("Rol: Todos", 150, ["Todos", "Administrador", "Docente", "Padre / Tutor", "Alumno"]),
+                    filtro_dropdown("Estado: Activo", 140, ["Todos", "Activo", "Bloqueado", "Inactivo"]),
+                ],
+            ),
+            btn_nuevo_usuario,
+        ],
+    )
+
+    # ==================== 2. TABLA DE USUARIOS Y ROLES ====================
+    usuarios_data = [
+        {"usuario": "m.gomez", "email": "m.gomez@educar.edu.ar", "nombre": "M. Estela Gómez", "rol": "Administrador", "vinculacion": "Acceso Total", "ultimo_acceso": "Hoy, 10:45 hs", "estado": "Activo"},
+        {"usuario": "r.martinez", "email": "r.martinez@educar.edu.ar", "nombre": "Román Alberto Martínez", "rol": "Docente", "vinculacion": "Legajo #20101", "ultimo_acceso": "Ayer, 18:30 hs", "estado": "Activo"},
+        {"usuario": "martin.gomez", "email": "tutor.gomez@gmail.com", "nombre": "Martín Gómez", "rol": "Padre / Tutor", "vinculacion": "Hijo: Santiago (#10245)", "ultimo_acceso": "12/10/2026", "estado": "Activo"},
+        {"usuario": "santiago.almiron", "email": "s.almiron@estudiantes.edu.ar", "nombre": "Santiago Almirón", "rol": "Alumno", "vinculacion": "Legajo #10245 (5to B)", "ultimo_acceso": "11/10/2026", "estado": "Activo"},
+        {"usuario": "g.sanchez", "email": "g.sanchez@educar.edu.ar", "nombre": "Guillermina Sánchez", "rol": "Docente", "vinculacion": "Legajo #20102", "ultimo_acceso": "Hoy, 08:15 hs", "estado": "Activo"},
+        {"usuario": "carla.morales", "email": "c.morales@tutor.com", "nombre": "Carla Morales", "rol": "Padre / Tutor", "vinculacion": "Hija: Valentina (#10248)", "ultimo_acceso": "10/10/2026", "estado": "Activo"},
+    ]
+
+    columnas_usuarios = [
+        ("Usuario / Email", 220, False),
+        ("Nombre Completo", 190, False),
+        ("Rol Asignado", 140, False),
+        ("Vinculación / Perfil", 200, False),
+        ("Última Conexión", 140, False),
+        ("Estado", 100, False),
+        ("Acciones", None, True),
+    ]
+
+    header_table = create_table_header(columnas_usuarios)
+
+    def rol_badge(rol: str) -> ft.Container:
+        colores = {
+            "Administrador": (TEAL_DARK, BG_WHITE),
+            "Docente": (TEAL_LIGHT, TEAL_DARK),
+            "Padre / Tutor": ("#FFF3E7", ORANGE),
+            "Alumno": ("#EBFEE6", "#10B981"),
+        }
+        bg, color = colores.get(rol, (TEAL_LIGHT, TEAL_DARK))
+        return ft.Container(
+            padding=ft.Padding(8, 3, 8, 3),
+            bgcolor=bg,
+            border_radius=4,
+            content=ft.Text(rol, size=11, weight=ft.FontWeight.BOLD, color=color),
+        )
+
+    def usuario_row(item: dict) -> ft.Container:
+        return ft.Container(
+            height=54,
+            padding=ft.Padding(16, 0, 16, 0),
+            border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
                     ft.Column(
-                        spacing=3,
-                        width=451,
-                        expand=True,
+                        spacing=2,
+                        width=220,
                         alignment=ft.MainAxisAlignment.CENTER,
                         controls=[
-                            ft.Text(item["nombre"], size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                            ft.Text(item["usuario"], size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
                             ft.Text(item["email"], size=11, color=MUTED),
                         ],
                     ),
+                    ft.Container(width=190, content=ft.Text(item["nombre"], size=14, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
+                    ft.Container(width=140, content=rol_badge(item["rol"])),
+                    ft.Container(width=200, content=ft.Text(item["vinculacion"], size=13, color=MUTED)),
+                    ft.Container(width=140, content=ft.Text(item["ultimo_acceso"], size=12, color=MUTED)),
+                    ft.Container(width=100, content=status_badge(item["estado"])),
                     ft.Container(
-                        width=135,
-                        content=ft.Text(item["rol"], size=13, color=TEXT_COLOR),
-                    ),
-                    ft.Container(
-                        width=275,
-                        content=ft.Text(item["acceso"], size=13, color=TEXT_COLOR),
-                    ),
-                    ft.Container(
-                        width=100,
+                        expand=True,
+                        alignment=ft.Alignment(1, 0),
                         content=ft.Row(
+                            spacing=12,
+                            alignment=ft.MainAxisAlignment.END,
                             controls=[
-                                ft.Container(
-                                    padding=ft.Padding(8, 4, 8, 4),
-                                    bgcolor=badge_bg,
-                                    border_radius=4,
-                                    content=ft.Text(item["estado"], size=12, weight=ft.FontWeight.W_600, color=badge_txt),
-                                ),
-                            ]
-                        ),
-                    ),
-                    ft.Container(
-                        width=75,
-                        content=ft.Row(
-                            spacing=10,
-                            controls=[
-                                ft.IconButton(
-                                    icon=ft.Icons.REMOVE_RED_EYE_OUTLINED,
-                                    icon_size=16,
-                                    icon_color=TEAL,
-                                    tooltip="Ver detalle",
-                                    padding=0,
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.EDIT_NOTE_OUTLINED,
-                                    icon_size=16,
-                                    icon_color=TEAL,
-                                    tooltip="Modificar permisos",
-                                    padding=0,
-                                ),
+                                ft.IconButton(icon=ft.Icons.KEY_OUTLINED, icon_size=16, icon_color=TEAL, tooltip="Restablecer Contraseña", padding=0),
+                                ft.IconButton(icon=ft.Icons.FAMILY_RESTROOM_OUTLINED, icon_size=16, icon_color=ORANGE, tooltip="Vincular Hijos/Alumnos", padding=0),
+                                ft.IconButton(icon=ft.Icons.BLOCK_OUTLINED, icon_size=16, icon_color=BADGE_RED_TXT, tooltip="Bloquear Acceso", padding=0),
                             ],
                         ),
                     ),
@@ -218,256 +179,44 @@ def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    tabla_usuarios_contenedor = ft.Container(
-        height=426,
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
-        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                cabecera_tabla_usuarios,
-                *[usuario_row(u) for u in usuarios_data],
-            ],
-        ),
+    table_container = create_table_container(
+        header=header_table,
+        rows=[usuario_row(u) for u in usuarios_data],
     )
 
-    nota_tabla_usuarios = ft.Text(
-        "Haga clic en una cuenta para auditar el historial de accesos, bloquear credenciales o reasignar roles de seguridad.",
-        size=12,
-        color=MUTED,
+    pagination_bar = create_pagination_bar(
+        texto_info="Mostrando 1-6 de 1,420 cuentas registradas",
+        pagina_actual=1,
+        total_paginas=237,
     )
 
-    # ==================== 4. MATRIZ DE PERMISOS POR ROL ====================
-    encabezado_roles = ft.Row(
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        controls=[
-            ft.Text("Matriz de Permisos por Rol", size=18, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-            ft.Container(
-                height=41,
-                bgcolor=BG_WHITE,
-                border=ft.Border.all(1, BORDER_COLOR),
-                border_radius=8,
-                padding=ft.Padding(16, 11, 16, 11),
-                content=ft.Text("Modificar Roles", size=14, weight=ft.FontWeight.W_600, color=TEAL),
-                on_click=lambda _: None,
-            ),
-        ],
-    )
-
-    cabecera_tabla_roles = ft.Container(
-        height=42,
+    aviso_seguridad = ft.Container(
         bgcolor=TEAL_LIGHT,
-        padding=ft.Padding(16, 13, 16, 13),
+        border_radius=BORDER_RADIUS,
+        padding=14,
         content=ft.Row(
-            spacing=12,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
             controls=[
-                ft.Container(width=145, content=ft.Text("Rol", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                ft.Container(width=326.5, expand=True, content=ft.Text("Módulos Habilitados", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                ft.Container(width=326.5, expand=True, content=ft.Text("Permisos de Edición", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                ft.Container(width=250, content=ft.Text("Alcance Geográfico / Sede", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                ft.Icon(ft.Icons.LOCK_OUTLINE, size=18, color=TEAL),
+                ft.Text(
+                    "Seguridad y Privacidad: Cada rol accede únicamente a las secciones autorizadas. Los padres solo pueden consultar y gestionar información de sus propios hijos vinculados.",
+                    size=13,
+                    color=TEAL_DARK,
+                    weight=ft.FontWeight.W_500,
+                ),
             ],
         ),
     )
 
-    roles_data = [
-        {"rol": "Super Administrador", "modulos": "Acceso total a todos los módulos y ajustes", "edicion": "Crear, editar, eliminar y auditar registros", "alcance": "Todas las sedes y niveles"},
-        {"rol": "Equipo Directivo", "modulos": "Alumnos, Cursos, Materias, Horarios y Reportes", "edicion": "Validar inscripciones y aprobar calificaciones", "alcance": "Nivel asignado (Inicial / Primario / Sec)"},
-        {"rol": "Cuerpo Docente", "modulos": "Calificaciones, Asistencia y Horarios de cátedra", "edicion": "Cargar notas, partes de clase y observaciones", "alcance": "Cursos y materias a cargo"},
-        {"rol": "Familias / Tutores", "modulos": "Portal de Familias, Boletín, Comedor y Transporte", "edicion": "Consulta de legajo y solicitud de trámites", "alcance": "Exclusivo hijos vinculados"},
-    ]
-
-    def rol_row(item: dict) -> ft.Container:
-        return ft.Container(
-            height=62,
-            bgcolor=BG_WHITE,
-            border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
-            padding=ft.Padding(16, 14, 16, 14),
-            content=ft.Row(
-                spacing=12,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Container(width=145, content=ft.Text(item["rol"], size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=326.5, expand=True, content=ft.Text(item["modulos"], size=13, color=TEXT_COLOR)),
-                    ft.Container(width=326.5, expand=True, content=ft.Text(item["edicion"], size=13, color=TEXT_COLOR)),
-                    ft.Container(width=250, content=ft.Text(item["alcance"], size=13, color=TEXT_COLOR)),
-                ],
-            ),
-        )
-
-    tabla_roles_contenedor = ft.Container(
-        height=290,
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
-        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                cabecera_tabla_roles,
-                *[rol_row(r) for r in roles_data],
-            ],
-        ),
-    )
-
-    seccion_permisos_rol = ft.Column(
-        spacing=12,
-        controls=[
-            encabezado_roles,
-            tabla_roles_contenedor,
+    # ==================== 3. RETORNO CON ADMIN_LAYOUT ====================
+    return admin_layout(
+        page=page,
+        titulo="Control de Acceso, Usuarios y Permisos RBAC",
+        active_route="/admin/usuarios",
+        content_controls=[
+            aviso_seguridad,
+            filters_bar,
+            table_container,
+            pagination_bar,
         ],
     )
-
-    # ==================== 5. ASOCIACIÓN FAMILIAR Y PRIVACIDAD ====================
-    def tarjeta_hijo_vinculado(nombre: str, curso: str) -> ft.Container:
-        return ft.Container(
-            expand=True,
-            height=98,
-            bgcolor=BG_PAGE,
-            border_radius=8,
-            padding=14,
-            content=ft.Column(
-                spacing=6,
-                controls=[
-                    ft.Text(nombre, size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                    ft.Text(curso, size=12, color=MUTED),
-                    ft.Container(
-                        padding=ft.Padding(8, 4, 8, 4),
-                        bgcolor=TEAL_LIGHT,
-                        border_radius=4,
-                        content=ft.Text("Acceso a boletín y pagos habilitado", size=12, weight=ft.FontWeight.W_600, color=TEAL),
-                    ),
-                ],
-            ),
-        )
-
-    panel_asociacion_familiar = ft.Container(
-        width=776,
-        height=258,
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
-        padding=24,
-        content=ft.Column(
-            spacing=16,
-            controls=[
-                ft.Text("Vinculación de Tutor / Familia — Carlos Alberto Almirón", size=18, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-                ft.Row(
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        ft.Text(
-                            "Cuenta con permisos activos para consultar legajos académicos, solicitar comedor y autorizar salidas.",
-                            size=13,
-                            color=TEXT_COLOR,
-                            expand=True,
-                        ),
-                        ft.Container(
-                            padding=ft.Padding(8, 4, 8, 4),
-                            bgcolor=TEAL_LIGHT,
-                            border_radius=4,
-                            content=ft.Text("2 Hijos vinculados", size=12, weight=ft.FontWeight.W_600, color=TEAL),
-                        ),
-                    ],
-                ),
-                ft.Row(
-                    spacing=12,
-                    controls=[
-                        tarjeta_hijo_vinculado("Santiago Almirón", "5to Año B · Secundario — Legajo #10245"),
-                        tarjeta_hijo_vinculado("Valentina Almirón", "2do Grado A · Primario — Legajo #11082"),
-                    ],
-                ),
-                ft.Text(
-                    "Las modificaciones en la patria potestad o tutoría legal deben ser respaldadas por documentación judicial.",
-                    size=12,
-                    color=MUTED,
-                ),
-            ],
-        ),
-    )
-
-    panel_seguridad_privacidad = ft.Container(
-        width=320,
-        height=266,
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=16,
-        padding=24,
-        content=ft.Column(
-            spacing=16,
-            controls=[
-                ft.Text("Seguridad y Privacidad", size=18, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-                ft.Icon(ft.Icons.SHIELD_OUTLINED, size=24, color=TEAL),
-                ft.Text("Autenticación de Dos Factores (2FA)", size=13, color=TEXT_COLOR),
-                ft.Text(
-                    "Obligatoria para roles con privilegios de modificación de notas, cobros y datos personales sensibles.",
-                    size=13,
-                    color=MUTED,
-                ),
-                ft.Text("Configurar políticas de contraseñas", size=12, weight=ft.FontWeight.W_600, color=TEAL),
-            ],
-        ),
-    )
-
-    fila_asociacion_privacidad = ft.Row(
-        spacing=20,
-        vertical_alignment=ft.CrossAxisAlignment.START,
-        controls=[panel_asociacion_familiar, panel_seguridad_privacidad],
-    )
-
-    nota_final = ft.Text(
-        "* La asignación y uso de credenciales se rige bajo la Ley de Protección de Datos Personales (Ley N° 25.326).",
-        size=11,
-        color=MUTED,
-    )
-
-    # ==================== 6. ENSAMBLE DEL LAYOUT GENERAL ====================
-    sidebar = create_sidebar(page, active_route="/admin/usuarios")
-    topbar = create_topbar(page, titulo="Usuarios y Permisos — Accesos y roles")
-
-    main_content = ft.Container(
-        expand=True,
-        bgcolor=BG_PAGE,
-        content=ft.Column(
-            spacing=0,
-            controls=[
-                topbar,
-                ft.Container(
-                    expand=True,
-                    padding=32,
-                    content=ft.Column(
-                        spacing=20,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            encabezado_modulo,
-                            filtros_fila,
-                            tabla_usuarios_contenedor,
-                            nota_tabla_usuarios,
-                            seccion_permisos_rol,
-                            fila_asociacion_privacidad,
-                            nota_final,
-                        ],
-                    ),
-                ),
-            ],
-        ),
-    )
-
-    return ft.Row(
-        expand=True,
-        spacing=0,
-        controls=[sidebar, main_content],
-    )
-
-
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Usuarios y Permisos"
-        page.padding = 0
-        page.bgcolor = BG_PAGE
-        page.add(get_admin_usuarios_view(page))
-
-    ft.run(main)
