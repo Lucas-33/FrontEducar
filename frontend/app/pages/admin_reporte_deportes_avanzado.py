@@ -1,202 +1,214 @@
 import flet as ft
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CARD_RADIUS,
+    CONTROL_HEIGHT,
+    MUTED,
+    ONLINE_GREEN,
+    ORANGE,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
+from frontend.app.components.table_view import (
+    create_pagination_bar,
+    create_table_container,
+    create_table_header,
+)
 
-COLOR_TEAL_DARK = "#0B4F4F"
-COLOR_TEAL_MED = "#0D6E6E"
-COLOR_TEAL_LIGHT = "#E6F2F2"
-COLOR_BG = "#F5F7F7"
-COLOR_CARD_BG = "#FFFFFF"
-COLOR_BORDER = "#EAE6E1"
-COLOR_TEXT_MAIN = "#1E2A29"
-COLOR_TEXT_MUTED = "#5C6B69"
-COLOR_SUCCESS = "#10B981"
-COLOR_ALERT = "#EF4444"
 
-def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Control:
-    data_talleres = [
-        {"deporte": "Fútbol", "nivel": "Primario", "horario": "Lun/Mié 16:30 - 18:00", "profesor": "Prof. Lucas Toledo", "inscriptos": 25, "cupo_max": 25, "aptos_al_dia": "24/25"},
-        {"deporte": "Fútbol", "nivel": "Secundario", "horario": "Mar/Jue 17:00 - 18:30", "profesor": "Prof. Lucas Toledo", "inscriptos": 22, "cupo_max": 25, "aptos_al_dia": "22/22"},
-        {"deporte": "Básquet", "nivel": "Secundario", "horario": "Lun/Mié 18:00 - 19:30", "profesor": "Prof. Marcos Paz", "inscriptos": 18, "cupo_max": 20, "aptos_al_dia": "16/18"},
-        {"deporte": "Vóley", "nivel": "Primario", "horario": "Mar/Jue 16:30 - 17:45", "profesor": "Lic. Romina Luna", "inscriptos": 15, "cupo_max": 20, "aptos_al_dia": "15/15"},
-        {"deporte": "Gimnasia Artística", "nivel": "Inicial", "horario": "Viernes 15:30 - 17:00", "profesor": "Lic. Romina Luna", "inscriptos": 12, "cupo_max": 15, "aptos_al_dia": "12/12"},
-        {"deporte": "Natación", "nivel": "Primario", "horario": "Sábados 09:30 - 11:30", "profesor": "Prof. Lucas Toledo", "inscriptos": 20, "cupo_max": 20, "aptos_al_dia": "19/20"},
-    ]
+def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
+    """Retorna el reporte de Alumnos por Deporte, Nivel, Horario y Profesor Responsable."""
 
-    dd_deporte = ft.Dropdown(
-        label="Deporte",
-        value="Todos",
-        width=170,
-        options=[
-            ft.dropdown.Option("Todos"),
-            ft.dropdown.Option("Fútbol"),
-            ft.dropdown.Option("Básquet"),
-            ft.dropdown.Option("Vóley"),
-            ft.dropdown.Option("Natación"),
-            ft.dropdown.Option("Gimnasia Artística"),
-        ],
-    )
-
-    dd_nivel = ft.Dropdown(
-        label="Nivel Educativo",
-        value="Todos",
-        width=160,
-        options=[
-            ft.dropdown.Option("Todos"),
-            ft.dropdown.Option("Inicial"),
-            ft.dropdown.Option("Primario"),
-            ft.dropdown.Option("Secundario"),
-        ],
-    )
-
-    dd_profesor = ft.Dropdown(
-        label="Profesor Responsable",
-        value="Todos",
-        width=200,
-        options=[
-            ft.dropdown.Option("Todos"),
-            ft.dropdown.Option("Prof. Lucas Toledo"),
-            ft.dropdown.Option("Prof. Marcos Paz"),
-            ft.dropdown.Option("Lic. Romina Luna"),
-        ],
-    )
-
-    table_data = ft.DataTable(
-        border=ft.border.all(1, COLOR_BORDER),
-        border_radius=8,
-        heading_row_color=COLOR_TEAL_LIGHT,
-        columns=[
-            ft.DataColumn(ft.Text("Disciplina", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Nivel", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Días y Horarios", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Profesor a Cargo", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Ocupación Cupo", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Apto Médico", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-        ],
-        rows=[],
-    )
-
-    def trigger_export(formato: str):
-        page.snack_bar = ft.SnackBar(
-            content=ft.Text(f"Exportando Padrón Deportivo y Certificados ({formato})..."),
-            bgcolor=COLOR_TEAL_DARK,
-        )
-        page.snack_bar.open = True
-        page.update()
-
-    def update_table(e=None):
-        dep = dd_deporte.value
-        niv = dd_nivel.value
-        prof = dd_profesor.value
-
-        rows = []
-        for t in data_talleres:
-            match_dep = (dep == "Todos") or (t["deporte"] == dep)
-            match_niv = (niv == "Todos") or (t["nivel"] == niv)
-            match_prof = (prof == "Todos") or (t["profesor"] == prof)
-
-            if match_dep and match_niv and match_prof:
-                ratio = t["inscriptos"] / t["cupo_max"]
-                is_full = ratio >= 1.0
-
-                rows.append(
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(t["deporte"], weight=ft.FontWeight.BOLD)),
-                            ft.DataCell(ft.Text(t["nivel"])),
-                            ft.DataCell(ft.Text(t["horario"])),
-                            ft.DataCell(ft.Text(t["profesor"])),
-                            ft.DataCell(
-                                ft.Row(
-                                    spacing=8,
-                                    controls=[
-                                        ft.Text(f"{t['inscriptos']}/{t['cupo_max']}", weight=ft.FontWeight.W_500),
-                                        ft.Container(
-                                            content=ft.Text("LLENO" if is_full else "DISP.", size=10, color=COLOR_CARD_BG, weight=ft.FontWeight.BOLD),
-                                            bgcolor=COLOR_ALERT if is_full else COLOR_SUCCESS,
-                                            border_radius=3,
-                                            padding=ft.padding.symmetric(horizontal=4, vertical=2),
-                                        ),
-                                    ],
-                                )
-                            ),
-                            ft.DataCell(
-                                ft.Text(t["aptos_al_dia"], color=COLOR_TEAL_MED, weight=ft.FontWeight.BOLD)
-                            ),
-                        ]
-                    )
-                )
-        table_data.rows = rows
-        page.update()
-
-    dd_deporte.on_change = update_table
-    dd_nivel.on_change = update_table
-    dd_profesor.on_change = update_table
-    update_table()
-
-    header_section = ft.Row(
+    header_actions = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
         controls=[
-            ft.Column(
-                spacing=4,
+            ft.Row(
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Text("Matriz de Deportes y Talleres Extracurriculares", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT_MAIN),
-                    ft.Text("Listados cruzados: Disciplina × Nivel × Franja Horaria × Docente.", size=14, color=COLOR_TEXT_MUTED),
+                    ft.Container(
+                        width=36,
+                        height=36,
+                        bgcolor=BG_WHITE,
+                        border=ft.Border.all(1, BORDER_COLOR),
+                        border_radius=18,
+                        alignment=ft.Alignment(0, 0),
+                        tooltip="Volver al Centro de Reportes",
+                        on_click=lambda _: page.go("/admin/reportes"),
+                        content=ft.Icon(ft.Icons.ARROW_BACK, size=16, color=TEXT_COLOR),
+                    ),
+                    ft.Column(
+                        spacing=2,
+                        controls=[
+                            ft.Text("Reporte Integral de Actividades Deportivas", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text("Alumnos por Deporte, Nivel, Horario y Profesor a Cargo", size=12, color=MUTED),
+                        ],
+                    ),
                 ],
             ),
             ft.Row(
                 spacing=10,
                 controls=[
-                    ft.ElevatedButton(
-                        "Planilla Excel",
-                        icon=ft.Icons.TABLE_VIEW,
-                        style=ft.ButtonStyle(bgcolor=COLOR_SUCCESS, color=COLOR_CARD_BG),
-                        on_click=lambda _: trigger_export("Excel"),
+                    ft.Button(
+                        content=ft.Row(
+                            spacing=6,
+                            controls=[
+                                ft.Icon(ft.Icons.FILE_DOWNLOAD_OUTLINED, size=15, color=TEAL_DARK),
+                                ft.Text("Exportar Excel", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                            ],
+                        ),
+                        bgcolor=TEAL_LIGHT,
+                        height=36,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        on_click=lambda _: None,
                     ),
-                    ft.ElevatedButton(
-                        "Reporte PDF",
-                        icon=ft.Icons.PICTURE_AS_PDF,
-                        style=ft.ButtonStyle(bgcolor=COLOR_TEAL_DARK, color=COLOR_CARD_BG),
-                        on_click=lambda _: trigger_export("PDF"),
+                    ft.Button(
+                        content=ft.Row(
+                            spacing=6,
+                            controls=[
+                                ft.Icon(ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE),
+                                ft.Text("Imprimir PDF", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                            ],
+                        ),
+                        bgcolor=ORANGE,
+                        height=36,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        on_click=lambda _: None,
                     ),
                 ],
             ),
         ],
     )
 
-    return ft.Container(
-        bgcolor=COLOR_BG,
-        expand=True,
-        padding=24,
-        content=ft.Column(
-            spacing=20,
+    search_input = ft.Container(
+        width=260,
+        height=CONTROL_HEIGHT,
+        bgcolor=BG_WHITE,
+        border=ft.Border.all(1, BORDER_COLOR),
+        border_radius=BORDER_RADIUS,
+        padding=ft.Padding(12, 0, 12, 0),
+        content=ft.Row(
+            spacing=10,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                header_section,
-                ft.Container(
-                    bgcolor=COLOR_CARD_BG,
-                    border=ft.border.all(1, COLOR_BORDER),
-                    border_radius=10,
-                    padding=16,
-                    content=ft.Row(
-                        spacing=16,
-                        wrap=True,
-                        controls=[dd_deporte, dd_nivel, dd_profesor],
-                    ),
-                ),
-                ft.Container(
-                    bgcolor=COLOR_CARD_BG,
-                    border=ft.border.all(1, COLOR_BORDER),
-                    border_radius=10,
-                    padding=16,
-                    content=ft.Column(scroll=ft.ScrollMode.AUTO, controls=[table_data]),
+                ft.Icon(ft.Icons.SEARCH, size=16, color=MUTED),
+                ft.TextField(
+                    hint_text="Buscar alumno o disciplina...",
+                    hint_style=ft.TextStyle(size=14, color=MUTED),
+                    text_size=14,
+                    color=TEXT_COLOR,
+                    border=ft.InputBorder.NONE,
+                    content_padding=ft.Padding(0, 0, 0, 10),
+                    expand=True,
                 ),
             ],
         ),
     )
 
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Reporte Avanzado Deportes"
-        page.theme_mode = ft.ThemeMode.LIGHT
-        page.padding = 0
-        page.add(get_admin_reporte_deportes_avanzado_view(page))
+    def filtro_dropdown(hint: str, width: int, opciones: list[str]) -> ft.Container:
+        return ft.Container(
+            width=width,
+            height=CONTROL_HEIGHT,
+            bgcolor=BG_WHITE,
+            border=ft.Border.all(1, BORDER_COLOR),
+            border_radius=BORDER_RADIUS,
+            content=ft.Dropdown(
+                hint_text=hint,
+                hint_style=ft.TextStyle(size=14, color=TEXT_COLOR),
+                text_size=14,
+                border=ft.InputBorder.NONE,
+                content_padding=ft.Padding(12, 0, 8, 12),
+                options=[ft.dropdown.Option(opc) for opc in opciones],
+            ),
+        )
 
-    ft.run(main)
+    filters_bar = ft.Row(
+        spacing=12,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            search_input,
+            filtro_dropdown("Deporte: Natación", 160, ["Todas", "Natación Climatizada", "Fútbol Campo", "Atletismo", "Básquetbol", "Artes Marciales"]),
+            filtro_dropdown("Nivel: Secundario", 155, ["Todos", "Nivel Primario", "Nivel Secundario"]),
+            filtro_dropdown("Horario: Lun/Mié 16:30", 175, ["Todos", "Lun y Mié 16:30 - 18:00 hs", "Mar y Jue 16:30 - 18:00 hs"]),
+        ],
+    )
+
+    # Requerimiento: Deporte, Alumno, Legajo, Curso, Nivel educativo, Horario y Profesor a cargo[cite: 5]
+    deportes_reporte_data = [
+        {"deporte": "Natación Climatizada", "nivel": "Nivel Secundario", "curso": "5to Año B", "legajo": "#10245", "alumno": "Almirón, Santiago", "horario": "Lun/Mié 16:30 - 18:00", "profesor": "Vargas, Esteban Carlos", "apto": "Vigente"},
+        {"deporte": "Natación Climatizada", "nivel": "Nivel Secundario", "curso": "6to Año A", "legajo": "#10249", "alumno": "Flores, Facundo", "horario": "Lun/Mié 16:30 - 18:00", "profesor": "Vargas, Esteban Carlos", "apto": "Vigente"},
+        {"deporte": "Natación Climatizada", "nivel": "Nivel Primario", "curso": "6to Grado C", "legajo": "#10247", "alumno": "Capra, Lautaro", "horario": "Mar/Jue 16:30 - 18:00", "profesor": "Vargas, Esteban Carlos", "apto": "Vigente"},
+        {"deporte": "Fútbol Campo", "nivel": "Nivel Secundario", "curso": "5to Año B", "legajo": "#10245", "alumno": "Almirón, Santiago", "horario": "Mar/Jue 16:30 - 18:00", "profesor": "Acuña, Germán", "apto": "Vigente"},
+        {"deporte": "Básquetbol", "nivel": "Nivel Secundario", "curso": "3er Año A", "legajo": "#10246", "alumno": "Benítez, Martina", "horario": "Mar/Jue 15:00 - 16:30", "profesor": "Pérez, Daniel", "apto": "Vigente"},
+    ]
+
+    columnas_deporte = [
+        ("Disciplina Deportiva", 170, False),
+        ("Nivel Educativo", 140, False),
+        ("Curso", 110, False),
+        ("Legajo", 90, False),
+        ("Alumno Inscripto", 170, False),
+        ("Días y Horarios", 170, False),
+        ("Profesor Responsable", 180, False),
+        ("Apto Médico", 100, False),
+    ]
+
+    header_table = create_table_header(columnas_deporte)
+
+    def deporte_reporte_row(item: dict) -> ft.Container:
+        return ft.Container(
+            height=50,
+            padding=ft.Padding(16, 0, 16, 0),
+            border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(width=170, content=ft.Text(item["deporte"], size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                    ft.Container(width=140, content=ft.Text(item["nivel"], size=13, color=MUTED)),
+                    ft.Container(width=110, content=ft.Text(item["curso"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=90, content=ft.Text(item["legajo"], size=13, weight=ft.FontWeight.BOLD, color=TEAL)),
+                    ft.Container(width=170, content=ft.Text(item["alumno"], size=14, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
+                    ft.Container(width=170, content=ft.Text(item["horario"], size=12, color=TEXT_COLOR)),
+                    ft.Container(width=180, content=ft.Text(item["profesor"], size=13, color=MUTED)),
+                    ft.Container(
+                        width=100,
+                        content=ft.Container(
+                            padding=ft.Padding(6, 2, 6, 2),
+                            bgcolor="#EBFEE6",
+                            border_radius=4,
+                            content=ft.Text(item["apto"], size=11, weight=ft.FontWeight.BOLD, color=ONLINE_GREEN),
+                        ),
+                    ),
+                ],
+            ),
+        )
+
+    table_container = create_table_container(
+        header=header_table,
+        rows=[deporte_reporte_row(d) for d in deportes_reporte_data],
+    )
+
+    pagination_bar = create_pagination_bar(
+        texto_info="Mostrando alumnos asignados a disciplinas deportivas",
+        pagina_actual=1,
+        total_paginas=3,
+    )
+
+    return admin_layout(
+        page=page,
+        titulo="Reporte: Deportes, Niveles y Horarios",
+        active_route="/admin/reportes",
+        content_controls=[
+            header_actions,
+            filters_bar,
+            table_container,
+            pagination_bar,
+        ],
+    )

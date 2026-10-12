@@ -1,173 +1,179 @@
 import flet as ft
+from frontend.app.components.admin_layout import admin_layout
+from frontend.app.components.constants import (
+    BG_WHITE,
+    BORDER_COLOR,
+    BORDER_RADIUS,
+    CARD_RADIUS,
+    CONTROL_HEIGHT,
+    MUTED,
+    ORANGE,
+    TEAL,
+    TEAL_DARK,
+    TEAL_LIGHT,
+    TEXT_COLOR,
+)
+from frontend.app.components.form_controls import status_badge
+from frontend.app.components.table_view import (
+    create_pagination_bar,
+    create_table_container,
+    create_table_header,
+)
 
-COLOR_TEAL_DARK = "#0B4F4F"
-COLOR_TEAL_MED = "#0D6E6E"
-COLOR_TEAL_LIGHT = "#E6F2F2"
-COLOR_BG = "#F5F7F7"
-COLOR_CARD_BG = "#FFFFFF"
-COLOR_BORDER = "#EAE6E1"
-COLOR_TEXT_MAIN = "#1E2A29"
-COLOR_TEXT_MUTED = "#5C6B69"
-COLOR_SUCCESS = "#10B981"
 
-def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Control:
-    data_pasajeros = [
-        {"linea": "Línea Norte (Unidad 04)", "alumno": "Tomás Silva", "curso": "5° Grado A", "parada": "Av. San Martín 1420", "turno": "Ida / Vuelta", "tutor_contacto": "Laura Silva (3624-112233)"},
-        {"linea": "Línea Norte (Unidad 04)", "alumno": "Lucía Morales", "curso": "3° Año A", "parada": "Plaza Central - Parada 2", "turno": "Solo Ida", "tutor_contacto": "Pedro Morales (3624-998877)"},
-        {"linea": "Línea Norte (Unidad 04)", "alumno": "Esteban Quito", "curso": "Sala 4 Años", "parada": "Calle 8 y 21", "turno": "Ida / Vuelta", "tutor_contacto": "Marta Gómez (3624-445566)"},
-        {"linea": "Línea Sur (Unidad 02)", "alumno": "Camila Beltrán", "curso": "2° Grado B", "parada": "Av. Castelli 800", "turno": "Ida / Vuelta", "tutor_contacto": "Andrés Beltrán (3624-332211)"},
-        {"linea": "Línea Sur (Unidad 02)", "alumno": "Joaquín Ríos", "curso": "1° Año B", "parada": "Parque Urbano Sur", "turno": "Solo Vuelta", "tutor_contacto": "Silvia Ríos (3624-776655)"},
-        {"linea": "Línea Oeste (Unidad 07)", "alumno": "Mía Cáceres", "curso": "6° Grado A", "parada": "B° San Cayetano Mz 4", "turno": "Ida / Vuelta", "tutor_contacto": "Hugo Cáceres (3624-665544)"},
-    ]
+def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
+    """Retorna el reporte oficial de Pasajeros agrupados por Recorrido de Transporte Escolar."""
 
-    dd_linea = ft.Dropdown(
-        label="Línea de Transporte",
-        value="Todas",
-        width=260,
-        options=[
-            ft.dropdown.Option("Todas"),
-            ft.dropdown.Option("Línea Norte (Unidad 04)"),
-            ft.dropdown.Option("Línea Sur (Unidad 02)"),
-            ft.dropdown.Option("Línea Oeste (Unidad 07)"),
-        ],
-    )
-
-    tf_filtro_parada = ft.TextField(
-        label="Filtrar por Parada o Alumno",
-        prefix_icon=ft.Icons.DIRECTIONS_BUS,
-        expand=True,
-    )
-
-    txt_total_pasajeros = ft.Text("Total de Pasajeros: 0", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)
-
-    table_data = ft.DataTable(
-        border=ft.border.all(1, COLOR_BORDER),
-        border_radius=8,
-        heading_row_color=COLOR_TEAL_LIGHT,
-        columns=[
-            ft.DataColumn(ft.Text("Línea Asignada", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Alumno Pasajero", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Curso", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Parada / Dirección", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Modalidad", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-            ft.DataColumn(ft.Text("Tutor y Contacto Emergencia", weight=ft.FontWeight.BOLD, color=COLOR_TEAL_DARK)),
-        ],
-        rows=[],
-    )
-
-    def trigger_export(formato: str):
-        page.snack_bar = ft.SnackBar(
-            content=ft.Text(f"Exportando Hoja de Ruta de Pasajeros ({formato})..."),
-            bgcolor=COLOR_TEAL_DARK,
-        )
-        page.snack_bar.open = True
-        page.update()
-
-    def update_table(e=None):
-        linea_sel = dd_linea.value
-        busqueda = tf_filtro_parada.value.strip().lower() if tf_filtro_parada.value else ""
-
-        rows = []
-        conteo = 0
-        for p in data_pasajeros:
-            match_linea = (linea_sel == "Todas") or (p["linea"] == linea_sel)
-            match_busqueda = (busqueda in p["parada"].lower()) or (busqueda in p["alumno"].lower())
-
-            if match_linea and match_busqueda:
-                conteo += 1
-                rows.append(
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(p["linea"], weight=ft.FontWeight.W_500)),
-                            ft.DataCell(ft.Text(p["alumno"], weight=ft.FontWeight.BOLD, color=COLOR_TEXT_MAIN)),
-                            ft.DataCell(ft.Text(p["curso"])),
-                            ft.DataCell(ft.Text(p["parada"])),
-                            ft.DataCell(
-                                ft.Container(
-                                    content=ft.Text(p["turno"], size=12, color=COLOR_TEAL_DARK, weight=ft.FontWeight.BOLD),
-                                    bgcolor=COLOR_TEAL_LIGHT,
-                                    border_radius=4,
-                                    padding=ft.padding.symmetric(horizontal=8, vertical=2),
-                                )
-                            ),
-                            ft.DataCell(ft.Text(p["tutor_contacto"])),
-                        ]
-                    )
-                )
-        table_data.rows = rows
-        txt_total_pasajeros.value = f"Total de Pasajeros en Nómina: {conteo}"
-        page.update()
-
-    dd_linea.on_change = update_table
-    tf_filtro_parada.on_change = update_table
-    update_table()
-
-    header_section = ft.Row(
+    header_actions = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
         controls=[
-            ft.Column(
-                spacing=4,
+            ft.Row(
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Text("Hoja de Ruta y Pasajeros de Transporte Escolar", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT_MAIN),
-                    ft.Text("Planilla operativa para choferes, celadores y supervisión de recorridos.", size=14, color=COLOR_TEXT_MUTED),
+                    ft.Container(
+                        width=36,
+                        height=36,
+                        bgcolor=BG_WHITE,
+                        border=ft.Border.all(1, BORDER_COLOR),
+                        border_radius=18,
+                        alignment=ft.Alignment(0, 0),
+                        tooltip="Volver al Centro de Reportes",
+                        on_click=lambda _: page.go("/admin/reportes"),
+                        content=ft.Icon(ft.Icons.ARROW_BACK, size=16, color=TEXT_COLOR),
+                    ),
+                    ft.Column(
+                        spacing=2,
+                        controls=[
+                            ft.Text("Hoja de Ruta: Pasajeros por Recorrido de Transporte", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text("Planilla operativa para choferes y celadores institucionales", size=12, color=MUTED),
+                        ],
+                    ),
                 ],
             ),
             ft.Row(
                 spacing=10,
                 controls=[
-                    ft.ElevatedButton(
-                        "Planilla Chofer (PDF)",
-                        icon=ft.Icons.PRINT,
-                        style=ft.ButtonStyle(bgcolor=COLOR_TEAL_DARK, color=COLOR_CARD_BG),
-                        on_click=lambda _: trigger_export("PDF"),
+                    ft.Button(
+                        content=ft.Row(
+                            spacing=6,
+                            controls=[
+                                ft.Icon(ft.Icons.FILE_DOWNLOAD_OUTLINED, size=15, color=TEAL_DARK),
+                                ft.Text("Exportar Excel", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                            ],
+                        ),
+                        bgcolor=TEAL_LIGHT,
+                        height=36,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        on_click=lambda _: None,
                     ),
-                    ft.ElevatedButton(
-                        "Excel Completo",
-                        icon=ft.Icons.DOWNLOAD,
-                        style=ft.ButtonStyle(bgcolor=COLOR_SUCCESS, color=COLOR_CARD_BG),
-                        on_click=lambda _: trigger_export("Excel"),
+                    ft.Button(
+                        content=ft.Row(
+                            spacing=6,
+                            controls=[
+                                ft.Icon(ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE),
+                                ft.Text("Imprimir PDF", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                            ],
+                        ),
+                        bgcolor=ORANGE,
+                        height=36,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        on_click=lambda _: None,
                     ),
                 ],
             ),
         ],
     )
 
-    return ft.Container(
-        bgcolor=COLOR_BG,
-        expand=True,
-        padding=24,
-        content=ft.Column(
-            spacing=20,
-            controls=[
-                header_section,
-                ft.Container(
-                    bgcolor=COLOR_CARD_BG,
-                    border=ft.border.all(1, COLOR_BORDER),
-                    border_radius=10,
-                    padding=16,
-                    content=ft.Row(
-                        spacing=16,
-                        controls=[dd_linea, tf_filtro_parada],
-                    ),
-                ),
-                ft.Row([txt_total_pasajeros], alignment=ft.MainAxisAlignment.END),
-                ft.Container(
-                    bgcolor=COLOR_CARD_BG,
-                    border=ft.border.all(1, COLOR_BORDER),
-                    border_radius=10,
-                    padding=16,
-                    content=ft.Column(scroll=ft.ScrollMode.AUTO, controls=[table_data]),
-                ),
-            ],
-        ),
+    def filtro_dropdown(hint: str, width: int, opciones: list[str]) -> ft.Container:
+        return ft.Container(
+            width=width,
+            height=CONTROL_HEIGHT,
+            bgcolor=BG_WHITE,
+            border=ft.Border.all(1, BORDER_COLOR),
+            border_radius=BORDER_RADIUS,
+            content=ft.Dropdown(
+                hint_text=hint,
+                hint_style=ft.TextStyle(size=14, color=TEXT_COLOR),
+                text_size=14,
+                border=ft.InputBorder.NONE,
+                content_padding=ft.Padding(12, 0, 8, 12),
+                options=[ft.dropdown.Option(opc) for opc in opciones],
+            ),
+        )
+
+    filters_bar = ft.Row(
+        spacing=12,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            filtro_dropdown("Recorrido: Recorrido 1 Norte", 220, ["Todos", "Recorrido 1 Norte", "Recorrido 2 Sur", "Recorrido 3 Centro", "Recorrido 4 Este"]),
+            filtro_dropdown("Turno: Mañana", 140, ["Todos", "Mañana", "Tarde"]),
+            filtro_dropdown("Nivel: Todos", 140, ["Todos", "Inicial", "Primario", "Secundario"]),
+        ],
     )
 
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Educar SGE - Hoja de Ruta Transporte"
-        page.theme_mode = ft.ThemeMode.LIGHT
-        page.padding = 0
-        page.add(get_admin_reporte_transporte_pasajeros_view(page))
+    # Requerimiento: Alumnos por recorrido del servicio de transporte[cite: 5]
+    pasajeros_reporte_data = [
+        {"recorrido": "Recorrido 1 Norte", "legajo": "#10245", "alumno": "Almirón, Santiago", "curso": "5to Año B", "parada": "Av. Sarmiento 1840", "horario_recogida": "06:45 hs", "tutor_contacto": "Martín Gómez (3624-912831)", "estado": "Activo"},
+        {"recorrido": "Recorrido 1 Norte", "legajo": "#10249", "alumno": "Flores, Facundo", "curso": "6to Año A", "parada": "Av. Sabin 320", "horario_recogida": "06:55 hs", "tutor_contacto": "Silvia Flores (3624-774411)", "estado": "Activo"},
+        {"recorrido": "Recorrido 1 Norte", "legajo": "#10255", "alumno": "Méndez, Joaquín", "curso": "2do Grado A", "parada": "Av. Italia 1200", "horario_recogida": "07:05 hs", "tutor_contacto": "Carlos Méndez (3624-665544)", "estado": "Activo"},
+        {"recorrido": "Recorrido 1 Norte", "legajo": "#10260", "alumno": "Suárez, Milagros", "curso": "Sala 4 A", "parada": "Ruta 16 y Av. Sarmiento", "horario_recogida": "07:15 hs", "tutor_contacto": "Romina Suárez (3624-223344)", "estado": "Activo"},
+    ]
 
-    ft.run(main)
-    
+    columnas_transporte = [
+        ("Recorrido Oficial", 160, False),
+        ("Legajo", 90, False),
+        ("Alumno Pasajero", 170, False),
+        ("Curso", 110, False),
+        ("Dirección / Parada", 220, False),
+        ("Hora Recogida", 120, False),
+        ("Teléfono Padre / Tutor", 190, False),
+        ("Estado", 90, False),
+    ]
+
+    header_table = create_table_header(columnas_transporte)
+
+    def pasajero_reporte_row(item: dict) -> ft.Container:
+        return ft.Container(
+            height=50,
+            padding=ft.Padding(16, 0, 16, 0),
+            border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(width=160, content=ft.Text(item["recorrido"], size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                    ft.Container(width=90, content=ft.Text(item["legajo"], size=13, weight=ft.FontWeight.BOLD, color=TEAL)),
+                    ft.Container(width=170, content=ft.Text(item["alumno"], size=14, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
+                    ft.Container(width=110, content=ft.Text(item["curso"], size=13, color=MUTED)),
+                    ft.Container(width=220, content=ft.Text(item["parada"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=120, content=ft.Text(item["horario_recogida"], size=12, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
+                    ft.Container(width=190, content=ft.Text(item["tutor_contacto"], size=12, color=MUTED)),
+                    ft.Container(width=90, content=status_badge(item["estado"])),
+                ],
+            ),
+        )
+
+    table_container = create_table_container(
+        header=header_table,
+        rows=[pasajero_reporte_row(p) for p in pasajeros_reporte_data],
+    )
+
+    pagination_bar = create_pagination_bar(
+        texto_info="Mostrando 4 de 28 pasajeros del Recorrido 1 Norte",
+        pagina_actual=1,
+        total_paginas=7,
+    )
+
+    return admin_layout(
+        page=page,
+        titulo="Reporte: Alumnos por Recorrido de Transporte",
+        active_route="/admin/reportes",
+        content_controls=[
+            header_actions,
+            filters_bar,
+            table_container,
+            pagination_bar,
+        ],
+    )
