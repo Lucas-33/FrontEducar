@@ -78,10 +78,10 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    # ==================== 2. TARJETAS DE INFORMACIÓN (COLUMNA IZQUIERDA) ====================
+    # ==================== 2. COLUMNA IZQUIERDA FLUIDA ====================
     fecha_nacimiento_field = ft.Column(
         spacing=6,
-        width=289,
+        expand=True,
         controls=[
             ft.Text("Fecha de Nacimiento *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
             ft.Container(
@@ -125,29 +125,29 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Legajo (Autogenerado)", "", width=289, read_only=True, valor_inicial="#10251"),
-                                input_con_label("DNI *", "Ej: 46.124.990", width=289),
+                                input_con_label("Legajo (Autogenerado)", "", width=None, expand=True, read_only=True, valor_inicial="#10251"),
+                                input_con_label("DNI *", "Ej: 46.124.990", width=None, expand=True),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Nombres *", "Ej: Sofía Valentina", width=289),
-                                input_con_label("Apellidos *", "Ej: Díaz", width=289),
+                                input_con_label("Nombres *", "Ej: Sofía Valentina", width=None, expand=True),
+                                input_con_label("Apellidos *", "Ej: Díaz", width=None, expand=True),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
                                 fecha_nacimiento_field,
-                                input_con_label("Domicilio Real *", "Av. Sarmiento 450, Resistencia", width=289),
+                                input_con_label("Domicilio Real *", "Av. Sarmiento 450, Resistencia", width=None, expand=True),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Teléfono de Contacto *", "3624-XXXXXX", width=289),
-                                input_con_label("Correo Electrónico Tutor", "ejemplo@tutor.com", width=289),
+                                input_con_label("Teléfono de Contacto *", "3624-XXXXXX", width=None, expand=True),
+                                input_con_label("Correo Electrónico Tutor", "ejemplo@tutor.com", width=None, expand=True),
                             ],
                         ),
                     ],
@@ -168,9 +168,9 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                 ft.Row(
                     spacing=16,
                     controls=[
-                        dropdown_con_label("Nivel Educativo", "Nivel Primario", ["Nivel Inicial", "Nivel Primario", "Nivel Secundario"], width=187),
-                        dropdown_con_label("Curso", "4to Grado A", ["Sala 5", "4to Grado A", "6to Grado C", "5to Año B"], width=187),
-                        dropdown_con_label("Estado de Matrícula", "Regular", ["Regular", "Pendiente", "Inactivo"], width=187),
+                        dropdown_con_label("Nivel Educativo", "Nivel Primario", ["Nivel Inicial", "Nivel Primario", "Nivel Secundario"], width=None, expand=True),
+                        dropdown_con_label("Curso", "4to Grado A", ["Sala 5", "4to Grado A", "6to Grado C", "5to Año B"], width=None, expand=True),
+                        dropdown_con_label("Estado de Matrícula", "Regular", ["Regular", "Pendiente", "Inactivo"], width=None, expand=True),
                     ],
                 ),
             ],
@@ -178,12 +178,12 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
     )
 
     columna_izquierda = ft.Column(
-        width=642,
+        expand=True,
         spacing=24,
         controls=[card_info_personal, card_info_academica],
     )
 
-    # ==================== 3. DEPORTES Y SERVICIOS (COLUMNA DERECHA) ====================
+    # ==================== 3. COLUMNA DERECHA COMPACTA ====================
     deportes_lista = [
         ("Atletismo", False),
         ("Natación", True),
@@ -225,7 +225,7 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                     spacing=4,
                     controls=[
                         ft.Text("Inscripción Deportiva", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.Text("* Permitido un máximo de 2 disciplinas activas.", size=12, color=ORANGE),
+                        ft.Text("* Máximo 2 disciplinas activas.", size=12, color=ORANGE),
                     ],
                 ),
                 ft.Column(
@@ -274,7 +274,7 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                                             spacing=2,
                                             controls=[
                                                 ft.Text("Transporte Escolar", size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                                                ft.Text("Servicio de traslado puerta a puerta", size=11, color=MUTED),
+                                                ft.Text("Servicio de traslado institucional", size=11, color=MUTED),
                                             ],
                                         ),
                                         ft.Switch(value=False, active_color=TEAL),
@@ -317,7 +317,7 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
     )
 
     columna_derecha = ft.Column(
-        width=450,
+        width=380,
         spacing=24,
         controls=[card_deportes, card_servicios],
     )

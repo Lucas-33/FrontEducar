@@ -76,9 +76,8 @@ def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    # ==================== 2. COLUMNA IZQUIERDA: INFORMACIÓN BÁSICA ====================
+    # ==================== 2. COLUMNA IZQUIERDA FLUIDA ====================
     card_info_basica = ft.Container(
-        width=612,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
         border_radius=CARD_RADIUS,
@@ -93,29 +92,29 @@ def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Legajo (Asignado)", "", width=274, read_only=True, valor_inicial="#20106"),
-                                input_con_label("DNI *", "Ej: 32.400.912", width=274),
+                                input_con_label("Legajo (Asignado)", "", width=None, expand=True, read_only=True, valor_inicial="#20106"),
+                                input_con_label("DNI *", "Ej: 32.400.912", width=None, expand=True),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Nombres *", "Ej: Guillermina", width=274),
-                                input_con_label("Apellidos *", "Ej: Sánchez", width=274),
+                                input_con_label("Nombres *", "Ej: Guillermina", width=None, expand=True),
+                                input_con_label("Apellidos *", "Ej: Sánchez", width=None, expand=True),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Especialidad Principal *", "Ej: Matemática Aplicada, Álgebra", width=274),
-                                dropdown_con_label("Estado de Contrato *", "Activo", ["Activo", "Licencia", "Inactivo"], width=274),
+                                input_con_label("Especialidad Principal *", "Ej: Matemática Aplicada, Álgebra", width=None, expand=True),
+                                dropdown_con_label("Estado de Contrato *", "Activo", ["Activo", "Licencia", "Inactivo"], width=None, expand=True),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Correo Laboral *", "ejemplo@educar.edu.ar", width=274),
-                                input_con_label("Teléfono Particular *", "3624-XXXXXX", width=274),
+                                input_con_label("Correo Laboral *", "ejemplo@educar.edu.ar", width=None, expand=True),
+                                input_con_label("Teléfono Particular *", "3624-XXXXXX", width=None, expand=True),
                             ],
                         ),
                     ],
@@ -124,7 +123,13 @@ def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
         ),
     )
 
-    # ==================== 3. COLUMNA DERECHA: MATERIAS A CARGO ====================
+    columna_izquierda = ft.Column(
+        expand=True,
+        spacing=24,
+        controls=[card_info_basica],
+    )
+
+    # ==================== 3. COLUMNA DERECHA COMPACTA ====================
     materias_data = [
         {"nombre": "Matemática", "nivel": "Secundario", "curso": "5to Año B"},
         {"nombre": "Álgebra Lineal", "nivel": "Secundario", "curso": "6to Año A"},
@@ -168,7 +173,7 @@ def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
         )
 
     card_materias_cargo = ft.Container(
-        width=480,
+        width=380,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
         border_radius=CARD_RADIUS,
@@ -180,7 +185,7 @@ def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                     spacing=4,
                     controls=[
                         ft.Text("Materias a Cargo", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.Text("Asigne las asignaturas correspondientes para el presente ciclo.", size=12, color=MUTED),
+                        ft.Text("Asigne las asignaturas correspondientes.", size=12, color=MUTED),
                     ],
                 ),
                 ft.Column(
@@ -216,7 +221,7 @@ def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
             ft.Row(
                 spacing=24,
                 vertical_alignment=ft.CrossAxisAlignment.START,
-                controls=[card_info_basica, card_materias_cargo],
+                controls=[columna_izquierda, card_materias_cargo],
             ),
         ],
     )
