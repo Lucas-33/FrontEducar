@@ -21,6 +21,7 @@ from frontend.app.pages.padre_dashboard import get_padre_dashboard_view
 from frontend.app.pages.padre_deportes import get_padre_deportes_view
 from frontend.app.pages.padre_docentes import get_padre_docentes_view
 from frontend.app.pages.padre_servicios import get_padre_servicios_view
+from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
 
 # Páginas administrativas
 from frontend.app.pages.admin_alumno_form import get_admin_alumno_form_view
@@ -38,7 +39,13 @@ from frontend.app.pages.admin_profesores import get_admin_profesores_view
 from frontend.app.pages.admin_reportes import get_admin_reportes_view
 from frontend.app.pages.admin_transporte import get_admin_transporte_view
 from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
-from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
+
+
+# Portal Docentes
+from frontend.app.pages.docente_alumnos import get_docente_alumnos_view
+from frontend.app.pages.docente_dashboard import get_docente_dashboard_view
+from frontend.app.pages.docente_deportes import get_docente_deportes_view
+from frontend.app.pages.docente_materias import get_docente_materias_view 
 
 # Reportes
 from frontend.app.pages.admin_reporte_alumnos_docentes import (
@@ -181,7 +188,23 @@ async def main(page: ft.Page):
             page.views.append(ft.View(route=ruta, padding=0, controls=[get_padre_docentes_view(page)]))
             page.update()
             return
-
+        # ==================== 2. RUTAS DEL PORTAL DOCENTE ====================
+        if ruta == "/portal/docente/dashboard":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_docente_dashboard_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/docente/materias":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_docente_materias_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/docente/alumnos":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_docente_alumnos_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/docente/deportes":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_docente_deportes_view(page)]))
+            page.update()
+            return
 
             
         # ==================== 3. RUTAS PÚBLICAS INSTITUCIONALES ====================
