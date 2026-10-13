@@ -10,6 +10,7 @@ from frontend.app.components.constants import (
     ORANGE,
     TEAL,
     TEAL_DARK,
+    TEAL_LIGHT,
     TEXT_COLOR,
 )
 from frontend.app.components.form_controls import status_badge
