@@ -38,6 +38,7 @@ from frontend.app.pages.admin_profesores import get_admin_profesores_view
 from frontend.app.pages.admin_reportes import get_admin_reportes_view
 from frontend.app.pages.admin_transporte import get_admin_transporte_view
 from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
+from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
 
 # Reportes
 from frontend.app.pages.admin_reporte_alumnos_docentes import (
@@ -159,7 +160,30 @@ async def main(page: ft.Page):
             page.views.append(ft.View(route=ruta, padding=0, controls=[get_admin_reporte_transporte_pasajeros_view(page)]))
             page.update()
             return
+        # ==================== 1. RUTAS DEL PORTAL FAMILIAS ====================
+        if ruta == "/portal/padre/dashboard":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_padre_dashboard_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/padre/inscripcion":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_padre_inscripcion_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/padre/deportes":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_padre_deportes_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/padre/servicios":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_padre_servicios_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/padre/docentes":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_padre_docentes_view(page)]))
+            page.update()
+            return
 
+
+            
         # ==================== 3. RUTAS PÚBLICAS INSTITUCIONALES ====================
         if ruta == "/quienes-somos":
             contenido_central = get_quienes_somos_view(page)
