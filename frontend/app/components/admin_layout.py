@@ -1,7 +1,7 @@
 import flet as ft
+from frontend.app.components.constants import BG_PAGE
 from frontend.app.components.sidebar import create_sidebar
 from frontend.app.components.topbar import create_topbar
-from frontend.app.components.constants import BG_PAGE
 
 
 def admin_layout(
@@ -13,15 +13,32 @@ def admin_layout(
     padding: int = 32,
     spacing: int = 24,
 ) -> ft.Row:
-    """
-    Layout maestro administrativo.
-    Ensambla Sidebar (fijo a la izquierda) + TopBar (fijo superior)
-    y un área de contenido central con scroll vertical independiente.
-    """
-    sidebar = create_sidebar(page, active_route=active_route)
+    """Layout maestro administrativo con sidebar colapsable reactivo."""
+
+    # Estado de colapso guardado directamente en la instancia de la página del usuario
+    is_collapsed = getattr(page, "sidebar_collapsed", False)
+
+    sidebar_holder = ft.Container()
     topbar = create_topbar(page, titulo=titulo)
 
-    # Área de contenido con scroll vertical desacoplado de las barras
+    def toggle_sidebar(e):
+        nuevo_estado = not getattr(page, "sidebar_collapsed", False)
+        page.sidebar_collapsed = nuevo_estado
+        sidebar_holder.content = create_sidebar(
+            page,
+            active_route=active_route,
+            collapsed=nuevo_estado,
+            on_toggle=toggle_sidebar,
+        )
+        sidebar_holder.update()
+
+    sidebar_holder.content = create_sidebar(
+        page,
+        active_route=active_route,
+        collapsed=is_collapsed,
+        on_toggle=toggle_sidebar,
+    )
+
     main_content = ft.Container(
         expand=True,
         bgcolor=BG_PAGE,
@@ -45,5 +62,5 @@ def admin_layout(
     return ft.Row(
         expand=True,
         spacing=0,
-        controls=[sidebar, main_content],
+        controls=[sidebar_holder, main_content],
     )

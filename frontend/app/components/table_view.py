@@ -15,7 +15,6 @@ def create_table_header(columns: list[tuple[str, int | None, bool]]) -> ft.Conta
     """
     Genera la cabecera estilizada de la tabla.
     columns recibe una lista de tuplas: (nombre_columna, ancho_px, alinear_a_la_derecha)
-    Si ancho_px es None, la celda se expande automáticamente.
     """
     controls = []
     for titulo, width, align_right in columns:
@@ -46,18 +45,36 @@ def create_table_header(columns: list[tuple[str, int | None, bool]]) -> ft.Conta
     )
 
 
-def create_table_container(header: ft.Container, rows: list[ft.Control]) -> ft.Container:
-    """Envuelve la cabecera y las filas en una tarjeta blanca con bordes curvos."""
+# frontend/app/components/table_view.py
+
+def create_table_container(
+    header: ft.Container,
+    rows: list[ft.Control],
+    min_width: int = 1120,
+) -> ft.Container:
+    """
+    Envuelve la tabla con tarjeta blanca y garantiza scroll horizontal
+    activo en cualquier pantalla o nivel de zoom.
+    """
     return ft.Container(
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
         border_radius=CARD_RADIUS,
         clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-        content=ft.Column(
+        content=ft.Row(
+            scroll=ft.ScrollMode.AUTO,
             spacing=0,
             controls=[
-                header,
-                *rows,
+                ft.Container(
+                    width=min_width,  # <--- Activa el cálculo de desbordamiento horizontal
+                    content=ft.Column(
+                        spacing=0,
+                        controls=[
+                            header,
+                            *rows,
+                        ],
+                    ),
+                ),
             ],
         ),
     )

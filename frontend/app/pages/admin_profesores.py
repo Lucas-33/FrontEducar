@@ -162,17 +162,17 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
         },
     ]
 
-    # Tuplas: (Título, Ancho px, Alineación derecha)
+    # Anchos calibrados para evitar desbordes (Total: ~1075 px)
     columnas_profesores = [
-        ("Legajo", 90, False),
-        ("DNI", 120, False),
-        ("Apellido", 150, False),
-        ("Nombre", 150, False),
-        ("Especialidad Principal", 220, False),
-        ("Correo Electrónico", 220, False),
-        ("Teléfono", 120, False),
-        ("Estado", 100, False),
-        ("Acciones", None, True),
+        ("Legajo", 80, False),
+        ("DNI", 105, False),
+        ("Apellido", 120, False),
+        ("Nombre", 130, False),
+        ("Especialidad Principal", 180, False),
+        ("Correo Electrónico", 190, False),
+        ("Teléfono", 115, False),
+        ("Estado", 95, False),
+        ("Acciones", 80, True),
     ]
 
     header_table = create_table_header(columnas_profesores)
@@ -186,19 +186,19 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=90, content=ft.Text(item["legajo"], size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=120, content=ft.Text(item["dni"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=150, content=ft.Text(item["apellido"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=150, content=ft.Text(item["nombre"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=220, content=ft.Text(item["especialidad"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=220, content=ft.Text(item["email"], size=14, color=MUTED)),
-                    ft.Container(width=120, content=ft.Text(item["telefono"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=100, content=status_badge(item["estado"])),
+                    ft.Container(width=80, content=ft.Text(item["legajo"], size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                    ft.Container(width=105, content=ft.Text(item["dni"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=120, content=ft.Text(item["apellido"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
+                    ft.Container(width=130, content=ft.Text(item["nombre"], size=14, color=TEXT_COLOR)),
+                    ft.Container(width=180, content=ft.Text(item["especialidad"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=190, content=ft.Text(item["email"], size=13, color=MUTED)),
+                    ft.Container(width=115, content=ft.Text(item["telefono"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=95, content=status_badge(item["estado"])),
                     ft.Container(
-                        expand=True,
+                        width=80,
                         alignment=ft.Alignment(1, 0),
                         content=ft.Row(
-                            spacing=12,
+                            spacing=8,
                             alignment=ft.MainAxisAlignment.END,
                             controls=[
                                 ft.IconButton(
