@@ -1,4 +1,6 @@
 import flet as ft
+import httpx
+from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
@@ -20,9 +22,14 @@ from frontend.app.components.table_view import (
 
 
 def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa de administración de alumnos usando AdminLayout."""
+    """Retorna la vista completa del directorio de alumnos consumiendo la API de FastAPI."""
 
-    # ==================== 1. BARRA DE BÚSQUEDA Y FILTROS ====================
+    # Asegurar token desde client_storage si la página fue recargada
+    token_almacenado = page.client_storage.get("auth_token")
+    if token_almacenado and not api_client.token:
+        api_client.set_token(token_almacenado)
+
+    # ==================== 1. BARRA DE FILTROS Y ACCIÓN ====================
     search_input = ft.Container(
         width=280,
         height=CONTROL_HEIGHT,
@@ -36,7 +43,7 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
             controls=[
                 ft.Icon(ft.Icons.SEARCH, size=16, color=MUTED),
                 ft.TextField(
-                    hint_text="Buscar por nombre o legajo...",
+                    hint_text="Buscar por apellido o legajo...",
                     hint_style=ft.TextStyle(size=14, color=MUTED),
                     text_size=14,
                     color=TEXT_COLOR,
@@ -92,40 +99,55 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     search_input,
-                    filtro_dropdown("Nivel: Todos", 135, ["Todos", "Inicial", "Primario", "Secundario"]),
-                    filtro_dropdown("Curso: Todos", 140, ["Todos", "Sala 5", "4to Grado", "6to Grado", "3er Año", "5to Año", "6to Año"]),
-                    filtro_dropdown("Estado: Activo", 145, ["Activo", "Regular", "Pendiente", "Inactivo"]),
+                    filtro_dropdown("Nivel: Todos", 140, ["Todos", "Nivel Inicial", "Nivel Primario", "Nivel Secundario"]),
+                    filtro_dropdown("Curso: Todos", 140, ["Todos", "Sala 5", "1er Grado", "4to Grado", "5to Año"]),
                 ],
             ),
             btn_nuevo_alumno,
         ],
     )
 
-    # ==================== 2. TABLA DE ALUMNOS ====================
-    alumnos_data = [
-        {"legajo": "#10245", "dni": "44.120.942", "apellido": "Almirón", "nombre": "Santiago", "nivel": "Secundario", "curso": "5to Año B", "estado": "Regular"},
-        {"legajo": "#10246", "dni": "45.892.110", "apellido": "Benítez", "nombre": "Martina", "nivel": "Secundario", "curso": "3er Año A", "estado": "Regular"},
-        {"legajo": "#10247", "dni": "48.330.124", "apellido": "Capra", "nombre": "Lautaro", "nivel": "Primario", "curso": "6to Grado C", "estado": "Regular"},
-        {"legajo": "#10248", "dni": "50.114.992", "apellido": "Díaz", "nombre": "Sofía Valentina", "nivel": "Inicial", "curso": "Sala de 5 años B", "estado": "Pendiente"},
-        {"legajo": "#10249", "dni": "43.902.114", "apellido": "Flores", "nombre": "Facundo Joaquín", "nivel": "Secundario", "curso": "6to Año A", "estado": "Regular"},
-        {"legajo": "#10250", "dni": "45.102.399", "apellido": "Giménez", "nombre": "Camila Belén", "nivel": "Primario", "curso": "4to Grado A", "estado": "Inactivo"},
+    # ==================== 2. LLAMADA AL BACKEND ====================
+    alumnos_data: list[dict] = []
+    error_servidor = False
+
+    try:
+        alumnos_data = api_client.get_alumnos(solo_activos=True)
+    except (httpx.RequestError, httpx.HTTPStatusError):
+        error_servidor = True
+
+    columnas_alumnos = [
+        ("Legajo", 90, False),
+        ("DNI", 110, False),
+        ("Apellido", 130, False),
+        ("Nombre", 140, False),
+        ("Curso", 120, False),
+        ("Teléfono", 120, False),
+        ("Correo Electrónico", 210, False),
+        ("Estado", 95, False),
+        ("Acciones", 80, True),
     ]
 
-    # Columnas: (Nombre, Ancho px, Alinear a la derecha)
-    columnas_definicion = [
-        ("Legajo", 100, False),
-        ("DNI", 140, False),
-        ("Apellido", 180, False),
-        ("Nombre", 180, False),
-        ("Nivel Educativo", 160, False),
-        ("Curso", 140, False),
-        ("Estado", 120, False),
-        ("Acciones", 64, True),
-    ]
-
-    header_table = create_table_header(columnas_definicion)
+    header_table = create_table_header(columnas_alumnos)
 
     def alumno_row(item: dict) -> ft.Container:
+        legajo = str(item.get("legajo", ""))
+        dni = str(item.get("dni", ""))
+        apellido = item.get("apellido", "")
+        nombre = item.get("nombre", "")
+        curso = str(item.get("curso") or item.get("id_curso") or "Sin Asignar")
+        telefono = item.get("telefono") or "-"
+        correo = item.get("correo_electronico") or item.get("email") or "-"
+        
+        # Mapeo de estado si viene booleano o string
+        estado_raw = item.get("estado")
+        if isinstance(estado_raw, bool):
+            estado_texto = "Activo" if estado_raw else "Inactivo"
+        elif estado_raw:
+            estado_texto = str(estado_raw)
+        else:
+            estado_texto = "Activo"
+
         return ft.Container(
             height=54,
             padding=ft.Padding(16, 0, 16, 0),
@@ -134,23 +156,35 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=100, content=ft.Text(item["legajo"], size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=140, content=ft.Text(item["dni"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=180, content=ft.Text(item["apellido"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=180, content=ft.Text(item["nombre"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=160, content=ft.Text(item["nivel"], size=14, color=MUTED)),
-                    ft.Container(width=140, content=ft.Text(item["curso"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=120, content=status_badge(item["estado"])),
+                    ft.Container(width=90, content=ft.Text(legajo, size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                    ft.Container(width=110, content=ft.Text(dni, size=13, color=TEXT_COLOR)),
+                    ft.Container(width=130, content=ft.Text(apellido, size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
+                    ft.Container(width=140, content=ft.Text(nombre, size=14, color=TEXT_COLOR)),
+                    ft.Container(width=120, content=ft.Text(curso, size=13, color=TEAL)),
+                    ft.Container(width=120, content=ft.Text(telefono, size=13, color=TEXT_COLOR)),
+                    ft.Container(width=210, content=ft.Text(correo, size=13, color=MUTED)),
+                    ft.Container(width=95, content=status_badge(estado_texto)),
                     ft.Container(
-                        width=64,
+                        width=80,
                         alignment=ft.Alignment(1, 0),
                         content=ft.Row(
-                            spacing=12,
+                            spacing=8,
                             alignment=ft.MainAxisAlignment.END,
                             controls=[
-                                ft.IconButton(icon=ft.Icons.EDIT_OUTLINED, icon_size=16, icon_color=TEAL, tooltip="Editar", padding=0),
-                                ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE_OUTLINED, icon_size=16, icon_color=MUTED, tooltip="Ver legajo", padding=0),
-                                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_size=16, icon_color=BADGE_RED_TXT, tooltip="Borrar", padding=0),
+                                ft.IconButton(
+                                    icon=ft.Icons.EDIT_OUTLINED,
+                                    icon_size=16,
+                                    icon_color=TEAL,
+                                    tooltip="Editar Alumno",
+                                    padding=0,
+                                ),
+                                ft.IconButton(
+                                    icon=ft.Icons.DELETE_OUTLINE,
+                                    icon_size=16,
+                                    icon_color=BADGE_RED_TXT,
+                                    tooltip="Dar de baja",
+                                    padding=0,
+                                ),
                             ],
                         ),
                     ),
@@ -158,22 +192,49 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
             ),
         )
 
+    # Construcción de filas según el resultado
+    if error_servidor:
+        filas_tabla = [
+            ft.Container(
+                padding=24,
+                alignment=ft.Alignment(0, 0),
+                content=ft.Text(
+                    "⚠️ No se pudo sincronizar con el servidor backend (FastAPI en http://127.0.0.1:8000). Verifique que esté ejecutándose.",
+                    size=13,
+                    color=BADGE_RED_TXT,
+                ),
+            )
+        ]
+        info_paginador = "Error de sincronización con la API"
+    elif not alumnos_data:
+        filas_tabla = [
+            ft.Container(
+                padding=24,
+                alignment=ft.Alignment(0, 0),
+                content=ft.Text("No se encontraron alumnos registrados en la base de datos.", size=13, color=MUTED),
+            )
+        ]
+        info_paginador = "Mostrando 0 registros"
+    else:
+        filas_tabla = [alumno_row(a) for a in alumnos_data]
+        info_paginador = f"Mostrando {len(alumnos_data)} alumnos registrados en la base de datos"
+
     table_container = create_table_container(
         header=header_table,
-        rows=[alumno_row(a) for a in alumnos_data],
+        rows=filas_tabla,
+        min_width=1095,
     )
 
-    # ==================== 3. BARRA DE PAGINACIÓN ====================
     pagination_bar = create_pagination_bar(
-        texto_info="Mostrando 1-6 de 1,248 alumnos matriculados",
+        texto_info=info_paginador,
         pagina_actual=1,
-        total_paginas=3,
+        total_paginas=1,
     )
 
-    # ==================== 4. LAYOUT ADMINISTRATIVO ====================
+    # ==================== 3. RETORNO CON ADMIN_LAYOUT ====================
     return admin_layout(
         page=page,
-        titulo="Directorio de Alumnos Matriculados",
+        titulo="Directorio de Estudiantes",
         active_route="/admin/alumnos",
         content_controls=[
             filters_bar,
