@@ -42,7 +42,7 @@ def create_sidebar(
         es_activo = active_route == ruta
 
         if collapsed:
-            # Modo compacto: Solo icono centrado con tooltip
+            # Modo compacto: Icono centrado de 42x42 px con tooltip descriptivo
             return ft.Container(
                 data=ruta,
                 height=42,
@@ -59,7 +59,7 @@ def create_sidebar(
                 ),
             )
 
-        # Modo extendido: Icono + Texto + Indicador
+        # Modo extendido: Icono + Nombre + Indicador de ruta activa
         return ft.Container(
             data=ruta,
             height=42,
@@ -91,47 +91,65 @@ def create_sidebar(
             ),
         )
 
-    # Cabecera con botón de toggle integrado
-    brand_section = ft.Row(
-        alignment=ft.MainAxisAlignment.CENTER if collapsed else ft.MainAxisAlignment.SPACE_BETWEEN,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        controls=[
-            ft.Row(
-                spacing=10,
-                controls=[
-                    ft.Container(
-                        width=36,
-                        height=36,
-                        bgcolor=TEAL,
-                        border_radius=18,
-                        alignment=ft.Alignment(0, 0),
-                        content=ft.Icon(ft.Icons.SCHOOL, color="white", size=18),
-                    ),
-                    *(
-                        [
-                            ft.Column(
-                                spacing=1,
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text("Educar SGE", size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                                    ft.Text("GESTIÓN", size=10, weight=ft.FontWeight.W_600, color=MUTED),
-                                ],
-                            )
-                        ]
-                        if not collapsed
-                        else []
-                    ),
-                ],
-            ),
-            ft.IconButton(
-                icon=ft.Icons.MENU_OPEN if not collapsed else ft.Icons.MENU,
-                icon_size=18,
-                icon_color=TEAL_DARK,
-                tooltip="Expandir / Colapsar menú",
-                on_click=on_toggle,
-            ),
-        ],
-    )
+    # Cabecera con adaptación vertical cuando está colapsado para que el botón no se recorte
+    if collapsed:
+        brand_section = ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=8,
+            controls=[
+                ft.Container(
+                    width=36,
+                    height=36,
+                    bgcolor=TEAL,
+                    border_radius=18,
+                    alignment=ft.Alignment(0, 0),
+                    tooltip="Educar SGE",
+                    content=ft.Icon(ft.Icons.SCHOOL, color="white", size=18),
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.MENU,
+                    icon_size=20,
+                    icon_color=TEAL_DARK,
+                    tooltip="Expandir menú lateral",
+                    on_click=on_toggle,
+                ),
+            ],
+        )
+    else:
+        brand_section = ft.Row(
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Row(
+                    spacing=10,
+                    controls=[
+                        ft.Container(
+                            width=36,
+                            height=36,
+                            bgcolor=TEAL,
+                            border_radius=18,
+                            alignment=ft.Alignment(0, 0),
+                            content=ft.Icon(ft.Icons.SCHOOL, color="white", size=18),
+                        ),
+                        ft.Column(
+                            spacing=1,
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            controls=[
+                                ft.Text("Educar SGE", size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                ft.Text("GESTIÓN", size=10, weight=ft.FontWeight.W_600, color=MUTED),
+                            ],
+                        ),
+                    ],
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.MENU_OPEN,
+                    icon_size=18,
+                    icon_color=TEAL_DARK,
+                    tooltip="Contraer menú lateral",
+                    on_click=on_toggle,
+                ),
+            ],
+        )
 
     nav_list = ft.Column(
         spacing=6,
@@ -141,15 +159,32 @@ def create_sidebar(
         controls=[item_sidebar(texto, ruta, icono) for texto, ruta, icono in items_menu],
     )
 
-    footer_section = ft.Container(
-        content=ft.Row(
-            alignment=ft.MainAxisAlignment.CENTER,
+    if collapsed:
+        footer_section = ft.Container(
+            alignment=ft.Alignment(0, 0),
+            tooltip="Servidor Online",
+            content=ft.Container(
+                width=8,
+                height=8,
+                bgcolor=ONLINE_GREEN,
+                border_radius=4,
+            ),
+        )
+    else:
+        footer_section = ft.Column(
+            spacing=4,
             controls=[
-                ft.Container(width=8, height=8, bgcolor=ONLINE_GREEN, border_radius=4),
-                *([ft.Text("Online", size=11, color=MUTED)] if not collapsed else []),
+                ft.Row(
+                    spacing=8,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(width=8, height=8, bgcolor=ONLINE_GREEN, border_radius=4),
+                        ft.Text("Servidor Online", size=12, color=MUTED),
+                    ],
+                ),
+                ft.Text("v2.5.0-resistencia", size=10, color=MUTED),
             ],
         )
-    )
 
     return ft.Container(
         width=ancho_actual,
