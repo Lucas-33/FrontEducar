@@ -1,21 +1,20 @@
 import flet as ft
-
-# Constantes de diseño extraídas del CSS / Figma
-BG_PAGE = "#FDFBF9"
-BG_WHITE = "#FFFFFF"
-TEAL_DARK = "#0B4F4F"
-TEAL = "#0D6E6E"
-TEAL_LIGHT = "#E6F2F2"
-ORANGE = "#D97736"
-TEXT_COLOR = "#1E2A29"
-MUTED = "#5C6B69"
-BORDER_COLOR = "#EAE6E1"
+from frontend.app.components.constants import (
+    BG_PAGE_ALT as BG_PAGE,
+    BG_WHITE,
+    BORDER_COLOR,
+    MUTED,
+    ORANGE,
+    TEAL,
+    TEAL_DARK,
+    TEXT_COLOR,
+)
 
 
 def get_login_view(page: ft.Page) -> list[ft.Control]:
     """Retorna el contenedor principal de la vista de inicio de sesión."""
 
-    # Estado del rol seleccionado (por defecto Familias según el diseño)
+    # Estado del rol seleccionado (por defecto Familias)
     rol_seleccionado = {"valor": "Familias"}
 
     roles = ["Alumnos", "Familias", "Docentes", "Admin"]
@@ -38,7 +37,6 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                 if activo
                 else None
             )
-            # El texto del botón activo toma el color TEAL_DARK, inactivo toma MUTED
             container.content.color = TEAL_DARK if activo else MUTED
             container.content.weight = (
                 ft.FontWeight.W_600 if activo else ft.FontWeight.W_500
@@ -46,7 +44,7 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
 
         selector_roles.update()
 
-    # Selector de roles segmentado (384px x 40px)
+    # Selector de roles segmentado
     tabs_controls = []
     for rol in roles:
         activo = rol == rol_seleccionado["valor"]
@@ -90,6 +88,20 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
         ),
     )
 
+    def on_submit(e):
+        rol = rol_seleccionado["valor"]
+
+        # Redirección dinámica basada en el rol seleccionado
+        rutas_por_rol = {
+            "Admin": "/admin/dashboard",
+            "Familias": "/portal/padre/dashboard",
+            "Docentes": "/portal/docente/dashboard",
+            "Alumnos": "/portal/alumno/dashboard",
+        }
+
+        destino = rutas_por_rol.get(rol, "/admin/dashboard")
+        page.go(destino)
+
     # Entradas del formulario
     usuario_field = ft.TextField(
         hint_text="ejemplo@educar.edu.ar",
@@ -117,18 +129,10 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
         border_radius=8,
         content_padding=ft.Padding(12, 12, 12, 12),
         height=41,
+        on_submit=on_submit,
     )
 
-    def on_submit(e):
-        # Lógica de depuración / conexión futura con el backend
-        print(f"Rol: {rol_seleccionado['valor']}")
-        print(f"Usuario: {usuario_field.value}")
-        print(f"Password ingresado: {'*' * len(password_field.value or '')}")
-        
-        # Redirigir a la vista de administración después del login
-        page.go("/admin/dashboard")
-
-    # Tarjeta de inicio de sesión (480px ancho, border-radius 16px)
+    # Tarjeta de inicio de sesión
     login_card = ft.Container(
         width=480,
         bgcolor=BG_WHITE,
@@ -145,7 +149,6 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
             spacing=32,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                # Encabezado del Formulario
                 ft.Column(
                     spacing=8,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -165,13 +168,10 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                         ),
                     ],
                 ),
-                # Selector de Rol
                 selector_roles,
-                # Campos de entrada
                 ft.Column(
                     spacing=20,
                     controls=[
-                        # Campo Usuario o Email
                         ft.Column(
                             spacing=8,
                             controls=[
@@ -184,7 +184,6 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                                 usuario_field,
                             ],
                         ),
-                        # Campo Contraseña
                         ft.Column(
                             spacing=8,
                             controls=[
@@ -211,7 +210,6 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                                 password_field,
                             ],
                         ),
-                        # Botón Ingresar
                         ft.Button(
                             "INGRESAR A LA PLATAFORMA",
                             bgcolor=TEAL,
@@ -228,7 +226,6 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                         ),
                     ],
                 ),
-                # Mensaje de Secretaría
                 ft.Text(
                     "¿No tiene usuario asignado? Diríjase a Secretaría para solicitar su alta institucional.",
                     size=13,
@@ -239,7 +236,6 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
         ),
     )
 
-    # Contenedor central (padding vertical 96px, horizontal 80px, fondo #FDFBF9)
     main_section = ft.Container(
         bgcolor=BG_PAGE,
         alignment=ft.Alignment(0, 0),
