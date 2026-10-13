@@ -47,6 +47,12 @@ from frontend.app.pages.docente_dashboard import get_docente_dashboard_view
 from frontend.app.pages.docente_deportes import get_docente_deportes_view
 from frontend.app.pages.docente_materias import get_docente_materias_view 
 
+# Portal Alumno / Estudiante
+from frontend.app.pages.alumno_dashboard import get_alumno_dashboard_view
+from frontend.app.pages.alumno_deportes import get_alumno_deportes_view
+from frontend.app.pages.alumno_materias import get_alumno_materias_view
+from frontend.app.pages.alumno_servicios import get_alumno_servicios_view
+
 # Reportes
 from frontend.app.pages.admin_reporte_alumnos_docentes import (
     get_admin_reporte_alumnos_docentes_view,
@@ -205,7 +211,25 @@ async def main(page: ft.Page):
             page.views.append(ft.View(route=ruta, padding=0, controls=[get_docente_deportes_view(page)]))
             page.update()
             return
+        # ==================== 3. RUTAS DEL PORTAL ESTUDIANTE ====================
+        if ruta == "/portal/alumno/dashboard":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_alumno_dashboard_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/alumno/materias":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_alumno_materias_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/alumno/deportes":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_alumno_deportes_view(page)]))
+            page.update()
+            return
+        elif ruta == "/portal/alumno/servicios":
+            page.views.append(ft.View(route=ruta, padding=0, controls=[get_alumno_servicios_view(page)]))
+            page.update()
+            return
 
+            
             
         # ==================== 3. RUTAS PÚBLICAS INSTITUCIONALES ====================
         if ruta == "/quienes-somos":
