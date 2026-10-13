@@ -151,9 +151,8 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         ),
     )
 
-    # ==================== 4. COLUMNA IZQUIERDA: FORMULARIO ====================
+    # ==================== 4. COLUMNA IZQUIERDA: FORMULARIO (FLUIDA) ====================
     card_datos_alta = ft.Container(
-        width=732,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
         border_radius=CARD_RADIUS,
@@ -249,7 +248,6 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
     )
 
     card_info_complementaria = ft.Container(
-        width=732,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
         border_radius=CARD_RADIUS,
@@ -316,7 +314,7 @@ def get_admin_comedor_view(page: ft.Page) -> ft.Row:
     )
 
     columna_formulario = ft.Column(
-        width=732,
+        expand=True,
         spacing=20,
         controls=[card_datos_alta, card_info_complementaria],
     )
