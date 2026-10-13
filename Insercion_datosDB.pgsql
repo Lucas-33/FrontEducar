@@ -139,16 +139,16 @@ ON CONFLICT (legajo_alumno) DO NOTHING;
 
 -- La contraseña para todos es 'password123' procesada con bcrypt.
 INSERT INTO usuario (username, password_hash, id_rol, legajo_alumno, legajo_profesor, id_padre, activo) VALUES 
-('admin_gral', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 1, NULL, NULL, NULL, TRUE),
+('admin_gral', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 1, NULL, NULL, NULL, TRUE),
 
-('lgomez', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 2, NULL, 2001, NULL, TRUE),
-('cruiz', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 2, NULL, 2002, NULL, TRUE),
+('lgomez', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 2, NULL, 2001, NULL, TRUE),
+('cruiz', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 2, NULL, 2002, NULL, TRUE),
 
-('rmartinez', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 3, NULL, NULL, 1, TRUE),
-('aperez', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 3, NULL, NULL, 2, TRUE),
+('rmartinez', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 3, NULL, NULL, 1, TRUE),
+('aperez', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 3, NULL, NULL, 2, TRUE),
 
-('tmartinez', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 4, 1002, NULL, NULL, TRUE),
-('mperez', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 4, 1003, NULL, NULL, TRUE)
+('tmartinez', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 4, 1002, NULL, NULL, TRUE),
+('mperez', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 4, 1003, NULL, NULL, TRUE)
 ON CONFLICT (username) DO NOTHING;
 
 -- ==============================================================================

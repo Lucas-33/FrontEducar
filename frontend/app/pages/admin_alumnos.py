@@ -21,8 +21,8 @@ from frontend.app.components.table_view import (
 )
 
 
-def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa del directorio de alumnos consumiendo la API de FastAPI."""
+async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
+    """Retorna la vista completa del directorio de alumnos consumiendo asincrónicamente la API."""
 
     # Asegurar token desde client_storage si la página fue recargada
     token_almacenado = page.client_storage.get("auth_token")
@@ -107,12 +107,12 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    # ==================== 2. LLAMADA AL BACKEND ====================
+    # ==================== 2. LLAMADA ASÍNCRONA AL BACKEND ====================
     alumnos_data: list[dict] = []
     error_servidor = False
 
     try:
-        alumnos_data = api_client.get_alumnos(solo_activos=True)
+        alumnos_data = await api_client.get_alumnos(solo_activos=True)
     except (httpx.RequestError, httpx.HTTPStatusError):
         error_servidor = True
 
@@ -138,8 +138,7 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
         curso = str(item.get("curso") or item.get("id_curso") or "Sin Asignar")
         telefono = item.get("telefono") or "-"
         correo = item.get("correo_electronico") or item.get("email") or "-"
-        
-        # Mapeo de estado si viene booleano o string
+
         estado_raw = item.get("estado")
         if isinstance(estado_raw, bool):
             estado_texto = "Activo" if estado_raw else "Inactivo"
@@ -192,7 +191,6 @@ def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    # Construcción de filas según el resultado
     if error_servidor:
         filas_tabla = [
             ft.Container(

@@ -1,28 +1,42 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import bcrypt
 import jwt
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.repositories import usuario_repository, rol_repository
 from backend.app.schemas.seguridad import UsuarioCreate, UsuarioUpdate, Token
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 SECRET_KEY = os.getenv("SECRET_KEY", "educar_secret_key_super_segura_2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 horas
 
+
 class SeguridadService:
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return pwd_context.verify(plain_password, hashed_password)
+        """Verifica una contraseña plana contra el hash bcrypt almacenado."""
+        if not plain_password or not hashed_password:
+            return False
+        try:
+            password_bytes = plain_password.encode("utf-8")[:72]
+            hashed_bytes = (
+                hashed_password.encode("utf-8")
+                if isinstance(hashed_password, str)
+                else hashed_password
+            )
+            return bcrypt.checkpw(password_bytes, hashed_bytes)
+        except Exception:
+            return False
 
     @staticmethod
     def get_password_hash(password: str) -> str:
-        return pwd_context.hash(password)
+        """Genera un hash bcrypt seguro en formato string ($2b$)."""
+        password_bytes = password.encode("utf-8")[:72]
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
     @staticmethod
     def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -50,7 +64,7 @@ class SeguridadService:
         user = self.authenticate_user(db, username, password)
         rol = rol_repository.get(db, user.id_rol)
         rol_nombre = rol.nombre if rol else "USER"
-        
+
         token_data = {
             "sub": user.username,
             "id_usuario": user.id_usuario,
@@ -77,5 +91,6 @@ class SeguridadService:
             )
         hashed_pwd = self.get_password_hash(user_in.password)
         return usuario_repository.create_user_with_hash(db, user_in, hashed_pwd)
+
 
 seguridad_service = SeguridadService()

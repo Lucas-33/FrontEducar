@@ -72,7 +72,7 @@ async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0
 
-    def route_change(e: ft.RouteChangeEvent):
+    async def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
         ruta = (page.route or "/").rstrip("/")
         if not ruta:
@@ -102,7 +102,8 @@ async def main(page: ft.Page):
             page.update()
             return
         elif ruta == "/admin/alumnos":
-            page.views.append(ft.View(route=ruta, padding=0, controls=[get_admin_alumnos_view(page)]))
+            vista_alumnos = await get_admin_alumnos_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_alumnos]))
             page.update()
             return
         elif ruta == "/admin/alumnos/nuevo":
@@ -276,4 +277,4 @@ async def main(page: ft.Page):
     page.on_route_change = route_change
     page.on_view_pop = view_pop
 
-    route_change(None)
+    await route_change(None)
