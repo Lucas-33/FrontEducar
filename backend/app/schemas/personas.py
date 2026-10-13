@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 # --- ALUMNO ---
 class AlumnoBase(BaseModel):
-    legajo: str
+    legajo: int
     dni: str
     nombre: str
     apellido: str
@@ -33,7 +33,7 @@ class AlumnoResponse(AlumnoBase):
 
 # --- PROFESOR ---
 class ProfesorBase(BaseModel):
-    legajo: str
+    legajo: int
     dni: str
     nombre: str
     apellido: str

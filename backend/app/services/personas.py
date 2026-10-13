@@ -23,7 +23,7 @@ class PersonasService:
             return alumno_repository.get_activos(db, skip=skip, limit=limit)
         return alumno_repository.get_multi(db, skip=skip, limit=limit)
 
-    def get_alumno(self, db: Session, legajo: str):
+    def get_alumno(self, db: Session, legajo: int):
         alumno = alumno_repository.get_by_legajo(db, legajo)
         if not alumno:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Alumno con legajo '{legajo}' no encontrado")
@@ -39,13 +39,13 @@ class PersonasService:
 
         return alumno_repository.create(db, alumno_in)
 
-    def update_alumno(self, db: Session, legajo: str, alumno_in: AlumnoUpdate):
+    def update_alumno(self, db: Session, legajo: int, alumno_in: AlumnoUpdate):
         alumno = self.get_alumno(db, legajo)
         if alumno_in.id_curso and not curso_repository.get(db, alumno_in.id_curso):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"El curso con ID {alumno_in.id_curso} no existe")
         return alumno_repository.update(db, alumno, alumno_in)
 
-    def delete_alumno(self, db: Session, legajo: str):
+    def delete_alumno(self, db: Session, legajo: int):
         self.get_alumno(db, legajo)
         return alumno_repository.soft_delete(db, legajo)
 
@@ -55,7 +55,7 @@ class PersonasService:
             return profesor_repository.get_activos(db, skip=skip, limit=limit)
         return profesor_repository.get_multi(db, skip=skip, limit=limit)
 
-    def get_profesor(self, db: Session, legajo: str):
+    def get_profesor(self, db: Session, legajo: int):
         profesor = profesor_repository.get_by_legajo(db, legajo)
         if not profesor:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Profesor con legajo '{legajo}' no encontrado")
@@ -68,11 +68,11 @@ class PersonasService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Ya existe un profesor con DNI '{profesor_in.dni}'")
         return profesor_repository.create(db, profesor_in)
 
-    def update_profesor(self, db: Session, legajo: str, profesor_in: ProfesorUpdate):
+    def update_profesor(self, db: Session, legajo: int, profesor_in: ProfesorUpdate):
         profesor = self.get_profesor(db, legajo)
         return profesor_repository.update(db, profesor, profesor_in)
 
-    def delete_profesor(self, db: Session, legajo: str):
+    def delete_profesor(self, db: Session, legajo: int):
         self.get_profesor(db, legajo)
         return profesor_repository.soft_delete(db, legajo)
 

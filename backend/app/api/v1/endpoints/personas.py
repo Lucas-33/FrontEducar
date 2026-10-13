@@ -25,7 +25,7 @@ def listar_alumnos(
     return personas_service.get_alumnos(db=db, solo_activos=solo_activos, skip=skip, limit=limit)
 
 @router.get("/alumnos/{legajo}", response_model=AlumnoResponse, summary="Obtener alumno por legajo")
-def obtener_alumno(legajo: str, db: Session = Depends(get_db)):
+def obtener_alumno(legajo: int, db: Session = Depends(get_db)):
     return personas_service.get_alumno(db=db, legajo=legajo)
 
 @router.post("/alumnos", response_model=AlumnoResponse, status_code=status.HTTP_201_CREATED, summary="Registrar alumno")
@@ -33,11 +33,11 @@ def crear_alumno(alumno_in: AlumnoCreate, db: Session = Depends(get_db)):
     return personas_service.create_alumno(db=db, alumno_in=alumno_in)
 
 @router.put("/alumnos/{legajo}", response_model=AlumnoResponse, summary="Actualizar datos de un alumno")
-def actualizar_alumno(legajo: str, alumno_in: AlumnoUpdate, db: Session = Depends(get_db)):
+def actualizar_alumno(legajo: int, alumno_in: AlumnoUpdate, db: Session = Depends(get_db)):
     return personas_service.update_alumno(db=db, legajo=legajo, alumno_in=alumno_in)
 
 @router.delete("/alumnos/{legajo}", response_model=AlumnoResponse, summary="Baja lógica de un alumno")
-def eliminar_alumno(legajo: str, db: Session = Depends(get_db)):
+def eliminar_alumno(legajo: int, db: Session = Depends(get_db)):
     return personas_service.delete_alumno(db=db, legajo=legajo)
 
 
@@ -53,7 +53,7 @@ def listar_profesores(
     return personas_service.get_profesores(db=db, solo_activos=solo_activos, skip=skip, limit=limit)
 
 @router.get("/profesores/{legajo}", response_model=ProfesorResponse, summary="Obtener profesor por legajo")
-def obtener_profesor(legajo: str, db: Session = Depends(get_db)):
+def obtener_profesor(legajo: int, db: Session = Depends(get_db)):
     return personas_service.get_profesor(db=db, legajo=legajo)
 
 @router.post("/profesores", response_model=ProfesorResponse, status_code=status.HTTP_201_CREATED, summary="Registrar profesor")
@@ -61,11 +61,11 @@ def crear_profesor(profesor_in: ProfesorCreate, db: Session = Depends(get_db)):
     return personas_service.create_profesor(db=db, profesor_in=profesor_in)
 
 @router.put("/profesores/{legajo}", response_model=ProfesorResponse, summary="Actualizar profesor")
-def actualizar_profesor(legajo: str, profesor_in: ProfesorUpdate, db: Session = Depends(get_db)):
+def actualizar_profesor(legajo: int, profesor_in: ProfesorUpdate, db: Session = Depends(get_db)):
     return personas_service.update_profesor(db=db, legajo=legajo, profesor_in=profesor_in)
 
 @router.delete("/profesores/{legajo}", response_model=ProfesorResponse, summary="Baja lógica de un profesor")
-def eliminar_profesor(legajo: str, db: Session = Depends(get_db)):
+def eliminar_profesor(legajo: int, db: Session = Depends(get_db)):
     return personas_service.delete_profesor(db=db, legajo=legajo)
 
 

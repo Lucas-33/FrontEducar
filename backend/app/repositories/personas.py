@@ -14,7 +14,7 @@ class AlumnoRepository(CRUDBase[Alumno, AlumnoCreate, AlumnoUpdate]):
     def __init__(self):
         super().__init__(Alumno)
 
-    def get_by_legajo(self, db: Session, legajo: str) -> Optional[Alumno]:
+    def get_by_legajo(self, db: Session, legajo: int) -> Optional[Alumno]:
         stmt = select(Alumno).where(Alumno.legajo == legajo)
         return db.scalars(stmt).first()
 
@@ -30,7 +30,7 @@ class AlumnoRepository(CRUDBase[Alumno, AlumnoCreate, AlumnoUpdate]):
         stmt = select(Alumno).where(Alumno.estado_alumno == "ACTIVO").offset(skip).limit(limit)
         return list(db.scalars(stmt).all())
 
-    def soft_delete(self, db: Session, legajo: str) -> Optional[Alumno]:
+    def soft_delete(self, db: Session, legajo: int) -> Optional[Alumno]:
         alumno = self.get_by_legajo(db, legajo)
         if alumno:
             alumno.estado_alumno = "INACTIVO"
@@ -42,7 +42,7 @@ class ProfesorRepository(CRUDBase[Profesor, ProfesorCreate, ProfesorUpdate]):
     def __init__(self):
         super().__init__(Profesor)
 
-    def get_by_legajo(self, db: Session, legajo: str) -> Optional[Profesor]:
+    def get_by_legajo(self, db: Session, legajo: int) -> Optional[Profesor]:
         stmt = select(Profesor).where(Profesor.legajo == legajo)
         return db.scalars(stmt).first()
 
@@ -54,7 +54,7 @@ class ProfesorRepository(CRUDBase[Profesor, ProfesorCreate, ProfesorUpdate]):
         stmt = select(Profesor).where(Profesor.estado == "ACTIVO").offset(skip).limit(limit)
         return list(db.scalars(stmt).all())
 
-    def soft_delete(self, db: Session, legajo: str) -> Optional[Profesor]:
+    def soft_delete(self, db: Session, legajo: int) -> Optional[Profesor]:
         profesor = self.get_by_legajo(db, legajo)
         if profesor:
             profesor.estado = "INACTIVO"

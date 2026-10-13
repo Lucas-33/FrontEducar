@@ -70,14 +70,14 @@ class APIClient:
         response.raise_for_status()
         return response.json()
 
-    async def update_alumno(self, legajo: str, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_alumno(self, legajo: int, data: dict[str, Any]) -> dict[str, Any]:
         client = self._get_client()
         url = f"{self.base_url}/personas/alumnos/{legajo}"
         response = await client.put(url, json=data, headers=self._get_headers())
         response.raise_for_status()
         return response.json()
 
-    async def delete_alumno(self, legajo: str) -> bool:
+    async def delete_alumno(self, legajo: int) -> bool:
         client = self._get_client()
         url = f"{self.base_url}/personas/alumnos/{legajo}"
         response = await client.delete(url, headers=self._get_headers())
