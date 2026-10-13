@@ -107,7 +107,8 @@ async def main(page: ft.Page):
             page.update()
             return
         elif ruta == "/admin/alumnos/nuevo":
-            page.views.append(ft.View(route=ruta, padding=0, controls=[get_admin_alumno_form_view(page)]))
+            vista_form = await get_admin_alumno_form_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_form]))
             page.update()
             return
         elif ruta == "/admin/profesores":

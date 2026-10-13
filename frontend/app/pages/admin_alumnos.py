@@ -24,8 +24,8 @@ from frontend.app.components.table_view import (
 async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
     """Retorna la vista completa del directorio de alumnos consumiendo asincrónicamente la API."""
 
-    # Asegurar token desde client_storage si la página fue recargada
-    token_almacenado = page.client_storage.get("auth_token")
+    # Asegurar token desde atributos de page si api_client no lo tiene
+    token_almacenado = getattr(page, "auth_token", None)
     if token_almacenado and not api_client.token:
         api_client.set_token(token_almacenado)
 
@@ -147,6 +147,13 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
         else:
             estado_texto = "Activo"
 
+        async def eliminar_alumno(e):
+            try:
+                await api_client.delete_alumno(legajo)
+                page.go("/admin/alumnos")
+            except Exception as err:
+                print(f"Error al eliminar alumno {legajo}: {err}")
+
         return ft.Container(
             height=54,
             padding=ft.Padding(16, 0, 16, 0),
@@ -176,6 +183,7 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
                                     icon_color=TEAL,
                                     tooltip="Editar Alumno",
                                     padding=0,
+                                    on_click=lambda _: None,
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE_OUTLINE,
@@ -183,6 +191,7 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
                                     icon_color=BADGE_RED_TXT,
                                     tooltip="Dar de baja",
                                     padding=0,
+                                    on_click=eliminar_alumno,
                                 ),
                             ],
                         ),

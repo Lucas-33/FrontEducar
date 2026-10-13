@@ -1,6 +1,9 @@
 import flet as ft
+import httpx
+from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
+    BADGE_RED_TXT,
     BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
@@ -14,13 +17,238 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.form_controls import dropdown_con_label, input_con_label
 
 
-def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa del formulario de alta/edición de alumno K-12."""
+async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
+    """Retorna la vista asíncrona de alta de alumno conectada con la API."""
 
-    # ==================== 1. BARRA SUPERIOR DE ACCIONES ====================
+    # ==================== 1. CARGA INICIAL DE CURSOS ====================
+    cursos_opciones: list[ft.dropdown.Option] = []
+    try:
+        cursos_data = await api_client.get_cursos()
+        for c in cursos_data:
+            id_curso = str(c.get("id_curso", ""))
+            nombre = c.get("nombre", "")
+            division = c.get("division", "")
+            texto = f"{nombre} {division}".strip()
+            cursos_opciones.append(ft.dropdown.Option(key=id_curso, text=texto))
+    except (httpx.RequestError, httpx.HTTPStatusError):
+        cursos_opciones = []
+
+    # ==================== 2. CAMPOS DEL FORMULARIO ====================
+    legajo_field = ft.TextField(
+        hint_text="Autogenerado o manual (ej: 10255)",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_PAGE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    dni_field = ft.TextField(
+        hint_text="Ej: 46124990",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    nombres_field = ft.TextField(
+        hint_text="Ej: Sofía Valentina",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    apellidos_field = ft.TextField(
+        hint_text="Ej: Díaz",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    fecha_nac_field = ft.TextField(
+        hint_text="AAAA-MM-DD (ej: 2012-05-18)",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    domicilio_field = ft.TextField(
+        hint_text="Av. Sarmiento 450, Resistencia",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    telefono_field = ft.TextField(
+        hint_text="3624-XXXXXX",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    email_field = ft.TextField(
+        hint_text="contacto@familia.com",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+    )
+
+    curso_dropdown = ft.Dropdown(
+        hint_text="Seleccione un curso...",
+        hint_style=ft.TextStyle(size=13, color=MUTED),
+        text_size=13,
+        options=cursos_opciones,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 0, 8, 12),
+        height=CONTROL_HEIGHT,
+    )
+
+    feedback_text = ft.Text("", size=13, weight=ft.FontWeight.W_600, visible=False)
+
+    def envolver_campo(label: str, control: ft.Control, expand: bool = True) -> ft.Column:
+        return ft.Column(
+            spacing=6,
+            expand=expand,
+            controls=[
+                ft.Text(label, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                control,
+            ],
+        )
+
+    # ==================== 3. LÓGICA DE GUARDADO ====================
+    btn_guardar = ft.Button(
+        content=ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+        bgcolor=TEAL,
+        height=37,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
+            padding=ft.Padding(20, 10, 20, 10),
+        ),
+    )
+
+    async def guardar_alumno(e):
+        feedback_text.visible = False
+        page.update()
+
+        dni = (dni_field.value or "").strip()
+        nombres = (nombres_field.value or "").strip()
+        apellidos = (apellidos_field.value or "").strip()
+        legajo = (legajo_field.value or "").strip()
+        fecha_nac = (fecha_nac_field.value or "").strip()
+        id_curso = curso_dropdown.value
+
+        if not dni or not nombres or not apellidos:
+            feedback_text.value = "⚠️ DNI, Nombres y Apellidos son campos obligatorios."
+            feedback_text.color = BADGE_RED_TXT
+            feedback_text.visible = True
+            page.update()
+            return
+
+        payload = {
+            "dni": dni,
+            "nombre": nombres,
+            "apellido": apellidos,
+            "domicilio": (domicilio_field.value or "").strip() or None,
+            "telefono": (telefono_field.value or "").strip() or None,
+            "correo_electronico": (email_field.value or "").strip() or None,
+        }
+
+        if legajo:
+            try:
+                payload["legajo"] = int(legajo)
+            except ValueError:
+                payload["legajo"] = legajo
+
+        if fecha_nac:
+            payload["fecha_nacimiento"] = fecha_nac
+
+        if id_curso:
+            try:
+                payload["id_curso"] = int(id_curso)
+            except ValueError:
+                payload["id_curso"] = id_curso
+
+        btn_guardar.disabled = True
+        btn_guardar.content = ft.Text("Guardando...", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+        page.update()
+
+        try:
+            await api_client.create_alumno(payload)
+            page.go("/admin/alumnos")
+        except httpx.HTTPStatusError as err:
+            btn_guardar.disabled = False
+            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            detalle = "Error al crear el alumno."
+            try:
+                data_err = err.response.json()
+                detalle = data_err.get("detail", detalle)
+            except Exception:
+                pass
+            feedback_text.value = f"⚠️ {detalle}"
+            feedback_text.color = BADGE_RED_TXT
+            feedback_text.visible = True
+            page.update()
+        except httpx.RequestError:
+            btn_guardar.disabled = False
+            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            feedback_text.value = "⚠️ Error de conexión con el backend."
+            feedback_text.color = BADGE_RED_TXT
+            feedback_text.visible = True
+            page.update()
+
+    btn_guardar.on_click = guardar_alumno
+
+    # ==================== 4. ACCIONES SUPERIORES ====================
     header_actions = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -41,7 +269,7 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                         content=ft.Icon(ft.Icons.ARROW_BACK, size=16, color=TEXT_COLOR),
                     ),
                     ft.Text(
-                        "Nuevo Alumno (Ciclo 2025)",
+                        "Nuevo Alumno (Ciclo Lectivo)",
                         size=18,
                         weight=ft.FontWeight.BOLD,
                         color=TEAL_DARK,
@@ -52,6 +280,7 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
+                    feedback_text,
                     ft.Button(
                         content=ft.Text("Cancelar", size=14, weight=ft.FontWeight.W_600, color=MUTED),
                         bgcolor=BG_WHITE,
@@ -63,53 +292,13 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                         ),
                         on_click=lambda _: page.go("/admin/alumnos"),
                     ),
-                    ft.Button(
-                        content=ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
-                        bgcolor=TEAL,
-                        height=37,
-                        style=ft.ButtonStyle(
-                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
-                            padding=ft.Padding(20, 10, 20, 10),
-                        ),
-                        on_click=lambda _: page.go("/admin/alumnos"),
-                    ),
+                    btn_guardar,
                 ],
             ),
         ],
     )
 
-    # ==================== 2. COLUMNA IZQUIERDA FLUIDA ====================
-    fecha_nacimiento_field = ft.Column(
-        spacing=6,
-        expand=True,
-        controls=[
-            ft.Text("Fecha de Nacimiento *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-            ft.Container(
-                height=CONTROL_HEIGHT,
-                bgcolor=BG_WHITE,
-                border=ft.Border.all(1, BORDER_COLOR),
-                border_radius=BORDER_RADIUS,
-                padding=ft.Padding(12, 0, 12, 0),
-                content=ft.Row(
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        ft.TextField(
-                            hint_text="DD/MM/AAAA",
-                            hint_style=ft.TextStyle(size=14, color=MUTED),
-                            text_size=14,
-                            color=TEXT_COLOR,
-                            border=ft.InputBorder.NONE,
-                            content_padding=ft.Padding(0, 0, 0, 10),
-                            expand=True,
-                        ),
-                        ft.Icon(ft.Icons.CALENDAR_TODAY_OUTLINED, size=16, color=MUTED),
-                    ],
-                ),
-            ),
-        ],
-    )
-
+    # ==================== 5. COLUMNAS Y FORMULARIO ====================
     card_info_personal = ft.Container(
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
@@ -125,29 +314,29 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Legajo (Autogenerado)", "", width=None, expand=True, read_only=True, valor_inicial="#10251"),
-                                input_con_label("DNI *", "Ej: 46.124.990", width=None, expand=True),
+                                envolver_campo("Legajo", legajo_field),
+                                envolver_campo("DNI *", dni_field),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Nombres *", "Ej: Sofía Valentina", width=None, expand=True),
-                                input_con_label("Apellidos *", "Ej: Díaz", width=None, expand=True),
+                                envolver_campo("Nombres *", nombres_field),
+                                envolver_campo("Apellidos *", apellidos_field),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                fecha_nacimiento_field,
-                                input_con_label("Domicilio Real *", "Av. Sarmiento 450, Resistencia", width=None, expand=True),
+                                envolver_campo("Fecha de Nacimiento", fecha_nac_field),
+                                envolver_campo("Domicilio Real", domicilio_field),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                input_con_label("Teléfono de Contacto *", "3624-XXXXXX", width=None, expand=True),
-                                input_con_label("Correo Electrónico Tutor", "ejemplo@tutor.com", width=None, expand=True),
+                                envolver_campo("Teléfono de Contacto", telefono_field),
+                                envolver_campo("Correo Electrónico Tutor", email_field),
                             ],
                         ),
                     ],
@@ -168,9 +357,7 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                 ft.Row(
                     spacing=16,
                     controls=[
-                        dropdown_con_label("Nivel Educativo", "Nivel Primario", ["Nivel Inicial", "Nivel Primario", "Nivel Secundario"], width=None, expand=True),
-                        dropdown_con_label("Curso", "4to Grado A", ["Sala 5", "4to Grado A", "6to Grado C", "5to Año B"], width=None, expand=True),
-                        dropdown_con_label("Estado de Matrícula", "Regular", ["Regular", "Pendiente", "Inactivo"], width=None, expand=True),
+                        envolver_campo("Curso Asignado *", curso_dropdown),
                     ],
                 ),
             ],
@@ -183,37 +370,9 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         controls=[card_info_personal, card_info_academica],
     )
 
-    # ==================== 3. COLUMNA DERECHA COMPACTA ====================
-    deportes_lista = [
-        ("Atletismo", False),
-        ("Natación", True),
-        ("Fútbol", False),
-        ("Artes Marciales", False),
-        ("Vóleibol", False),
-        ("Danza", False),
-        ("Básquet", True),
-        ("Ajedrez", False),
-    ]
-
-    def item_deporte(nombre: str, marcado: bool) -> ft.Row:
-        return ft.Row(
-            spacing=12,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Container(
-                    width=20,
-                    height=20,
-                    bgcolor=TEAL_LIGHT if marcado else BG_WHITE,
-                    border=ft.Border.all(1, TEAL if marcado else BORDER_COLOR),
-                    border_radius=4,
-                    alignment=ft.Alignment(0, 0),
-                    content=ft.Icon(ft.Icons.CHECK, size=12, color=TEAL) if marcado else None,
-                ),
-                ft.Text(nombre, size=14, color=TEXT_COLOR),
-            ],
-        )
-
-    card_deportes = ft.Container(
+    # Lateral informativo
+    card_instrucciones = ft.Container(
+        width=360,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
         border_radius=CARD_RADIUS,
@@ -221,108 +380,30 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=16,
             controls=[
-                ft.Column(
-                    spacing=4,
-                    controls=[
-                        ft.Text("Inscripción Deportiva", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.Text("* Máximo 2 disciplinas activas.", size=12, color=ORANGE),
-                    ],
+                ft.Text("Pautas de Matriculación", size=17, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "1. El DNI debe ingresarse sin puntos ni caracteres especiales.\n\n"
+                    "2. La fecha de nacimiento sigue el formato estándar AAAA-MM-DD.\n\n"
+                    "3. El curso asignará automáticamente las materias y turnos predeterminados.",
+                    size=13,
+                    color=MUTED,
                 ),
-                ft.Column(
-                    spacing=12,
-                    controls=[item_deporte(nombre, status) for nombre, status in deportes_lista],
-                ),
-            ],
-        ),
-    )
-
-    card_servicios = ft.Container(
-        bgcolor=BG_WHITE,
-        border=ft.Border.all(1, BORDER_COLOR),
-        border_radius=CARD_RADIUS,
-        padding=24,
-        content=ft.Column(
-            spacing=20,
-            controls=[
-                ft.Text("Servicios Adicionales", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                ft.Column(
-                    spacing=16,
-                    controls=[
-                        ft.Row(
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[
-                                ft.Column(
-                                    spacing=2,
-                                    controls=[
-                                        ft.Text("Comedor Escolar", size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                                        ft.Text("Acceso diario al almuerzo institucional", size=11, color=MUTED),
-                                    ],
-                                ),
-                                ft.Switch(value=True, active_color=TEAL),
-                            ],
-                        ),
-                        ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
-                        ft.Column(
-                            spacing=12,
-                            controls=[
-                                ft.Row(
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                                    controls=[
-                                        ft.Column(
-                                            spacing=2,
-                                            controls=[
-                                                ft.Text("Transporte Escolar", size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                                                ft.Text("Servicio de traslado institucional", size=11, color=MUTED),
-                                            ],
-                                        ),
-                                        ft.Switch(value=False, active_color=TEAL),
-                                    ],
-                                ),
-                                ft.Container(
-                                    opacity=0.5,
-                                    content=ft.Column(
-                                        spacing=6,
-                                        controls=[
-                                            ft.Text("Zona de Recorrido Asignada", size=12, weight=ft.FontWeight.W_600, color=MUTED),
-                                            ft.Container(
-                                                height=36,
-                                                bgcolor=BG_PAGE,
-                                                border=ft.Border.all(1, BORDER_COLOR),
-                                                border_radius=BORDER_RADIUS,
-                                                content=ft.Dropdown(
-                                                    hint_text="Ninguna seleccionada",
-                                                    hint_style=ft.TextStyle(size=13, color=MUTED),
-                                                    text_size=13,
-                                                    border=ft.InputBorder.NONE,
-                                                    content_padding=ft.Padding(10, 0, 8, 14),
-                                                    options=[
-                                                        ft.dropdown.Option("Recorrido 1 - Zona Norte"),
-                                                        ft.dropdown.Option("Recorrido 2 - Zona Sur"),
-                                                        ft.dropdown.Option("Recorrido 3 - Zona Centro"),
-                                                        ft.dropdown.Option("Recorrido 4 - Zona Este"),
-                                                    ],
-                                                ),
-                                            ),
-                                        ],
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ],
+                ft.Container(
+                    bgcolor=TEAL_LIGHT,
+                    border_radius=BORDER_RADIUS,
+                    padding=14,
+                    content=ft.Row(
+                        spacing=10,
+                        controls=[
+                            ft.Icon(ft.Icons.INFO_OUTLINE, size=18, color=TEAL),
+                            ft.Text("Los legajos vacíos se autogeneran según la secuencia institucional.", size=12, color=TEAL_DARK),
+                        ],
+                    ),
                 ),
             ],
         ),
     )
 
-    columna_derecha = ft.Column(
-        width=380,
-        spacing=24,
-        controls=[card_deportes, card_servicios],
-    )
-
-    # ==================== 4. RETORNO CON ADMIN_LAYOUT ====================
     return admin_layout(
         page=page,
         titulo="Ficha de Alumno — Alta de Matrícula K-12",
@@ -332,7 +413,7 @@ def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
             ft.Row(
                 spacing=24,
                 vertical_alignment=ft.CrossAxisAlignment.START,
-                controls=[columna_izquierda, columna_derecha],
+                controls=[columna_izquierda, card_instrucciones],
             ),
         ],
     )
