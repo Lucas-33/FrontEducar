@@ -1,4 +1,6 @@
+import httpx
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_PAGE_ALT,
     BG_WHITE,
@@ -87,6 +89,54 @@ def get_contacto_view(page: ft.Page) -> list[ft.Control]:
     )
 
     # FORMULARIO DE CONSULTA WEB
+    campo_nombre = ft.TextField(hint_text="Tu nombre", border_color=BORDER_COLOR, focused_border_color=TEAL, height=CONTROL_HEIGHT, text_size=14, border_radius=BORDER_RADIUS)
+    campo_telefono = ft.TextField(hint_text="+54 362 4XXXXXX", border_color=BORDER_COLOR, focused_border_color=TEAL, height=CONTROL_HEIGHT, text_size=14, border_radius=BORDER_RADIUS)
+    campo_correo = ft.TextField(hint_text="tucorreo@ejemplo.com", border_color=BORDER_COLOR, focused_border_color=TEAL, height=CONTROL_HEIGHT, text_size=14, border_radius=BORDER_RADIUS)
+    campo_mensaje = ft.TextField(hint_text="Describa su consulta acerca de niveles, aranceles o visitas...", border_color=BORDER_COLOR, focused_border_color=TEAL, multiline=True, min_lines=4, border_radius=BORDER_RADIUS)
+
+    def mostrar_resultado(titulo: str, mensaje: str, error: bool = False):
+        dialogo = ft.AlertDialog(
+            modal=True,
+            bgcolor=BG_WHITE,
+            title=ft.Text(titulo, size=17, weight=ft.FontWeight.BOLD, color="#B91C1C" if error else TEAL_DARK),
+            content=ft.Text(mensaje, size=14, color=TEXT_COLOR, width=380),
+            actions=[
+                ft.Button("Entendido", bgcolor=TEAL, color=BG_WHITE, on_click=lambda _: page.pop_dialog())
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.show_dialog(dialogo)
+
+    async def enviar_consulta(e):
+        if not campo_nombre.value or not campo_telefono.value or not campo_correo.value or not campo_mensaje.value:
+            mostrar_resultado("Faltan datos", "Complete todos los campos obligatorios (*) para enviar su consulta.", error=True)
+            return
+
+        payload = {
+            "nombre": campo_nombre.value.strip(),
+            "telefono": campo_telefono.value.strip(),
+            "correo": campo_correo.value.strip(),
+            "mensaje": campo_mensaje.value.strip(),
+        }
+        try:
+            await api_client.enviar_contacto(payload)
+        except httpx.HTTPStatusError:
+            mostrar_resultado("No se pudo enviar", "Revise los datos ingresados e intente nuevamente.", error=True)
+            return
+        except Exception:
+            mostrar_resultado("Sin conexión", "No se pudo conectar con el servidor. Intente más tarde.", error=True)
+            return
+
+        campo_nombre.value = ""
+        campo_telefono.value = ""
+        campo_correo.value = ""
+        campo_mensaje.value = ""
+        page.update()
+        mostrar_resultado(
+            "¡Consulta enviada!",
+            "Su mensaje fue recibido por secretaría. Le responderemos a la brevedad al correo indicado.",
+        )
+
     tarjeta_formulario = ft.Container(
         col={"sm": 12, "md": 7},
         bgcolor=BG_WHITE,
@@ -108,7 +158,7 @@ def get_contacto_view(page: ft.Page) -> list[ft.Control]:
                                 spacing=6,
                                 controls=[
                                     ft.Text("Nombre completo *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                                    ft.TextField(hint_text="Tu nombre", border_color=BORDER_COLOR, focused_border_color=TEAL, height=CONTROL_HEIGHT, text_size=14, border_radius=BORDER_RADIUS),
+                                    campo_nombre,
                                 ],
                             ),
                         ),
@@ -118,7 +168,7 @@ def get_contacto_view(page: ft.Page) -> list[ft.Control]:
                                 spacing=6,
                                 controls=[
                                     ft.Text("Teléfono de contacto *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                                    ft.TextField(hint_text="+54 362 4XXXXXX", border_color=BORDER_COLOR, focused_border_color=TEAL, height=CONTROL_HEIGHT, text_size=14, border_radius=BORDER_RADIUS),
+                                    campo_telefono,
                                 ],
                             ),
                         ),
@@ -128,7 +178,7 @@ def get_contacto_view(page: ft.Page) -> list[ft.Control]:
                                 spacing=6,
                                 controls=[
                                     ft.Text("Correo electrónico *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                                    ft.TextField(hint_text="tucorreo@ejemplo.com", border_color=BORDER_COLOR, focused_border_color=TEAL, height=CONTROL_HEIGHT, text_size=14, border_radius=BORDER_RADIUS),
+                                    campo_correo,
                                 ],
                             ),
                         ),
@@ -138,7 +188,7 @@ def get_contacto_view(page: ft.Page) -> list[ft.Control]:
                                 spacing=6,
                                 controls=[
                                     ft.Text("Mensaje o consulta *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                                    ft.TextField(hint_text="Describa su consulta acerca de niveles, aranceles o visitas...", border_color=BORDER_COLOR, focused_border_color=TEAL, multiline=True, min_lines=4, border_radius=BORDER_RADIUS),
+                                    campo_mensaje,
                                 ],
                             ),
                         ),
@@ -150,7 +200,7 @@ def get_contacto_view(page: ft.Page) -> list[ft.Control]:
                     color=BG_WHITE,
                     height=CONTROL_HEIGHT,
                     style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
-                    on_click=lambda _: None,
+                    on_click=enviar_consulta,
                 ),
             ],
         ),

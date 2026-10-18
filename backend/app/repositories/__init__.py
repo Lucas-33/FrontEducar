@@ -21,3 +21,13 @@ from backend.app.repositories.servicios import (
     inscripcion_transporte_repository,
     inscripcion_comedor_repository,
 )
+from backend.app.repositories.comunidad import (
+    mensaje_contacto_repository,
+    opinion_repository,
+    postulacion_empleo_repository,
+    solicitud_inscripcion_repository,
+)
+from backend.app.repositories.evaluacion import (
+    asistencia_repository,
+    calificacion_repository,
+)

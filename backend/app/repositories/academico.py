@@ -41,7 +41,7 @@ class MateriaCursoProfesorRepository(CRUDBase[MateriaCursoProfesor, MateriaCurso
         stmt = select(MateriaCursoProfesor).where(MateriaCursoProfesor.id_curso == id_curso)
         return list(db.scalars(stmt).all())
 
-    def get_by_profesor(self, db: Session, legajo_profesor: str) -> List[MateriaCursoProfesor]:
+    def get_by_profesor(self, db: Session, legajo_profesor: int) -> List[MateriaCursoProfesor]:
         stmt = select(MateriaCursoProfesor).where(MateriaCursoProfesor.legajo_profesor == legajo_profesor)
         return list(db.scalars(stmt).all())
 

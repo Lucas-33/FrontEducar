@@ -36,14 +36,14 @@ class InscripcionDeporteRepository(CRUDBase[InscripcionDeporte, InscripcionDepor
     def __init__(self):
         super().__init__(InscripcionDeporte)
 
-    def get_inscripcion(self, db: Session, legajo_alumno: str, id_grupo: int) -> Optional[InscripcionDeporte]:
+    def get_inscripcion(self, db: Session, legajo_alumno: int, id_grupo: int) -> Optional[InscripcionDeporte]:
         stmt = select(InscripcionDeporte).where(
             InscripcionDeporte.legajo_alumno == legajo_alumno,
             InscripcionDeporte.id_grupo == id_grupo,
         )
         return db.scalars(stmt).first()
 
-    def get_by_alumno(self, db: Session, legajo_alumno: str) -> List[InscripcionDeporte]:
+    def get_by_alumno(self, db: Session, legajo_alumno: int) -> List[InscripcionDeporte]:
         stmt = select(InscripcionDeporte).where(InscripcionDeporte.legajo_alumno == legajo_alumno)
         return list(db.scalars(stmt).all())
 
@@ -55,10 +55,10 @@ class InscripcionTransporteRepository(CRUDBase[InscripcionTransporte, Inscripcio
     def __init__(self):
         super().__init__(InscripcionTransporte)
 
-    def get_by_alumno(self, db: Session, legajo_alumno: str) -> Optional[InscripcionTransporte]:
+    def get_by_alumno(self, db: Session, legajo_alumno: int) -> Optional[InscripcionTransporte]:
         return db.get(InscripcionTransporte, legajo_alumno)
 
-    def soft_delete(self, db: Session, legajo_alumno: str) -> Optional[InscripcionTransporte]:
+    def soft_delete(self, db: Session, legajo_alumno: int) -> Optional[InscripcionTransporte]:
         inscripcion = self.get_by_alumno(db, legajo_alumno)
         if inscripcion:
             inscripcion.estado = "INACTIVO"
@@ -70,10 +70,10 @@ class InscripcionComedorRepository(CRUDBase[InscripcionComedor, InscripcionComed
     def __init__(self):
         super().__init__(InscripcionComedor)
 
-    def get_by_alumno(self, db: Session, legajo_alumno: str) -> Optional[InscripcionComedor]:
+    def get_by_alumno(self, db: Session, legajo_alumno: int) -> Optional[InscripcionComedor]:
         return db.get(InscripcionComedor, legajo_alumno)
 
-    def soft_delete(self, db: Session, legajo_alumno: str) -> Optional[InscripcionComedor]:
+    def soft_delete(self, db: Session, legajo_alumno: int) -> Optional[InscripcionComedor]:
         inscripcion = self.get_by_alumno(db, legajo_alumno)
         if inscripcion:
             inscripcion.estado = "INACTIVO"

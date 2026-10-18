@@ -80,7 +80,7 @@ class PadreResponse(PadreBase):
 # --- PADRE_ALUMNO ---
 class PadreAlumnoBase(BaseModel):
     id_padre: int
-    legajo_alumno: str
+    legajo_alumno: int
 
 class PadreAlumnoCreate(PadreAlumnoBase):
     pass

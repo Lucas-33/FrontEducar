@@ -1,4 +1,5 @@
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_WHITE,
     BORDER_COLOR,
@@ -10,6 +11,7 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
+from frontend.app.components.password_dialog import abrir_cambio_password
 
 
 def create_sidebar(
@@ -30,11 +32,20 @@ def create_sidebar(
         ("Deportes", "/admin/deportes", ft.Icons.FITNESS_CENTER_OUTLINED),
         ("Horarios", "/admin/horarios", ft.Icons.ACCESS_TIME_OUTLINED),
         ("Inscripciones", "/admin/inscripciones", ft.Icons.DESCRIPTION_OUTLINED),
+        ("Comunidad", "/admin/comunidad", ft.Icons.FORUM_OUTLINED),
         ("Transporte", "/admin/transporte", ft.Icons.DIRECTIONS_BUS_OUTLINED),
         ("Comedor", "/admin/comedor", ft.Icons.RESTAURANT_OUTLINED),
         ("Usuarios y Permisos", "/admin/usuarios", ft.Icons.LOCK_OUTLINE),
         ("Reportes", "/admin/reportes", ft.Icons.BAR_CHART_OUTLINED),
     ]
+
+    def _cerrar_sesion(_):
+        """Cierra la sesión del usuario: borra el token y vuelve al login."""
+        page.auth_token = None
+        page.auth_rol = None
+        page.auth_user = None
+        api_client.clear_token()
+        page.go("/portal")
 
     ancho_actual = 72 if collapsed else SIDEBAR_WIDTH
 
@@ -160,20 +171,68 @@ def create_sidebar(
     )
 
     if collapsed:
-        footer_section = ft.Container(
-            alignment=ft.Alignment(0, 0),
-            tooltip="Servidor Online",
-            content=ft.Container(
-                width=8,
-                height=8,
-                bgcolor=ONLINE_GREEN,
-                border_radius=4,
-            ),
+        footer_section = ft.Column(
+            spacing=8,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.IconButton(
+                    icon=ft.Icons.LOCK_RESET,
+                    icon_size=18,
+                    icon_color=TEAL,
+                    tooltip="Cambiar mi contraseña",
+                    on_click=lambda _: abrir_cambio_password(page),
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.LOGOUT,
+                    icon_size=18,
+                    icon_color="#EF4444",
+                    tooltip="Cerrar sesión",
+                    on_click=_cerrar_sesion,
+                ),
+                ft.Container(
+                    tooltip="Servidor Online",
+                    content=ft.Container(
+                        width=8,
+                        height=8,
+                        bgcolor=ONLINE_GREEN,
+                        border_radius=4,
+                    ),
+                ),
+            ],
         )
     else:
         footer_section = ft.Column(
             spacing=4,
             controls=[
+                ft.Container(
+                    height=36,
+                    border_radius=8,
+                    padding=ft.Padding(8, 6, 8, 6),
+                    on_click=lambda _: abrir_cambio_password(page),
+                    content=ft.Row(
+                        spacing=8,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Icon(ft.Icons.LOCK_RESET, size=15, color=TEAL),
+                            ft.Text("Cambiar Contraseña", size=12, color=TEXT_COLOR),
+                        ],
+                    ),
+                ),
+                ft.Container(
+                    height=36,
+                    border_radius=8,
+                    padding=ft.Padding(8, 6, 8, 6),
+                    on_click=_cerrar_sesion,
+                    content=ft.Row(
+                        spacing=8,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Icon(ft.Icons.LOGOUT, size=15, color="#EF4444"),
+                            ft.Text("Cerrar Sesión", size=12, color="#EF4444"),
+                        ],
+                    ),
+                ),
+                ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
                 ft.Row(
                     spacing=8,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,

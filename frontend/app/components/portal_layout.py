@@ -1,4 +1,5 @@
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_PAGE,
     BG_WHITE,
@@ -9,6 +10,7 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
+from frontend.app.components.password_dialog import abrir_cambio_password
 
 
 def portal_layout(
@@ -26,10 +28,35 @@ def portal_layout(
     Adapta el sidebar y topbar con accesos pertinentes al rol autenticado.
     """
 
+    def _cerrar_sesion(_):
+        """Cierra la sesión del usuario: borra el token y vuelve al login."""
+        page.auth_token = None
+        page.auth_rol = None
+        page.auth_user = None
+        api_client.clear_token()
+        page.go("/portal")
+
+    # Nombre y rol reales del usuario logueado (si están disponibles en la página)
+    auth_user = getattr(page, "auth_user", None)
+    if auth_user:
+        usuario_nombre = auth_user
+    rol_legible = {
+        "ADMIN": "Administración",
+        "TEACHER": "Docente",
+        "DOCENTE": "Docente",
+        "PARENT": "Tutor responsable",
+        "FAMILIA": "Tutor responsable",
+        "STUDENT": "Estudiante",
+        "ALUMNO": "Estudiante",
+    }.get((getattr(page, "auth_rol", "") or "").upper())
+    if rol_legible:
+        usuario_sub = rol_legible
+
     # 1. MENÚS SEGÚN ROL
     if rol.lower() in ["padre", "familia", "tutor"]:
         items_menu = [
             ("Mis Hijos", "/portal/padre/dashboard", ft.Icons.FAMILY_RESTROOM_OUTLINED),
+            ("Notas y Asistencia", "/portal/padre/notas", ft.Icons.ASSESSMENT_OUTLINED),
             ("Inscripción Cursado", "/portal/padre/inscripcion", ft.Icons.APP_REGISTRATION_OUTLINED),
             ("Deportes y Horarios", "/portal/padre/deportes", ft.Icons.FITNESS_CENTER_OUTLINED),
             ("Comedor y Transporte", "/portal/padre/servicios", ft.Icons.RESTAURANT_OUTLINED),
@@ -40,6 +67,7 @@ def portal_layout(
         items_menu = [
             ("Mi Panel", "/portal/docente/dashboard", ft.Icons.DASHBOARD_OUTLINED),
             ("Mis Cursos y Materias", "/portal/docente/materias", ft.Icons.MENU_BOOK_OUTLINED),
+            ("Notas y Asistencia", "/portal/docente/notas", ft.Icons.ASSESSMENT_OUTLINED),
             ("Nómina de Alumnos", "/portal/docente/alumnos", ft.Icons.PEOPLE_OUTLINE),
             ("Deportes a Cargo", "/portal/docente/deportes", ft.Icons.FITNESS_CENTER_OUTLINED),
         ]
@@ -48,6 +76,7 @@ def portal_layout(
         items_menu = [
             ("Mi Cursado", "/portal/alumno/dashboard", ft.Icons.SCHOOL_OUTLINED),
             ("Materias y Profesores", "/portal/alumno/materias", ft.Icons.MENU_BOOK_OUTLINED),
+            ("Mis Notas", "/portal/alumno/notas", ft.Icons.ASSESSMENT_OUTLINED),
             ("Mis Deportes", "/portal/alumno/deportes", ft.Icons.FITNESS_CENTER_OUTLINED),
             ("Comedor y Transporte", "/portal/alumno/servicios", ft.Icons.DIRECTIONS_BUS_OUTLINED),
         ]
@@ -130,7 +159,20 @@ def portal_layout(
                     height=40,
                     border_radius=8,
                     padding=ft.Padding(12, 8, 12, 8),
-                    on_click=lambda _: page.go("/portal"),
+                    on_click=lambda _: abrir_cambio_password(page),
+                    content=ft.Row(
+                        spacing=10,
+                        controls=[
+                            ft.Icon(ft.Icons.LOCK_RESET, size=16, color=TEAL),
+                            ft.Text("Cambiar Contraseña", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                        ],
+                    ),
+                ),
+                ft.Container(
+                    height=40,
+                    border_radius=8,
+                    padding=ft.Padding(12, 8, 12, 8),
+                    on_click=_cerrar_sesion,
                     content=ft.Row(
                         spacing=10,
                         controls=[

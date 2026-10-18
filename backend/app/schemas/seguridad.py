@@ -17,8 +17,8 @@ class RolResponse(RolBase):
 class UsuarioBase(BaseModel):
     username: str
     id_rol: int
-    legajo_alumno: Optional[str] = None
-    legajo_profesor: Optional[str] = None
+    legajo_alumno: Optional[int] = None
+    legajo_profesor: Optional[int] = None
     id_padre: Optional[int] = None
     activo: bool = True
 
@@ -36,6 +36,13 @@ class UsuarioResponse(UsuarioBase):
     creado_en: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
+class UsuarioAdminResponse(UsuarioBase):
+    """Vista administrativa: incluye el nombre del rol y el vínculo resuelto."""
+    id_usuario: int
+    rol: str = ""
+    vinculacion: str = "-"
+    creado_en: Optional[datetime] = None
+
 # --- AUTENTICACIÓN / JWT ---
 class LoginRequest(BaseModel):
     username: str
@@ -50,3 +57,8 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
     rol: Optional[str] = None
+
+class CambioPasswordRequest(BaseModel):
+    """Cambio de contraseña del propio usuario autenticado."""
+    password_actual: str
+    password_nueva: str

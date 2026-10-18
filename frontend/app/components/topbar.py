@@ -1,4 +1,5 @@
 import flet as ft
+from frontend.app.components.password_dialog import abrir_cambio_password
 
 # Paleta y tokens visuales del CSS
 BG_WHITE = "#FFFFFF"
@@ -22,6 +23,22 @@ def create_topbar(
     on_notifications=None,
 ) -> ft.Container:
     """Genera la barra superior (TopBar) del panel interno de control Educar SGE."""
+
+    # Nombre y rol reales del usuario logueado (si están disponibles en la página)
+    auth_user = getattr(page, "auth_user", None)
+    if auth_user:
+        usuario_nombre = auth_user
+    rol_legible = {
+        "ADMIN": "Administración",
+        "TEACHER": "Docente",
+        "DOCENTE": "Docente",
+        "PARENT": "Tutor responsable",
+        "FAMILIA": "Tutor responsable",
+        "STUDENT": "Estudiante",
+        "ALUMNO": "Estudiante",
+    }.get((getattr(page, "auth_rol", "") or "").upper())
+    if rol_legible:
+        usuario_rol = rol_legible
 
     # 1. Buscador estilo píldora (195px x 26px aprox)
     search_input = ft.TextField(
@@ -75,6 +92,18 @@ def create_topbar(
         content=ft.Icon(ft.Icons.NOTIFICATIONS_NONE_OUTLINED, size=18, color=TEAL),
     )
 
+    # 3b. Botón circular para cambiar la contraseña del usuario
+    password_button = ft.Container(
+        width=36,
+        height=36,
+        bgcolor=TEAL_LIGHT,
+        border_radius=18,
+        alignment=ft.Alignment(0, 0),
+        tooltip="Cambiar mi contraseña",
+        on_click=lambda _: abrir_cambio_password(page),
+        content=ft.Icon(ft.Icons.LOCK_RESET, size=18, color=TEAL),
+    )
+
     # 4. Sección de Usuario (Avatar 36x36px + Nombre y Cargo)
     user_avatar = ft.Container(
         width=36,
@@ -122,6 +151,7 @@ def create_topbar(
             search_bar,
             help_button,
             notifications_button,
+            password_button,
             user_section,
         ],
     )

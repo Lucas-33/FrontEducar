@@ -149,7 +149,7 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
 
         async def eliminar_alumno(e):
             try:
-                await api_client.delete_alumno(legajo)
+                await api_client.delete_alumno(int(legajo))
                 page.go("/admin/alumnos")
             except Exception as err:
                 print(f"Error al eliminar alumno {legajo}: {err}")

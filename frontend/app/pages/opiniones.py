@@ -1,4 +1,6 @@
+import httpx
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_PAGE_ALT,
     BG_WHITE,
@@ -15,15 +17,47 @@ from frontend.app.components.constants import (
 )
 
 
-def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
-    """Retorna la vista de Testimonios y Formulario público para dejar opiniones sin login."""
+def _fecha_legible(iso: str | None) -> str:
+    """Convierte una fecha ISO (2026-10-18) al formato '18 Oct, 2026'."""
+    meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    if not iso:
+        return ""
+    partes = str(iso)[:10].split("-")
+    if len(partes) == 3:
+        try:
+            return f"{int(partes[2]):02d} {meses[int(partes[1]) - 1]}, {partes[0]}"
+        except (ValueError, IndexError):
+            return str(iso)
+    return str(iso)
 
-    # 1. ESTADO Y TESTIMONIOS EXISTENTES
+
+async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
+    """Retorna la vista de Testimonios con las opiniones aprobadas cargadas desde la API
+    y el formulario público conectado (las opiniones nuevas quedan en moderación)."""
+
+    # 1. TESTIMONIOS APROBADOS DESDE LA API (con respaldo de ejemplo si no hay ninguno)
     testimonios_data = [
         {"nombre": "Carolina Ferreyra", "relacion": "Madre Nivel Primario", "estrellas": 5, "fecha": "04 Oct, 2026", "opinion": "La infraestructura deportiva y el natatorio climatizado son únicos en Resistencia. Mis dos hijos van felices y la jornada extendida les permite aprovechar cada minuto."},
         {"nombre": "Prof. Roberto Zampa", "relacion": "Docente Universitario", "estrellas": 5, "fecha": "28 Sep, 2026", "opinion": "El enfoque trilingüe y los laboratorios de ciencias marcan una diferencia notable en el nivel pedagógico con el que egresan los estudiantes secundarios."},
         {"nombre": "Mariana Gómez", "relacion": "Madre Nivel Inicial", "estrellas": 5, "fecha": "15 Sep, 2026", "opinion": "Excelente servicio de comedor y gabinete psicopedagógico. La adaptación en sala de 4 años fue sumamente cálida y personalizada por parte de las maestras."},
     ]
+
+    try:
+        opiniones_api = await api_client.get_opiniones()
+    except Exception:
+        opiniones_api = []
+
+    if opiniones_api:
+        testimonios_data = [
+            {
+                "nombre": o.get("nombre") or "Anónimo",
+                "relacion": o.get("vinculo") or "Comunidad",
+                "estrellas": o.get("estrellas") or 5,
+                "fecha": _fecha_legible(o.get("fecha")),
+                "opinion": o.get("comentario") or "",
+            }
+            for o in opiniones_api
+        ]
 
     def tarjeta_testimonio(t: dict) -> ft.Container:
         return ft.Container(
@@ -95,15 +129,36 @@ def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
 
     alerta_mensaje = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=TEAL)
 
-    def enviar_opinion(e):
+    async def enviar_opinion(e):
         if not nombre_input.value or not opinion_input.value:
             alerta_mensaje.value = "Por favor, complete su nombre y comentario antes de enviar."
             alerta_mensaje.color = "#EF4444"
-        else:
-            alerta_mensaje.value = "¡Gracias por su testimonio! Su opinión ha sido enviada para moderación."
-            alerta_mensaje.color = TEAL
-            nombre_input.value = ""
-            opinion_input.value = ""
+            alerta_mensaje.update()
+            return
+
+        payload = {
+            "nombre": nombre_input.value.strip(),
+            "vinculo": rol_dropdown.value,
+            "comentario": opinion_input.value.strip(),
+            "estrellas": 5,
+        }
+        try:
+            await api_client.crear_opinion(payload)
+        except httpx.HTTPStatusError:
+            alerta_mensaje.value = "Revise los datos ingresados (nombre y comentario son obligatorios)."
+            alerta_mensaje.color = "#EF4444"
+            alerta_mensaje.update()
+            return
+        except Exception:
+            alerta_mensaje.value = "No se pudo conectar con el servidor. Intente nuevamente."
+            alerta_mensaje.color = "#EF4444"
+            alerta_mensaje.update()
+            return
+
+        alerta_mensaje.value = "¡Gracias por su testimonio! Su opinión fue enviada para moderación y se publicará una vez aprobada."
+        alerta_mensaje.color = TEAL
+        nombre_input.value = ""
+        opinion_input.value = ""
         alerta_mensaje.update()
 
     formulario_card = ft.Container(

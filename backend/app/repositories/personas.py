@@ -74,7 +74,7 @@ class PadreAlumnoRepository(CRUDBase[PadreAlumno, PadreAlumnoCreate, PadreAlumno
     def __init__(self):
         super().__init__(PadreAlumno)
 
-    def get_relacion(self, db: Session, id_padre: int, legajo_alumno: str) -> Optional[PadreAlumno]:
+    def get_relacion(self, db: Session, id_padre: int, legajo_alumno: int) -> Optional[PadreAlumno]:
         stmt = select(PadreAlumno).where(
             PadreAlumno.id_padre == id_padre,
             PadreAlumno.legajo_alumno == legajo_alumno,
@@ -85,7 +85,7 @@ class PadreAlumnoRepository(CRUDBase[PadreAlumno, PadreAlumnoCreate, PadreAlumno
         stmt = select(PadreAlumno).where(PadreAlumno.id_padre == id_padre)
         return list(db.scalars(stmt).all())
 
-    def get_padres_por_alumno(self, db: Session, legajo_alumno: str) -> List[PadreAlumno]:
+    def get_padres_por_alumno(self, db: Session, legajo_alumno: int) -> List[PadreAlumno]:
         stmt = select(PadreAlumno).where(PadreAlumno.legajo_alumno == legajo_alumno)
         return list(db.scalars(stmt).all())
 

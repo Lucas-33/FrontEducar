@@ -1,13 +1,15 @@
+import httpx
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
+    BADGE_RED_TXT,
     BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
     BORDER_RADIUS,
     CARD_RADIUS,
     MUTED,
-    ONLINE_GREEN,
     ORANGE,
     TEAL,
     TEAL_DARK,
@@ -16,10 +18,148 @@ from frontend.app.components.constants import (
 )
 
 
-def get_admin_reportes_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa del Módulo General de Reportes y Estadísticas usando AdminLayout."""
+def formatear_fecha(valor) -> str:
+    """Convierte una fecha ISO (YYYY-MM-DD) al formato local DD/MM/YYYY."""
+    texto = str(valor or "").strip()
+    if not texto:
+        return "—"
+    partes = texto.split("-")
+    if len(partes) == 3 and all(partes):
+        return f"{partes[2]}/{partes[1]}/{partes[0]}"
+    return texto
 
-    # ==================== 1. TARJETAS DE CATEGORÍAS RESPONSIVAS ====================
+
+async def get_admin_reportes_view(page: ft.Page) -> ft.Row:
+    """Índice general de reportes con indicadores reales y vista previa en vivo desde la API."""
+
+    token_almacenado = getattr(page, "auth_token", None)
+    if token_almacenado and not api_client.token:
+        api_client.set_token(token_almacenado)
+
+    estado: dict = {
+        "alumnos": [],
+        "profesores": [],
+        "cursos": [],
+        "inscripciones_deporte": [],
+    }
+    errores: list[str] = []
+
+    async def consultar(etiqueta: str, metodo, *args, **kwargs) -> list:
+        """Ejecuta una consulta a la API y acumula los fallos para avisar en pantalla."""
+        try:
+            return await metodo(*args, **kwargs)
+        except httpx.HTTPStatusError as err:
+            detalle = "error del servidor"
+            try:
+                detalle = err.response.json().get("detail", detalle)
+            except Exception:
+                pass
+            errores.append(f"{etiqueta}: {detalle}")
+            return []
+        except httpx.RequestError:
+            errores.append(f"{etiqueta}: sin conexión con el backend")
+            return []
+        except Exception:
+            errores.append(f"{etiqueta}: error inesperado")
+            return []
+
+    estado["alumnos"] = await consultar("alumnos", api_client.get_alumnos, solo_activos=False)
+    estado["profesores"] = await consultar("docentes", api_client.get_profesores, solo_activos=False)
+    estado["cursos"] = await consultar("cursos", api_client.get_cursos)
+    estado["inscripciones_deporte"] = await consultar("inscripciones deportivas", api_client.get_inscripciones_deporte)
+
+    alumnos_activos = len([a for a in estado["alumnos"] if str(a.get("estado_alumno", "")).upper() == "ACTIVO"])
+    docentes_activos = len([p for p in estado["profesores"] if str(p.get("estado", "")).upper() == "ACTIVO"])
+
+    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    if errores:
+        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(errores)
+        aviso_error.visible = True
+
+    # ==================== 1. INDICADORES REALES ====================
+    def kpi_card(
+        titulo: str,
+        valor: int,
+        subtitulo: str,
+        icono: ft.IconData,
+        ruta: str,
+    ) -> ft.Container:
+        return ft.Container(
+            col={"sm": 12, "md": 6, "lg": 3},
+            bgcolor=BG_WHITE,
+            border=ft.Border.all(1, BORDER_COLOR),
+            border_radius=12,
+            padding=18,
+            on_click=lambda _: page.go(ruta),
+            content=ft.Row(
+                spacing=14,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(
+                        width=40,
+                        height=40,
+                        bgcolor=TEAL_LIGHT,
+                        border_radius=BORDER_RADIUS,
+                        alignment=ft.Alignment(0, 0),
+                        content=ft.Icon(icono, size=20, color=TEAL_DARK),
+                    ),
+                    ft.Column(
+                        spacing=2,
+                        controls=[
+                            ft.Text(str(valor), size=22, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(titulo, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                            ft.Text(subtitulo, size=11, color=MUTED, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                        ],
+                    ),
+                ],
+            ),
+        )
+
+    kpis = ft.ResponsiveRow(
+        columns=12,
+        spacing=16,
+        run_spacing=16,
+        controls=[
+            kpi_card(
+                "Alumnos activos",
+                alumnos_activos,
+                f"{len(estado['alumnos'])} registrados en total",
+                ft.Icons.PERSON_OUTLINE,
+                "/admin/reporte-alumnos-docentes",
+            ),
+            kpi_card(
+                "Docentes activos",
+                docentes_activos,
+                f"{len(estado['profesores'])} registrados en total",
+                ft.Icons.WORK_OUTLINE,
+                "/admin/reporte-alumnos-docentes",
+            ),
+            kpi_card(
+                "Cursos y divisiones",
+                len(estado["cursos"]),
+                "Divisiones cargadas en el sistema",
+                ft.Icons.CLASS_OUTLINED,
+                "/admin/reporte-cursos-materias",
+            ),
+            kpi_card(
+                "Inscriptos a deportes",
+                len(estado["inscripciones_deporte"]),
+                "Fichas de inscripción registradas",
+                ft.Icons.FITNESS_CENTER_OUTLINED,
+                "/admin/reporte-deportes-avanzado",
+            ),
+        ],
+    )
+
+    seccion_indicadores = ft.Column(
+        spacing=16,
+        controls=[
+            ft.Text("Indicadores Generales del Sistema", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+            kpis,
+        ],
+    )
+
+    # ==================== 2. TARJETAS DE CATEGORÍAS RESPONSIVAS ====================
     def categoria_card(titulo: str, descripcion: str, icono: ft.IconData, ruta: str | None = None) -> ft.Container:
         return ft.Container(
             col={"sm": 12, "md": 6, "lg": 4},
@@ -65,12 +205,12 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
         )
 
     categorias_data = [
-        ("Reporte por Alumno", "Progreso individual, inasistencias y comportamiento consolidado.", ft.Icons.PERSON_OUTLINE, "/admin/reporte-alumnos-docentes"),
-        ("Reporte por Docente", "Horas cátedra dictadas, asignaciones de materias y licencias.", ft.Icons.WORK_OUTLINE, "/admin/reporte-alumnos-docentes"),
-        ("Listado por Curso", "Nóminas completas filtradas por grado, turno y nivel académico.", ft.Icons.PEOPLE_OUTLINE, "/admin/reporte-cursos-materias"),
-        ("Listado por Materia", "Estadísticas de rendimiento, promedios y nóminas de inscriptos.", ft.Icons.MENU_BOOK_OUTLINED, "/admin/reporte-cursos-materias"),
-        ("Listado por Deporte", "Alumnos inscriptos por disciplina deportiva para control médico.", ft.Icons.FITNESS_CENTER_OUTLINED, "/admin/reporte-deportes-avanzado"),
-        ("Listado por Transporte", "Hojas de ruta por recorrido con datos de tutores y teléfonos.", ft.Icons.DIRECTIONS_BUS_OUTLINED, "/admin/reporte-transporte-pasajeros"),
+        ("Reporte por Alumno", "Nómina de alumnos por curso y nivel con su estado de matrícula.", ft.Icons.PERSON_OUTLINE, "/admin/reporte-alumnos-docentes"),
+        ("Reporte por Docente", "Plantel docente agrupado por especialidad y estado registrado.", ft.Icons.WORK_OUTLINE, "/admin/reporte-alumnos-docentes"),
+        ("Listado por Curso", "Cursos y divisiones con matrícula activa y materias asignadas.", ft.Icons.PEOPLE_OUTLINE, "/admin/reporte-cursos-materias"),
+        ("Listado por Materia", "Materias dictadas, docente a cargo e inscriptos por curso.", ft.Icons.MENU_BOOK_OUTLINED, "/admin/reporte-cursos-materias"),
+        ("Listado por Deporte", "Grupos, niveles, horarios e inscriptos por disciplina deportiva.", ft.Icons.FITNESS_CENTER_OUTLINED, "/admin/reporte-deportes-avanzado"),
+        ("Listado por Transporte", "Pasajeros por recorrido con estado de alta y datos de contacto.", ft.Icons.DIRECTIONS_BUS_OUTLINED, "/admin/reporte-transporte-pasajeros"),
     ]
 
     seccion_categorias = ft.Column(
@@ -86,12 +226,15 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    # ==================== 2. VISTA PREVIA DE REPORTE ====================
-    alumnos_deporte_data = [
-        {"legajo": "#10245", "alumno": "Almirón, Santiago", "curso": "5to Año B", "ficha": "Aprobada (Vence Oct 25)", "ficha_color": ONLINE_GREEN, "seguro": "Al Día"},
-        {"legajo": "#10249", "alumno": "Flores, Facundo Joaquín", "curso": "6to Año A", "ficha": "Aprobada (Vence Nov 25)", "ficha_color": ONLINE_GREEN, "seguro": "Al Día"},
-        {"legajo": "#10252", "alumno": "Pérez, Juan Manuel", "curso": "2do Año C", "ficha": "Pendiente Presentar", "ficha_color": "#EF4444", "seguro": "Al Día"},
-    ]
+    # ==================== 3. VISTA PREVIA DE REPORTE (DATOS REALES) ====================
+    nombre_curso = {c["id_curso"]: c["nombre"] for c in estado["cursos"]}
+    curso_por_legajo = {a["legajo"]: a.get("id_curso") for a in estado["alumnos"]}
+
+    ultimas_inscripciones = sorted(
+        estado["inscripciones_deporte"],
+        key=lambda i: str(i.get("fecha_inscripcion") or ""),
+        reverse=True,
+    )[:3]
 
     header_reporte = ft.Container(
         height=39,
@@ -104,13 +247,14 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                 ft.Container(width=120, content=ft.Text("Legajo", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
                 ft.Container(width=220, content=ft.Text("Alumno", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
                 ft.Container(width=150, content=ft.Text("Curso", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
-                ft.Container(width=180, content=ft.Text("Ficha Médica", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
-                ft.Container(expand=True, content=ft.Text("Seguro Escolar", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
+                ft.Container(width=180, content=ft.Text("Disciplina Deportiva", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
+                ft.Container(expand=True, content=ft.Text("Fecha de Inscripción", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
             ],
         ),
     )
 
     def reporte_row(item: dict, con_borde: bool = True) -> ft.Container:
+        curso = nombre_curso.get(curso_por_legajo.get(item.get("legajo_alumno")), "Sin curso asignado")
         return ft.Container(
             height=40,
             padding=ft.Padding(12, 0, 12, 0),
@@ -119,14 +263,28 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=120, content=ft.Text(item["legajo"], size=13, weight=ft.FontWeight.W_600, color=TEAL)),
-                    ft.Container(width=220, content=ft.Text(item["alumno"], size=13, color=TEXT_COLOR)),
-                    ft.Container(width=150, content=ft.Text(item["curso"], size=13, color=TEXT_COLOR)),
-                    ft.Container(width=180, content=ft.Text(item["ficha"], size=13, weight=ft.FontWeight.W_500, color=item["ficha_color"])),
-                    ft.Container(expand=True, content=ft.Text(item["seguro"], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=120, content=ft.Text(f"#{item.get('legajo_alumno', '')}", size=13, weight=ft.FontWeight.W_600, color=TEAL)),
+                    ft.Container(width=220, content=ft.Text(str(item.get("alumno", "")).split(" (")[0], size=13, color=TEXT_COLOR)),
+                    ft.Container(width=150, content=ft.Text(curso, size=13, color=TEXT_COLOR)),
+                    ft.Container(width=180, content=ft.Text(item.get("deporte") or "—", size=13, weight=ft.FontWeight.W_500, color=TEAL_DARK)),
+                    ft.Container(expand=True, content=ft.Text(formatear_fecha(item.get("fecha_inscripcion")), size=13, color=MUTED)),
                 ],
             ),
         )
+
+    if ultimas_inscripciones:
+        filas_preview = [
+            reporte_row(item, con_borde=(indice < len(ultimas_inscripciones) - 1))
+            for indice, item in enumerate(ultimas_inscripciones)
+        ]
+    else:
+        filas_preview = [
+            ft.Container(
+                padding=20,
+                alignment=ft.Alignment(0, 0),
+                content=ft.Text("No hay inscripciones deportivas registradas en el sistema.", size=13, color=MUTED),
+            )
+        ]
 
     tabla_preview = ft.Container(
         bgcolor=BG_WHITE,
@@ -137,9 +295,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
             spacing=0,
             controls=[
                 header_reporte,
-                reporte_row(alumnos_deporte_data[0], con_borde=True),
-                reporte_row(alumnos_deporte_data[1], con_borde=True),
-                reporte_row(alumnos_deporte_data[2], con_borde=False),
+                *filas_preview,
             ],
         ),
     )
@@ -159,8 +315,8 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                         ft.Column(
                             spacing=4,
                             controls=[
-                                ft.Text("Vista Previa de Reporte: Alumnos por Deporte (Natación)", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                                ft.Text("Listado oficial de alumnos con ficha médica habilitada para el natatorio.", size=13, color=MUTED),
+                                ft.Text("Vista Previa de Reporte: Inscripciones Deportivas", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                ft.Text("Últimas fichas de inscripción registradas en las disciplinas deportivas.", size=13, color=MUTED),
                             ],
                         ),
                         ft.Row(
@@ -178,7 +334,7 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
                                     bgcolor=TEAL_LIGHT,
                                     height=32,
                                     style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS), padding=ft.Padding(16, 8, 16, 8)),
-                                    on_click=lambda _: None,
+                                    on_click=lambda _: page.launch_url(api_client.reporte_url("deportes")),
                                 ),
                                 ft.Button(
                                     content=ft.Row(
@@ -202,13 +358,15 @@ def get_admin_reportes_view(page: ft.Page) -> ft.Row:
         ),
     )
 
-    # ==================== 3. RETORNO CON ADMIN_LAYOUT ====================
+    # ==================== 4. RETORNO CON ADMIN_LAYOUT ====================
     return admin_layout(
         page=page,
         titulo="Módulo General de Reportes y Estadísticas",
         active_route="/admin/reportes",
         spacing=32,
         content_controls=[
+            aviso_error,
+            seccion_indicadores,
             seccion_categorias,
             preview_card,
         ],

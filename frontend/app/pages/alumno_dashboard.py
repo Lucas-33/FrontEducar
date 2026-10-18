@@ -1,5 +1,10 @@
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
+    BADGE_GREEN_BG,
+    BADGE_GREEN_TXT,
+    BADGE_RED_TXT,
+    BADGE_WARN_BG,
     BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
@@ -16,10 +21,217 @@ from frontend.app.components.constants import (
 from frontend.app.components.portal_layout import portal_layout
 
 
-def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
-    """Retorna el panel principal del estudiante con carnet digital y agenda diaria."""
+def _fecha_corta(iso: str | None) -> str:
+    """Convierte un ISO timestamp del backend en dd/mm/aaaa."""
+    if not iso or len(iso) < 10:
+        return "-"
+    return f"{iso[8:10]}/{iso[5:7]}/{iso[0:4]}"
 
-    # ==================== 1. BANNER ESTUDIANTE ====================
+
+def _esta_activo(valor: str | None) -> bool:
+    """Normaliza los estados ACTIVO/INACTIVO devueltos por el backend."""
+    return (valor or "").strip().upper() == "ACTIVO"
+
+
+def _badge_estado(activo: bool, con_registro: bool) -> ft.Container:
+    """Badge semántico para servicios e inscripciones del alumno."""
+    if activo:
+        return ft.Container(
+            padding=ft.Padding(8, 4, 8, 4),
+            bgcolor=BADGE_GREEN_BG,
+            border_radius=4,
+            content=ft.Text("Activo", size=12, weight=ft.FontWeight.W_600, color=BADGE_GREEN_TXT),
+        )
+    if con_registro:
+        return ft.Container(
+            padding=ft.Padding(8, 4, 8, 4),
+            bgcolor="#FEEBEB",
+            border_radius=4,
+            content=ft.Text("Inactivo", size=12, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT),
+        )
+    return ft.Container(
+        padding=ft.Padding(8, 4, 8, 4),
+        bgcolor=BG_WHITE,
+        border=ft.Border.all(1, BORDER_COLOR),
+        border_radius=4,
+        content=ft.Text("Sin alta", size=12, weight=ft.FontWeight.W_600, color=MUTED),
+    )
+
+
+def _estado_vacio(titulo: str, mensaje: str) -> ft.Container:
+    """Tarjeta de estado vacío para cuando el alumno no puede identificarse."""
+    return ft.Container(
+        bgcolor=BG_WHITE,
+        border=ft.Border.all(1, BORDER_COLOR),
+        border_radius=CARD_RADIUS,
+        padding=40,
+        content=ft.Column(
+            spacing=12,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(
+                    width=56,
+                    height=56,
+                    bgcolor=TEAL_LIGHT,
+                    border_radius=28,
+                    alignment=ft.Alignment(0, 0),
+                    content=ft.Icon(ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK),
+                ),
+                ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(mensaje, size=14, color=MUTED, text_align=ft.TextAlign.CENTER),
+            ],
+        ),
+    )
+
+
+async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
+    """Panel principal del estudiante con carnet digital y resumen real de su cursado."""
+
+    token_almacenado = getattr(page, "auth_token", None)
+    if token_almacenado and not api_client.token:
+        api_client.set_token(token_almacenado)
+
+    try:
+        perfil = await api_client.get_mi_perfil()
+    except Exception:
+        perfil = None
+
+    legajo = (perfil or {}).get("legajo_alumno")
+
+    def construir_layout(
+        usuario_nombre: str, usuario_sub: str, controles: list[ft.Control]
+    ) -> ft.Row:
+        return portal_layout(
+            page=page,
+            titulo="Portal del Estudiante — Mi Cursado",
+            active_route="/portal/alumno/dashboard",
+            rol="Alumno",
+            usuario_nombre=usuario_nombre,
+            usuario_sub=usuario_sub,
+            content_controls=controles,
+        )
+
+    if perfil is None or legajo is None:
+        return construir_layout(
+            "Estudiante",
+            "Sesión no identificada",
+            [
+                _estado_vacio(
+                    "Alumno no identificado",
+                    "No se pudo identificar al alumno. Inicie sesión nuevamente.",
+                )
+            ],
+        )
+
+    # ==================== 1. DATOS REALES DEL ALUMNO ====================
+    estado: dict = {
+        "alumno": None,
+        "cursos": [],
+        "niveles": [],
+        "asignaciones": [],
+        "grupos_deporte": [],
+        "inscripciones_deporte": [],
+        "inscripciones_transporte": [],
+        "inscripciones_comedor": [],
+    }
+    errores: list[str] = []
+
+    try:
+        alumnos = await api_client.get_alumnos(solo_activos=False)
+        estado["alumno"] = next((a for a in alumnos if a.get("legajo") == legajo), None)
+    except Exception:
+        errores.append("datos del alumno")
+
+    try:
+        estado["cursos"] = await api_client.get_cursos()
+    except Exception:
+        estado["cursos"] = []
+
+    try:
+        estado["niveles"] = await api_client.get_niveles()
+    except Exception:
+        estado["niveles"] = []
+
+    try:
+        estado["asignaciones"] = await api_client.get_asignaciones()
+    except Exception:
+        estado["asignaciones"] = []
+
+    try:
+        estado["grupos_deporte"] = await api_client.get_grupos_deporte()
+    except Exception:
+        estado["grupos_deporte"] = []
+
+    try:
+        inscripciones = await api_client.get_inscripciones_deporte()
+        estado["inscripciones_deporte"] = [
+            i for i in inscripciones if i.get("legajo_alumno") == legajo
+        ]
+    except Exception:
+        errores.append("inscripciones deportivas")
+
+    try:
+        inscripciones = await api_client.get_inscripciones_transporte()
+        estado["inscripciones_transporte"] = [
+            i for i in inscripciones if i.get("legajo_alumno") == legajo
+        ]
+    except Exception:
+        errores.append("inscripciones de transporte")
+
+    try:
+        inscripciones = await api_client.get_inscripciones_comedor()
+        estado["inscripciones_comedor"] = [
+            i for i in inscripciones if i.get("legajo_alumno") == legajo
+        ]
+    except Exception:
+        errores.append("inscripciones de comedor")
+
+    alumno = estado["alumno"]
+    if alumno is None:
+        return construir_layout(
+            "Estudiante",
+            f"Legajo #{legajo}",
+            [
+                _estado_vacio(
+                    "Registro de alumno no encontrado",
+                    f"No se encontró el legajo #{legajo} en el padrón de alumnos. "
+                    "Verifique su matrícula con la Secretaría del colegio.",
+                )
+            ],
+        )
+
+    curso = next(
+        (c for c in estado["cursos"] if c.get("id_curso") == alumno.get("id_curso")),
+        None,
+    )
+    nivel = next(
+        (n for n in estado["niveles"] if curso and n.get("id_nivel") == curso.get("id_nivel")),
+        None,
+    )
+
+    nombre_curso = curso.get("nombre") if curso else "Curso sin asignar"
+    nombre_nivel = nivel.get("nombre") if nivel else "Sin nivel"
+    nombre_completo = f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    iniciales = (
+        f"{alumno.get('nombre', '')[:1]}{alumno.get('apellido', '')[:1]}".upper() or "AL"
+    )
+    estado_alumno = (alumno.get("estado_alumno") or "-").strip().upper()
+    matricula_regular = estado_alumno == "ACTIVO"
+
+    asignaciones_curso = [
+        a for a in estado["asignaciones"] if curso and a.get("id_curso") == curso.get("id_curso")
+    ]
+    materias_unicas = {a.get("id_materia") for a in asignaciones_curso}
+
+    inscripciones_deporte = estado["inscripciones_deporte"]
+    nombres_deportes = sorted({i.get("deporte", "-") for i in inscripciones_deporte})
+    transporte = estado["inscripciones_transporte"][0] if estado["inscripciones_transporte"] else None
+    comedor = estado["inscripciones_comedor"][0] if estado["inscripciones_comedor"] else None
+    transporte_activo = bool(transporte) and _esta_activo(transporte.get("estado"))
+    comedor_activo = bool(comedor) and _esta_activo(comedor.get("estado"))
+    servicios_activos = int(transporte_activo) + int(comedor_activo)
+
+    # ==================== 2. BANNER ESTUDIANTE ====================
     banner_alumno = ft.Container(
         bgcolor=TEAL_DARK,
         border_radius=CARD_RADIUS,
@@ -37,29 +249,47 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                             bgcolor=TEAL_LIGHT,
                             border_radius=27,
                             alignment=ft.Alignment(0, 0),
-                            content=ft.Text("SA", size=20, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            content=ft.Text(
+                                iniciales, size=20, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                            ),
                         ),
                         ft.Column(
                             spacing=3,
                             controls=[
-                                ft.Text("¡Hola, Santiago Almirón!", size=22, weight=ft.FontWeight.BOLD, color=BG_WHITE),
-                                ft.Text("Legajo #10245 · 5to Año División B · Ciclo Lectivo 2027", size=13, color=TEAL_LIGHT),
+                                ft.Text(
+                                    f"¡Hola, {nombre_completo}!",
+                                    size=22,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=BG_WHITE,
+                                ),
+                                ft.Text(
+                                    f"Legajo #{alumno.get('legajo')} · {nombre_curso} · Nivel {nombre_nivel}",
+                                    size=13,
+                                    color=TEAL_LIGHT,
+                                ),
                             ],
                         ),
                     ],
                 ),
                 ft.Container(
-                    bgcolor=ONLINE_GREEN,
+                    bgcolor=ONLINE_GREEN if matricula_regular else BADGE_RED_TXT,
                     border_radius=BORDER_RADIUS,
                     padding=ft.Padding(12, 6, 12, 6),
-                    content=ft.Text("MATRÍCULA REGULAR", size=11, weight=ft.FontWeight.BOLD, color=BG_WHITE),
+                    content=ft.Text(
+                        "MATRÍCULA REGULAR" if matricula_regular else f"MATRÍCULA {estado_alumno}",
+                        size=11,
+                        weight=ft.FontWeight.BOLD,
+                        color=BG_WHITE,
+                    ),
                 ),
             ],
         ),
     )
 
-    # ==================== 2. TARJETAS DE MÉTRICAS ====================
-    def kpi_alumno(titulo: str, valor: str, subtitulo: str, icono: ft.IconData, color_bg: str) -> ft.Container:
+    # ==================== 3. TARJETAS DE MÉTRICAS REALES ====================
+    def kpi_alumno(
+        titulo: str, valor: str, subtitulo: str, icono: ft.IconData, color_bg: str
+    ) -> ft.Container:
         return ft.Container(
             expand=True,
             bgcolor=BG_WHITE,
@@ -94,35 +324,56 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
             ),
         )
 
+    resumen_servicios = (
+        f"Transporte: {'Activo' if transporte_activo else 'Inactivo'} · "
+        f"Comedor: {'Activo' if comedor_activo else 'Inactivo'}"
+    )
+
     kpis_row = ft.Row(
         spacing=16,
         controls=[
-            kpi_alumno("PROMEDIO GENERAL", "8.50", "1er Trimestre", ft.Icons.AUTO_GRAPH, TEAL_LIGHT),
-            kpi_alumno("ASISTENCIA GLOBAL", "94%", "2 inasistencias justificadas", ft.Icons.HOW_TO_REG, "#EBFEE6"),
-            kpi_alumno("MATERIAS CURSANDO", "6", "Plan Orientado", ft.Icons.MENU_BOOK_OUTLINED, TEAL_LIGHT),
-            kpi_alumno("DEPORTES ACTIVOS", "2 de 2", "Natación y Fútbol", ft.Icons.FITNESS_CENTER_OUTLINED, "#FFF3E7"),
+            kpi_alumno(
+                "ESTADO DE MATRÍCULA",
+                estado_alumno.capitalize() or "-",
+                f"DNI {alumno.get('dni', '-')}",
+                ft.Icons.BADGE_OUTLINED,
+                TEAL_LIGHT,
+            ),
+            kpi_alumno(
+                "MATERIAS DEL CURSO",
+                str(len(materias_unicas)),
+                f"{nombre_curso} · {nombre_nivel}",
+                ft.Icons.MENU_BOOK_OUTLINED,
+                TEAL_LIGHT,
+            ),
+            kpi_alumno(
+                "DEPORTES INSCRIPTOS",
+                str(len(inscripciones_deporte)),
+                ", ".join(nombres_deportes) if nombres_deportes else "Sin inscripciones",
+                ft.Icons.FITNESS_CENTER_OUTLINED,
+                BADGE_GREEN_BG,
+            ),
+            kpi_alumno(
+                "SERVICIOS ACTIVOS",
+                f"{servicios_activos} de 2",
+                resumen_servicios,
+                ft.Icons.DIRECTIONS_BUS_OUTLINED,
+                BADGE_WARN_BG,
+            ),
         ],
     )
 
-    # ==================== 3. HORARIO DE HOY ====================
-    clases_hoy = [
-        {"hora": "07:30 - 09:00 hs", "materia": "Matemática Aplicada", "profesor": "Prof. Guillermina Sánchez", "aula": "Aula 12"},
-        {"hora": "09:15 - 10:45 hs", "materia": "Física y Química", "profesor": "Prof. Román Martínez", "aula": "Laboratorio Central"},
-        {"hora": "12:30 - 13:30 hs", "materia": "Almuerzo Institucional", "profesor": "Comedor Turno Intermedio", "aula": "Salón Comedor"},
-        {"hora": "16:30 - 18:00 hs", "materia": "Natación Climatizada", "profesor": "Prof. Esteban Vargas", "aula": "Natatorio Olímpico"},
-    ]
-
-    def item_clase(c: dict) -> ft.Container:
-        es_comedor = "Almuerzo" in c["materia"]
-        es_deporte = "Natación" in c["materia"]
-        color_barra = ORANGE if es_comedor else (ONLINE_GREEN if es_deporte else TEAL)
-
+    # ==================== 4. RESUMEN DE SERVICIOS Y ACTIVIDADES ====================
+    def item_resumen(
+        titulo: str, detalle: str, color_barra: str, badge: ft.Control
+    ) -> ft.Container:
         return ft.Container(
             bgcolor=BG_PAGE,
             border_radius=BORDER_RADIUS,
             padding=14,
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     ft.Row(
                         spacing=12,
@@ -131,23 +382,77 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                             ft.Column(
                                 spacing=2,
                                 controls=[
-                                    ft.Text(c["materia"], size=14, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                                    ft.Text(f"{c['profesor']} · Espacio: {c['aula']}", size=12, color=MUTED),
+                                    ft.Text(
+                                        titulo,
+                                        size=14,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEAL_DARK,
+                                    ),
+                                    ft.Text(detalle, size=12, color=MUTED),
                                 ],
                             ),
                         ],
                     ),
-                    ft.Container(
-                        padding=ft.Padding(8, 4, 8, 4),
-                        bgcolor=BG_WHITE,
-                        border_radius=4,
-                        content=ft.Text(c["hora"], size=12, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                    ),
+                    badge,
                 ],
             ),
         )
 
-    agenda_card = ft.Container(
+    items_resumen: list[ft.Control] = [
+        item_resumen(
+            "Transporte Institucional",
+            (
+                f"{transporte.get('recorrido', '-')} · Alta {_fecha_corta(transporte.get('fecha_alta'))}"
+                if transporte
+                else "Sin inscripción al transporte registrada."
+            ),
+            TEAL,
+            _badge_estado(transporte_activo, bool(transporte)),
+        ),
+        item_resumen(
+            "Comedor Escolar",
+            (
+                f"Alta {_fecha_corta(comedor.get('fecha_alta'))}"
+                if comedor
+                else "Sin inscripción al comedor registrada."
+            ),
+            ORANGE,
+            _badge_estado(comedor_activo, bool(comedor)),
+        ),
+    ]
+
+    if inscripciones_deporte:
+        for inscripcion in inscripciones_deporte:
+            grupo = next(
+                (
+                    g
+                    for g in estado["grupos_deporte"]
+                    if g.get("id_grupo") == inscripcion.get("id_grupo")
+                ),
+                None,
+            )
+            detalle = f"Inscripto el {_fecha_corta(inscripcion.get('fecha_inscripcion'))}"
+            if grupo and grupo.get("horario"):
+                detalle = f"{grupo['horario']} · {detalle}"
+            items_resumen.append(
+                item_resumen(
+                    f"Deporte: {inscripcion.get('deporte', '-')}",
+                    detalle,
+                    ONLINE_GREEN,
+                    _badge_estado(True, True),
+                )
+            )
+    else:
+        items_resumen.append(
+            item_resumen(
+                "Deportes",
+                "Sin inscripciones deportivas registradas.",
+                ONLINE_GREEN,
+                _badge_estado(False, False),
+            )
+        )
+
+    resumen_card = ft.Container(
         expand=True,
         bgcolor=BG_WHITE,
         border=ft.Border.all(1, BORDER_COLOR),
@@ -159,16 +464,34 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Mi Horario y Actividades de Hoy", size=17, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.TextButton("Ver Todas las Materias", on_click=lambda _: page.go("/portal/alumno/materias")),
+                        ft.Text(
+                            "Mi Resumen de Servicios y Actividades",
+                            size=17,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEAL_DARK,
+                        ),
+                        ft.TextButton(
+                            "Ver Todas las Materias",
+                            on_click=lambda _: page.go("/portal/alumno/materias"),
+                        ),
                     ],
                 ),
-                ft.Column(spacing=10, controls=[item_clase(c) for c in clases_hoy]),
+                ft.Column(spacing=10, controls=items_resumen),
             ],
         ),
     )
 
-    # ==================== 4. CARNET DIGITAL ESTUDIANTIL ====================
+    # ==================== 5. CARNET DIGITAL ESTUDIANTIL ====================
+    servicios_habilitados = []
+    if comedor_activo:
+        servicios_habilitados.append("Comedor")
+    if transporte_activo:
+        servicios_habilitados.append("Traslado")
+    if servicios_habilitados:
+        texto_habilitacion = "Habilitado para: " + ", ".join(servicios_habilitados) + "."
+    else:
+        texto_habilitacion = "Sin servicios activos registrados (comedor o traslado)."
+
     carnet_card = ft.Container(
         width=380,
         bgcolor=BG_WHITE,
@@ -179,7 +502,12 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
             spacing=16,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                ft.Text("Credencial Digital Estudiantil", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Credencial Digital Estudiantil",
+                    size=16,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Container(
                     width=280,
                     bgcolor=TEAL_LIGHT,
@@ -193,7 +521,12 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                             ft.Row(
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                                 controls=[
-                                    ft.Text("EDUCAR SGE", size=11, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                    ft.Text(
+                                        "EDUCAR SGE",
+                                        size=11,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEAL_DARK,
+                                    ),
                                     ft.Icon(ft.Icons.NFC, size=16, color=TEAL),
                                 ],
                             ),
@@ -202,9 +535,23 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                                 spacing=2,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                 controls=[
-                                    ft.Text("Santiago Almirón", size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                                    ft.Text("Legajo: #10245 · DNI: 46.124.990", size=11, color=MUTED),
-                                    ft.Text("5to Año B · Secundario", size=12, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                                    ft.Text(
+                                        nombre_completo,
+                                        size=15,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEAL_DARK,
+                                    ),
+                                    ft.Text(
+                                        f"Legajo: #{alumno.get('legajo')} · DNI: {alumno.get('dni', '-')}",
+                                        size=11,
+                                        color=MUTED,
+                                    ),
+                                    ft.Text(
+                                        f"{nombre_curso} · {nombre_nivel}",
+                                        size=12,
+                                        weight=ft.FontWeight.W_600,
+                                        color=TEXT_COLOR,
+                                    ),
                                 ],
                             ),
                             ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
@@ -213,13 +560,22 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                                 spacing=6,
                                 controls=[
                                     ft.Icon(ft.Icons.QR_CODE, size=18, color=TEAL_DARK),
-                                    ft.Text("Válido ciclo lectivo 2027", size=10, color=MUTED),
+                                    ft.Text(
+                                        f"Estado de matrícula: {estado_alumno.capitalize()}",
+                                        size=10,
+                                        color=MUTED,
+                                    ),
                                 ],
                             ),
                         ],
                     ),
                 ),
-                ft.Text("Habilitado para Comedor, Traslado y Biblioteca.", size=11, color=MUTED, text_align=ft.TextAlign.CENTER),
+                ft.Text(
+                    texto_habilitacion,
+                    size=11,
+                    color=MUTED,
+                    text_align=ft.TextAlign.CENTER,
+                ),
             ],
         ),
     )
@@ -227,19 +583,31 @@ def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
     fila_inferior = ft.Row(
         spacing=24,
         vertical_alignment=ft.CrossAxisAlignment.START,
-        controls=[agenda_card, carnet_card],
+        controls=[resumen_card, carnet_card],
     )
 
-    return portal_layout(
-        page=page,
-        titulo="Portal del Estudiante — Mi Cursado",
-        active_route="/portal/alumno/dashboard",
-        rol="Alumno",
-        usuario_nombre="Santiago Almirón",
-        usuario_sub="Legajo #10245 · 5to Año B",
-        content_controls=[
-            banner_alumno,
-            kpis_row,
-            fila_inferior,
-        ],
+    aviso_error = ft.Text(
+        f"⚠️ No se pudieron cargar: {', '.join(errores)}." if errores else "",
+        size=13,
+        weight=ft.FontWeight.W_600,
+        color=BADGE_RED_TXT,
+        visible=bool(errores),
+    )
+
+    holder_contenido = ft.Column(spacing=24, controls=[])
+
+    def render():
+        holder_contenido.controls = [banner_alumno, kpis_row, fila_inferior]
+        try:
+            page.update()
+        except Exception:
+            pass
+
+    render()
+
+    # ==================== 6. RETORNO CON PORTAL_LAYOUT ====================
+    return construir_layout(
+        nombre_completo,
+        f"Legajo #{alumno.get('legajo')} · {nombre_curso}",
+        [aviso_error, holder_contenido],
     )

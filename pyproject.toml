@@ -8,7 +8,11 @@ authors = [
     { name = "Flet developer", email = "you@example.com" }
 ]
 dependencies = [
+    "bcrypt>=5.0.0",
+    "fastapi>=0.141.1",
     "flet>=0.86.5",
+    "httpx>=0.28.1",
+    "openpyxl>=3.1.5",
     "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.13",
     "pydantic-settings>=2.15.0",
@@ -16,6 +20,7 @@ dependencies = [
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "sqlalchemy>=2.0.54",
+    "uvicorn[standard]>=0.52.4",
 ]
 
 [dependency-groups]
@@ -30,13 +35,14 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["backend/tests"]
+pythonpath = ["."]
 
 [tool.flet]
-org = "com.mycompany"
-product = "my-app"
-company = "Flet"
-copyright = "Copyright (C) 2023-2026 by Flet"
+org = "com.educar"
+product = "educar-para-transformar"
+company = "Educar para Transformar"
+copyright = "Copyright (C) 2026 by Educar para Transformar"
 
 [tool.flet.app]
-path = "src"
+path = "frontend"

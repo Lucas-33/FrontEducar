@@ -17,8 +17,8 @@ class Usuario(Base):
     id_rol = Column(Integer, ForeignKey("rol.id_rol", ondelete="RESTRICT"), nullable=False)
     
     # Vinculación opcional con la entidad real
-    legajo_alumno = Column(String(50), ForeignKey("alumno.legajo", onupdate="CASCADE", ondelete="SET NULL"), nullable=True)
-    legajo_profesor = Column(String(50), ForeignKey("profesor.legajo", onupdate="CASCADE", ondelete="SET NULL"), nullable=True)
+    legajo_alumno = Column(Integer, ForeignKey("alumno.legajo", onupdate="CASCADE", ondelete="SET NULL"), nullable=True)
+    legajo_profesor = Column(Integer, ForeignKey("profesor.legajo", onupdate="CASCADE", ondelete="SET NULL"), nullable=True)
     id_padre = Column(Integer, ForeignKey("padre.id_padre", ondelete="SET NULL"), nullable=True)
     
     activo = Column(Boolean, default=True, nullable=False)

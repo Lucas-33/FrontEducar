@@ -152,6 +152,55 @@ INSERT INTO usuario (username, password_hash, id_rol, legajo_alumno, legajo_prof
 ON CONFLICT (username) DO NOTHING;
 
 -- ==============================================================================
+-- 5b. COMUNIDAD (formularios públicos y moderación)
+-- ==============================================================================
+
+INSERT INTO solicitud_inscripcion (postulante, dni, fecha_nacimiento, nivel, tutor, telefono, correo, fecha, estado, observaciones) VALUES 
+('Julieta Acosta', '55123456', '2021-11-03', 'Inicial (Sala de 5)', 'Marina Acosta', '3624000001', 'marina.acosta@gmail.com', CURRENT_DATE - 6, 'Pendiente', NULL),
+('Benjamín Romero', '53888999', '2018-07-14', 'Primario (2° Grado)', 'Diego Romero', '3624000002', 'diego.romero@hotmail.com', CURRENT_DATE - 20, 'Aprobado', 'Documentación completa. Entrevista realizada.'),
+('Agustina Vega', '56777000', '2016-03-27', 'Primario (5° Grado)', 'Paola Vega', '3624000003', 'paola.vega@gmail.com', CURRENT_DATE - 12, 'Rechazado', 'Sin vacantes en el curso solicitado.');
+
+INSERT INTO mensaje_contacto (nombre, telefono, correo, mensaje, fecha, leido) VALUES 
+('Marcela Fernández', '3624112233', 'marcela.fdez@gmail.com', 'Buenas tardes, quisiera consultar por las vacantes disponibles en Sala de 4 para el ciclo 2027.', CURRENT_TIMESTAMP - INTERVAL '2 days', TRUE),
+('Hugo Benítez', '3624223344', 'hugo.benitez@yahoo.com', '¿Cuáles son los horarios de atención de secretaría? Gracias.', CURRENT_TIMESTAMP - INTERVAL '5 hours', FALSE);
+
+INSERT INTO opinion (nombre, vinculo, comentario, estrellas, fecha, aprobada) VALUES 
+('Carla Duarte', 'Madre de 2° Grado', 'La atención de las maestras y el gabinete psicopedagógico es excelente. Mis hijos van felices a la escuela.', 5, CURRENT_DATE - 30, TRUE),
+('Sergio Ramírez', 'Ex alumno promoción 2019', 'El nivel académico y los valores que me dejó el colegio fueron fundamentales para mi carrera universitaria.', 5, CURRENT_DATE - 15, TRUE),
+('Lucía Torres', 'Vecina del barrio', 'Participé del taller de huerta comunitaria y me encantó la propuesta. Felicitaciones a los docentes por la organización.', 4, CURRENT_DATE - 3, FALSE);
+
+INSERT INTO postulacion_empleo (nombre, correo, telefono, puesto, area, mensaje, fecha) VALUES 
+('Verónica Ibarra', 'veronica.ibarra@gmail.com', '3624334455', 'Enfermero/a Profesional Matriculado/a', 'Gabinete de Salud y Enfermería', 'Cuento con matrícula provincial vigente y 8 años de experiencia en pediatría.', CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('Martín Correa', 'martin.correa@outlook.com', '3624445566', 'Postulación espontánea', 'Educación Física y Deportes', 'Soy profesor de educación física con experiencia en escuelas deportivas infantiles.', CURRENT_TIMESTAMP - INTERVAL '1 day');
+
+-- ==============================================================================
+-- 5c. EVALUACIÓN (calificaciones y asistencia)
+-- ==============================================================================
+
+-- Calificaciones coherentes con las asignaciones materia_curso_profesor del punto 3
+INSERT INTO calificacion (legajo_alumno, id_materia, id_curso, periodo, tipo, nota, fecha, observacion, legajo_profesor) VALUES 
+(1002, 1, 4, '1° Trimestre', 'Parcial', 8.50, CURRENT_DATE - 45, 'Buen desempeño en resolución de problemas.', 2001),
+(1002, 1, 4, '1° Trimestre', 'Trabajo Práctico', 9.00, CURRENT_DATE - 20, NULL, 2001),
+(1002, 6, 4, '1° Trimestre', 'Conceptual', 9.50, CURRENT_DATE - 15, 'Excelente participación en las clases.', 2002),
+(1003, 1, 5, '1° Trimestre', 'Parcial', 7.25, CURRENT_DATE - 40, 'Debe reforzar operaciones con fracciones.', 2001),
+(1003, 1, 5, '1° Trimestre', 'Trabajo Práctico', 8.00, CURRENT_DATE - 12, NULL, 2001),
+(1003, 3, 5, '1° Trimestre', 'Oral', 8.75, CURRENT_DATE - 25, 'Muy buena exposición sobre la Revolución de Mayo.', 2004),
+(1003, 5, 5, '1° Trimestre', 'Parcial', 6.50, CURRENT_DATE - 18, NULL, 2003),
+(1004, 6, 6, '1° Trimestre', 'Conceptual', 10.00, CURRENT_DATE - 10, 'Líder positivo del grupo.', 2002);
+
+-- Asistencia de los últimos días (un registro por alumno y fecha)
+INSERT INTO asistencia (legajo_alumno, id_curso, fecha, estado, observacion, legajo_profesor) VALUES 
+(1002, 4, CURRENT_DATE - 3, 'PRESENTE', NULL, 2001),
+(1002, 4, CURRENT_DATE - 2, 'PRESENTE', NULL, 2001),
+(1002, 4, CURRENT_DATE - 1, 'TARDE', 'Ingresó 15 minutos tarde por turno médico.', 2001),
+(1003, 5, CURRENT_DATE - 3, 'PRESENTE', NULL, 2001),
+(1003, 5, CURRENT_DATE - 2, 'AUSENTE', 'Ausencia sin aviso.', 2001),
+(1003, 5, CURRENT_DATE - 1, 'JUSTIFICADO', 'Certificado médico presentado por la familia.', 2001),
+(1004, 6, CURRENT_DATE - 2, 'PRESENTE', NULL, 2002),
+(1004, 6, CURRENT_DATE - 1, 'PRESENTE', NULL, 2002)
+ON CONFLICT (legajo_alumno, fecha) DO NOTHING;
+
+-- ==============================================================================
 -- 6. ACTUALIZACIÓN DE SECUENCIAS IDENTITY (PREVENCIÓN DE ERRORES)
 -- ==============================================================================
 
@@ -166,5 +215,11 @@ SELECT setval(pg_get_serial_sequence('curso', 'id_curso'), COALESCE(MAX(id_curso
 SELECT setval(pg_get_serial_sequence('padre', 'id_padre'), COALESCE(MAX(id_padre), 1)) FROM padre;
 SELECT setval(pg_get_serial_sequence('deporte', 'id_deporte'), COALESCE(MAX(id_deporte), 1)) FROM deporte;
 SELECT setval(pg_get_serial_sequence('grupo_deporte', 'id_grupo'), COALESCE(MAX(id_grupo), 1)) FROM grupo_deporte;
+SELECT setval(pg_get_serial_sequence('solicitud_inscripcion', 'id_solicitud'), COALESCE(MAX(id_solicitud), 1)) FROM solicitud_inscripcion;
+SELECT setval(pg_get_serial_sequence('mensaje_contacto', 'id_mensaje'), COALESCE(MAX(id_mensaje), 1)) FROM mensaje_contacto;
+SELECT setval(pg_get_serial_sequence('opinion', 'id_opinion'), COALESCE(MAX(id_opinion), 1)) FROM opinion;
+SELECT setval(pg_get_serial_sequence('postulacion_empleo', 'id_postulacion'), COALESCE(MAX(id_postulacion), 1)) FROM postulacion_empleo;
+SELECT setval(pg_get_serial_sequence('calificacion', 'id_calificacion'), COALESCE(MAX(id_calificacion), 1)) FROM calificacion;
+SELECT setval(pg_get_serial_sequence('asistencia', 'id_asistencia'), COALESCE(MAX(id_asistencia), 1)) FROM asistencia;
 
 COMMIT;

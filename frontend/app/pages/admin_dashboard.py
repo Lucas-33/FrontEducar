@@ -1,4 +1,5 @@
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
     AMBER_STATE,
@@ -18,8 +19,30 @@ from frontend.app.components.constants import (
 )
 
 
-def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa del panel interno Educar SGE usando AdminLayout."""
+async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
+    """Retorna la vista completa del panel interno Educar SGE usando AdminLayout
+    con las métricas reales calculadas desde la base de datos."""
+
+    token = getattr(page, "auth_token", None)
+    if token and not api_client.token:
+        api_client.set_token(token)
+
+    resumen = {
+        "alumnos_activos": "—",
+        "docentes_activos": "—",
+        "cursos": "—",
+        "niveles": "—",
+        "solicitudes_pendientes": "—",
+        "mensajes_no_leidos": "—",
+        "transporte_activos": "—",
+        "comedor_activos": "—",
+    }
+    try:
+        resumen.update(await api_client.get_resumen_dashboard())
+    except Exception:
+        pass
+
+    usuario = getattr(page, "auth_user", None) or "Administración"
 
     # ==================== 1. BANNER INSTITUCIONAL ====================
     welcome_banner = ft.Container(
@@ -36,13 +59,14 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.Text(
-                            "¡Buen día, Estela! Ciclo Lectivo 2025 Activo",
+                            f"¡Buen día, {usuario}! Ciclo Lectivo Activo",
                             size=22,
                             weight=ft.FontWeight.BOLD,
                             color=BG_WHITE,
                         ),
                         ft.Text(
-                            "El período de inscripciones para el nivel inicial y primario cuenta con alta demanda de solicitudes esta semana.",
+                            f"Hoy hay {resumen['solicitudes_pendientes']} solicitudes de admisión pendientes "
+                            f"y {resumen['mensajes_no_leidos']} mensajes de contacto sin leer.",
                             size=14,
                             color=TEAL_LIGHT,
                         ),
@@ -109,10 +133,34 @@ def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
     kpis_row = ft.Row(
         spacing=16,
         controls=[
-            kpi_card("ALUMNOS MATRICULADOS", "1,248", "98% asistencia hoy", ft.Icons.PEOPLE_OUTLINE, TEAL_LIGHT),
-            kpi_card("PERSONAL DOCENTE", "86", "3 con licencia activa", ft.Icons.WORK_OUTLINE, BADGE_YELLOW_BG),
-            kpi_card("INSCRIPCIONES PENDIENTES", "45", "En secretaría", ft.Icons.DESCRIPTION_OUTLINED, TEAL_LIGHT),
-            kpi_card("CURSOS ACTIVOS", "32", "K-12 completos", ft.Icons.FOLDER_OPEN_OUTLINED, TEAL_LIGHT),
+            kpi_card(
+                "ALUMNOS MATRICULADOS",
+                str(resumen["alumnos_activos"]),
+                "Matrícula activa en el sistema",
+                ft.Icons.PEOPLE_OUTLINE,
+                TEAL_LIGHT,
+            ),
+            kpi_card(
+                "PERSONAL DOCENTE",
+                str(resumen["docentes_activos"]),
+                "Plantel docente activo",
+                ft.Icons.WORK_OUTLINE,
+                BADGE_YELLOW_BG,
+            ),
+            kpi_card(
+                "INSCRIPCIONES PENDIENTES",
+                str(resumen["solicitudes_pendientes"]),
+                "Solicitudes de admisión en secretaría",
+                ft.Icons.DESCRIPTION_OUTLINED,
+                TEAL_LIGHT,
+            ),
+            kpi_card(
+                "CURSOS ACTIVOS",
+                str(resumen["cursos"]),
+                f"{resumen['niveles']} niveles educativos",
+                ft.Icons.FOLDER_OPEN_OUTLINED,
+                TEAL_LIGHT,
+            ),
         ],
     )
 

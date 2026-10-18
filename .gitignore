@@ -34,6 +34,9 @@ venv.bak/
 *.sqlite
 db.sqlite3
 
+# ===== PostgreSQL local del proyecto (cluster en .pgdata/) =====
+.pgdata/
+
 # ===== FastAPI / Uvicorn =====
 *.log
 logs/

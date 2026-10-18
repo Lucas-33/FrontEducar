@@ -25,4 +25,4 @@ class MateriaCursoProfesor(Base):
 
     id_materia = Column(Integer, ForeignKey("materia.id_materia", ondelete="CASCADE"), primary_key=True)
     id_curso = Column(Integer, ForeignKey("curso.id_curso", ondelete="CASCADE"), primary_key=True)
-    legajo_profesor = Column(String(50), ForeignKey("profesor.legajo", onupdate="CASCADE", ondelete="RESTRICT"), nullable=False)
+    legajo_profesor = Column(Integer, ForeignKey("profesor.legajo", onupdate="CASCADE", ondelete="RESTRICT"), nullable=False)

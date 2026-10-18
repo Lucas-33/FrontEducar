@@ -10,3 +10,10 @@ from backend.app.models.servicios import (
     InscripcionTransporte,
     InscripcionComedor,
 )
+from backend.app.models.comunidad import (
+    MensajeContacto,
+    Opinion,
+    PostulacionEmpleo,
+    SolicitudInscripcion,
+)
+from backend.app.models.evaluacion import Asistencia, Calificacion

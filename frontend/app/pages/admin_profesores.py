@@ -1,4 +1,5 @@
 import flet as ft
+from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
@@ -19,10 +20,30 @@ from frontend.app.components.table_view import (
 )
 
 
-def get_admin_profesores_view(page: ft.Page) -> ft.Row:
-    """Retorna la vista completa de la Nómina del Personal Docente con AdminLayout."""
+async def get_admin_profesores_view(page: ft.Page) -> ft.Row:
+    """Vista de la Nómina del Personal Docente conectada a la API."""
+
+    token_almacenado = getattr(page, "auth_token", None)
+    if token_almacenado and not api_client.token:
+        api_client.set_token(token_almacenado)
+
+    estado: dict = {"profesores": [], "texto": ""}
+
+    try:
+        estado["profesores"] = await api_client.get_profesores(solo_activos=False)
+    except Exception:
+        estado["profesores"] = []
 
     # ==================== 1. BARRA DE BÚSQUEDA Y FILTROS ====================
+    search_field = ft.TextField(
+        hint_text="Buscar docente por especialidad o apellido...",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        border=ft.InputBorder.NONE,
+        content_padding=ft.Padding(0, 0, 0, 10),
+        expand=True,
+    )
     search_input = ft.Container(
         width=280,
         height=CONTROL_HEIGHT,
@@ -35,15 +56,7 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.SEARCH, size=16, color=MUTED),
-                ft.TextField(
-                    hint_text="Buscar docente por especialidad o apellido...",
-                    hint_style=ft.TextStyle(size=14, color=MUTED),
-                    text_size=14,
-                    color=TEXT_COLOR,
-                    border=ft.InputBorder.NONE,
-                    content_padding=ft.Padding(0, 0, 0, 10),
-                    expand=True,
-                ),
+                search_field,
             ],
         ),
     )
@@ -92,77 +105,16 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     search_input,
-                    filtro_dropdown(
-                        "Área: Todas",
-                        125,
-                        ["Todas", "Ciencias Exactas", "Lenguas", "Educación Física", "Tecnología"],
-                    ),
-                    filtro_dropdown(
-                        "Estado: Activo",
-                        144,
-                        ["Todos", "Activo", "Licencia", "Inactivo"],
-                    ),
+                    filtro_dropdown("Estado: Todos", 144, ["Todos", "Activo", "Licencia", "Inactivo"]),
                 ],
             ),
             btn_nuevo_profesor,
         ],
     )
 
-    # ==================== 2. TABLA DE PROFESORES ====================
-    profesores_data = [
-        {
-            "legajo": "#20101",
-            "dni": "31.902.115",
-            "apellido": "Martínez",
-            "nombre": "Román Alberto",
-            "especialidad": "Ciencias Naturales / Física",
-            "email": "r.martinez@educar.edu.ar",
-            "telefono": "3624-912881",
-            "estado": "Activo",
-        },
-        {
-            "legajo": "#20102",
-            "dni": "29.448.109",
-            "apellido": "Sánchez",
-            "nombre": "Guillermina",
-            "especialidad": "Matemática Aplicada",
-            "email": "g.sanchez@educar.edu.ar",
-            "telefono": "3624-402919",
-            "estado": "Activo",
-        },
-        {
-            "legajo": "#20103",
-            "dni": "35.102.394",
-            "apellido": "Vargas",
-            "nombre": "Esteban Carlos",
-            "especialidad": "Educación Física / Natación",
-            "email": "e.vargas@educar.edu.ar",
-            "telefono": "3624-001229",
-            "estado": "Licencia",
-        },
-        {
-            "legajo": "#20104",
-            "dni": "33.910.224",
-            "apellido": "Duarte",
-            "nombre": "María Florencia",
-            "especialidad": "Lengua y Literatura",
-            "email": "f.duarte@educar.edu.ar",
-            "telefono": "3624-114402",
-            "estado": "Activo",
-        },
-        {
-            "legajo": "#20105",
-            "dni": "28.990.124",
-            "apellido": "Ortega",
-            "nombre": "Luis Humberto",
-            "especialidad": "Informática / Robótica",
-            "email": "l.ortega@educar.edu.ar",
-            "telefono": "3624-556601",
-            "estado": "Inactivo",
-        },
-    ]
+    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
 
-    # Anchos calibrados para evitar desbordes (Total: ~1075 px)
+    # ==================== 2. TABLA DE PROFESORES ====================
     columnas_profesores = [
         ("Legajo", 80, False),
         ("DNI", 105, False),
@@ -176,8 +128,26 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
     ]
 
     header_table = create_table_header(columnas_profesores)
+    table_holder = ft.Container()
+    pagination_holder = ft.Container()
+
+    def mostrar_error(mensaje: str):
+        aviso_error.value = f"⚠️ {mensaje}"
+        aviso_error.visible = True
+        try:
+            page.update()
+        except Exception:
+            pass
 
     def profesor_row(item: dict) -> ft.Container:
+        async def eliminar_profesor(e):
+            try:
+                await api_client.delete_profesor(int(item["legajo"]))
+            except Exception as err:
+                mostrar_error(f"No se pudo dar de baja al docente {item['legajo']}: {err}")
+                return
+            await recargar()
+
         return ft.Container(
             height=54,
             padding=ft.Padding(16, 0, 16, 0),
@@ -186,14 +156,14 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=80, content=ft.Text(item["legajo"], size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=105, content=ft.Text(item["dni"], size=13, color=TEXT_COLOR)),
-                    ft.Container(width=120, content=ft.Text(item["apellido"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=130, content=ft.Text(item["nombre"], size=14, color=TEXT_COLOR)),
-                    ft.Container(width=180, content=ft.Text(item["especialidad"], size=13, color=TEXT_COLOR)),
-                    ft.Container(width=190, content=ft.Text(item["email"], size=13, color=MUTED)),
-                    ft.Container(width=115, content=ft.Text(item["telefono"], size=13, color=TEXT_COLOR)),
-                    ft.Container(width=95, content=status_badge(item["estado"])),
+                    ft.Container(width=80, content=ft.Text(str(item.get("legajo", "")), size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
+                    ft.Container(width=105, content=ft.Text(str(item.get("dni", "")), size=13, color=TEXT_COLOR)),
+                    ft.Container(width=120, content=ft.Text(item.get("apellido", ""), size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
+                    ft.Container(width=130, content=ft.Text(item.get("nombre", ""), size=14, color=TEXT_COLOR)),
+                    ft.Container(width=180, content=ft.Text(item.get("especialidad", ""), size=13, color=TEXT_COLOR)),
+                    ft.Container(width=190, content=ft.Text(item.get("correo_electronico", ""), size=13, color=MUTED)),
+                    ft.Container(width=115, content=ft.Text(item.get("telefono", ""), size=13, color=TEXT_COLOR)),
+                    ft.Container(width=95, content=status_badge(item.get("estado", "ACTIVO").capitalize())),
                     ft.Container(
                         width=80,
                         alignment=ft.Alignment(1, 0),
@@ -202,18 +172,12 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                             alignment=ft.MainAxisAlignment.END,
                             controls=[
                                 ft.IconButton(
-                                    icon=ft.Icons.EDIT_OUTLINED,
-                                    icon_size=16,
-                                    icon_color=TEAL,
-                                    tooltip="Editar",
-                                    padding=0,
-                                ),
-                                ft.IconButton(
                                     icon=ft.Icons.DELETE_OUTLINE,
                                     icon_size=16,
                                     icon_color=BADGE_RED_TXT,
-                                    tooltip="Eliminar",
+                                    tooltip="Dar de baja",
                                     padding=0,
+                                    on_click=eliminar_profesor,
                                 ),
                             ],
                         ),
@@ -222,16 +186,54 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    table_container = create_table_container(
-        header=header_table,
-        rows=[profesor_row(p) for p in profesores_data],
-    )
+    def profesores_filtrados() -> list[dict]:
+        texto = (estado["texto"] or "").lower()
+        if not texto:
+            return estado["profesores"]
+        return [
+            p
+            for p in estado["profesores"]
+            if texto
+            in f"{p.get('apellido', '')} {p.get('nombre', '')} {p.get('especialidad', '')} {p.get('legajo', '')}".lower()
+        ]
 
-    pagination_bar = create_pagination_bar(
-        texto_info="Mostrando 1-5 de 86 docentes registrados",
-        pagina_actual=1,
-        total_paginas=2,
-    )
+    def render():
+        visibles = profesores_filtrados()
+        table_holder.content = create_table_container(
+            header=header_table,
+            rows=[profesor_row(p) for p in visibles]
+            or [
+                ft.Container(
+                    padding=20,
+                    alignment=ft.Alignment(0, 0),
+                    content=ft.Text("No hay docentes que coincidan con la búsqueda.", size=13, color=MUTED),
+                )
+            ],
+        )
+        pagination_holder.content = create_pagination_bar(
+            texto_info=f"Mostrando {len(visibles)} de {len(estado['profesores'])} docentes registrados",
+            pagina_actual=1,
+            total_paginas=max(1, (len(visibles) + 9) // 10),
+        )
+        try:
+            page.update()
+        except Exception:
+            pass
+
+    async def recargar():
+        try:
+            estado["profesores"] = await api_client.get_profesores(solo_activos=False)
+        except Exception as err:
+            mostrar_error(f"No se pudo refrescar la lista de docentes: {err}")
+        render()
+
+    def on_buscar(e):
+        estado["texto"] = search_field.value or ""
+        render()
+
+    search_field.on_change = on_buscar
+
+    render()
 
     # ==================== 3. RETORNO CON ADMIN_LAYOUT ====================
     return admin_layout(
@@ -240,7 +242,8 @@ def get_admin_profesores_view(page: ft.Page) -> ft.Row:
         active_route="/admin/profesores",
         content_controls=[
             filters_bar,
-            table_container,
-            pagination_bar,
+            aviso_error,
+            table_holder,
+            pagination_holder,
         ],
     )

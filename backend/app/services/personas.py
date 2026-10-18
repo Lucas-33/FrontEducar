@@ -80,6 +80,21 @@ class PersonasService:
     def get_padres(self, db: Session, skip: int = 0, limit: int = 100):
         return padre_repository.get_multi(db, skip=skip, limit=limit)
 
+    def get_alumnos_de_padre(self, db: Session, id_padre: int) -> List:
+        """Devuelve los alumnos (hijos) vinculados a un tutor."""
+        if not padre_repository.get(db, id_padre):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"El tutor con ID {id_padre} no existe",
+            )
+        relaciones = padre_alumno_repository.get_alumnos_por_padre(db, id_padre)
+        alumnos = []
+        for relacion in relaciones:
+            alumno = alumno_repository.get_by_legajo(db, relacion.legajo_alumno)
+            if alumno:
+                alumnos.append(alumno)
+        return alumnos
+
     def create_padre(self, db: Session, padre_in: PadreCreate):
         if padre_repository.get_by_dni(db, padre_in.dni):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Ya existe un padre con DNI '{padre_in.dni}'")
