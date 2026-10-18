@@ -83,12 +83,15 @@ Contraseña para todos: `password123`
 | Usuario      | Rol      |
 | ------------ | -------- |
 | `admin_gral` | ADMIN    |
+| `admin2`     | ADMIN    |
 | `lgomez`     | TEACHER  |
 | `cruiz`      | TEACHER  |
 | `rmartinez`  | PARENT   |
 | `aperez`     | PARENT   |
 | `tmartinez`  | STUDENT  |
 | `mperez`     | STUDENT  |
+
+Excepción: `admin2` usa la contraseña `admin1234`.
 
 Si un usuario administrador no puede iniciar sesión, `fix_auth.py` regenera su
 contraseña a `password123`:

@@ -138,8 +138,10 @@ ON CONFLICT (legajo_alumno) DO NOTHING;
 -- ==============================================================================
 
 -- La contraseña para todos es 'password123' procesada con bcrypt.
+-- Excepción: el usuario 'admin2' usa la contraseña 'admin1234'.
 INSERT INTO usuario (username, password_hash, id_rol, legajo_alumno, legajo_profesor, id_padre, activo) VALUES 
 ('admin_gral', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 1, NULL, NULL, NULL, TRUE),
+('admin2', '$2b$12$w.Ew9VtyymFw1YcSTkzAu.Jg/HD7kV7bDJoOvxPbCavAZoF673HxK', 1, NULL, NULL, NULL, TRUE),
 
 ('lgomez', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 2, NULL, 2001, NULL, TRUE),
 ('cruiz', '$2b$12$ZmnciLXJxYuDt35EFBu5AeSRM/U09o7sGJgPfgt71lkxjeHkiHRvS', 2, NULL, 2002, NULL, TRUE),
