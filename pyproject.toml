@@ -46,9 +46,7 @@ company = "Educar para Transformar"
 copyright = "Copyright (C) 2026 by Educar para Transformar"
 
 [tool.flet.app]
-<<<<<<< HEAD
-path = "frontend"
-=======
+
 path = "src"
 
 
@@ -58,5 +56,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
-
->>>>>>> origin/main
