@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/agregar-ci
+
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ---------------------------------------------------------
+  # LINT
+  # ---------------------------------------------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Instalar dependencias
+        run: uv sync --dev
+
+      - name: Ejecutar Ruff
+        run: uv run ruff check .
+
+
+  # ---------------------------------------------------------
+  # BUILD + TEST + COVERAGE
+  # ---------------------------------------------------------
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-24.04
+
+    env:
+      DATABASE_URL: sqlite:///./test.db
+      SECRET_KEY: clave-solo-para-tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Instalar dependencias
+        run: uv sync --dev
+
+      - name: Verificar sintaxis
+        run: uv run python -m compileall -q .
+
+      - name: Ejecutar tests con coverage
+        run: |
+          uv run pytest \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=50 \
+            --junitxml=reporte-tests.xml
+
+      - name: Guardar reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-ci
+          path: |
+            coverage.xml
+            reporte-tests.xml
+          if-no-files-found: warn

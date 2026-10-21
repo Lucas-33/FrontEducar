@@ -18,9 +18,14 @@ certifi==2026.7.22
     #   httpcore
     #   httpx
 click==8.5.0
+<<<<<<< HEAD
     # via uvicorn
 exceptiongroup==1.3.1 ; python_full_version < '3.11'
     # via anyio
+=======
+cookiecutter==2.7.1
+coverage==7.16.2
+>>>>>>> origin/main
 fastapi==0.141.1
     # via my-app
 flet==0.86.5
@@ -36,6 +41,7 @@ httpcore==1.0.9
 httptools==0.8.0
     # via uvicorn
 httpx==0.28.1
+<<<<<<< HEAD
     # via
     #   flet
     #   my-app
@@ -61,6 +67,26 @@ pydantic-settings==2.15.0
     # via my-app
 pyjwt==2.15.1
     # via my-app
+=======
+idna==3.20
+iniconfig==2.3.1
+Jinja2==3.1.6
+markdown-it-py==4.2.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+msgpack==1.2.2
+oauthlib==3.3.1
+packaging==26.3
+pillow==12.3.0
+pluggy==1.6.0
+pydantic==2.13.5
+pydantic_core==2.46.5
+Pygments==2.21.0
+pypng==0.20220715.0
+pytest==9.1.1
+pytest-cov==7.1.0
+python-dateutil==2.9.0.post0
+>>>>>>> origin/main
 python-dotenv==1.2.3
     # via
     #   my-app
@@ -71,7 +97,13 @@ python-multipart==0.0.32
 pyyaml==6.0.3
     # via uvicorn
 repath==0.9.0
+<<<<<<< HEAD
     # via flet
+=======
+requests==2.34.2
+rich==15.0.0
+ruff==0.16.10
+>>>>>>> origin/main
 six==1.17.0
     # via repath
 sqlalchemy==2.0.54 ; python_full_version < '3.11'
