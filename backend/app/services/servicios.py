@@ -88,10 +88,31 @@ class ServiciosEscolaresService:
     def inscribir_deporte(self, db: Session, inscripcion_in: InscripcionDeporteCreate):
         if not alumno_repository.get_by_legajo(db, inscripcion_in.legajo_alumno):
             raise HTTPException(status_code=404, detail="El alumno no existe")
-        if not grupo_deporte_repository.get(db, inscripcion_in.id_grupo):
+        
+        nuevo_grupo = grupo_deporte_repository.get(db, inscripcion_in.id_grupo)
+        if not nuevo_grupo:
             raise HTTPException(status_code=404, detail="El grupo deportivo no existe")
+            
         if inscripcion_deporte_repository.get_inscripcion(db, inscripcion_in.legajo_alumno, inscripcion_in.id_grupo):
             raise HTTPException(status_code=400, detail="El alumno ya está inscripto en este grupo")
+
+        # 1. Validar límite máximo de 2 deportes (RF03)
+        inscripciones_actuales = inscripcion_deporte_repository.get_by_alumno(db, inscripcion_in.legajo_alumno)
+        if len(inscripciones_actuales) >= 2:
+            raise HTTPException(
+                status_code=400, 
+                detail="El alumno ya alcanzó el límite máximo de dos deportes simultáneos"
+            )
+
+        # 2. Controlar conflictos de horario (RF07)
+        for inscripcion in inscripciones_actuales:
+            grupo_actual = grupo_deporte_repository.get(db, inscripcion.id_grupo)
+            if grupo_actual and grupo_actual.id_horario == nuevo_grupo.id_horario:
+                raise HTTPException(
+                    status_code=409, 
+                    detail="Existe un conflicto de horarios con otro deporte en el que el alumno ya está inscripto"
+                )
+
         return inscripcion_deporte_repository.create(db, inscripcion_in)
 
     # --- TRANSPORTE ---
