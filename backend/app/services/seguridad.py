@@ -21,7 +21,7 @@ from backend.app.schemas.seguridad import (
     UsuarioUpdate,
 )
 
-SECRET_KEY = os.getenv("SECRET_KEY", "educar_secret_key_super_segura_2026")
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
