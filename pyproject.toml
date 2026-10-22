@@ -39,6 +39,7 @@ dev = [
 asyncio_mode = "auto"
 testpaths = ["backend/tests"]
 pythonpath = ["."]
+addopts = "--cov=backend --cov-report=term-missing --cov-report=xml --cov-fail-under=20"
 
 [tool.flet]
 org = "com.educar"
