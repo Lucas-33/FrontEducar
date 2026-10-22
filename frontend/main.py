@@ -6,6 +6,7 @@ Uso (desde la raíz del proyecto):
 
 Requiere el backend en marcha en http://127.0.0.1:8000 (ver frontend/run.py).
 """
+
 import sys
 from pathlib import Path
 

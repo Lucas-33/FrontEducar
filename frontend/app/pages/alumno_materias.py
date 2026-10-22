@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
@@ -37,7 +38,9 @@ def _estado_vacio(titulo: str, mensaje: str) -> ft.Container:
                     bgcolor=TEAL_LIGHT,
                     border_radius=28,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Icon(ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK),
+                    content=ft.Icon(
+                        ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK
+                    ),
                 ),
                 ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
                 ft.Text(mensaje, size=14, color=MUTED, text_align=ft.TextAlign.CENTER),
@@ -146,7 +149,9 @@ async def get_alumno_materias_view(page: ft.Page) -> ft.Row:
     curso = estado["curso"]
     nombre_curso = curso.get("nombre") if curso else "Curso sin asignar"
     nombre_nivel = estado["nivel"].get("nombre") if estado["nivel"] else "Sin nivel"
-    nombre_completo = f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    nombre_completo = (
+        f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    )
 
     # ==================== 2. AVISO DE ERROR DE CARGA ====================
     aviso_error = ft.Text(
@@ -190,15 +195,21 @@ async def get_alumno_materias_view(page: ft.Page) -> ft.Row:
                     ),
                     ft.Container(
                         width=260,
-                        content=ft.Text(item.get("profesor", "-"), size=13, color=MUTED),
+                        content=ft.Text(
+                            item.get("profesor", "-"), size=13, color=MUTED
+                        ),
                     ),
                     ft.Container(
                         width=200,
-                        content=ft.Text(item.get("curso", nombre_curso), size=13, color=TEXT_COLOR),
+                        content=ft.Text(
+                            item.get("curso", nombre_curso), size=13, color=TEXT_COLOR
+                        ),
                     ),
                     ft.Container(
                         width=180,
-                        content=ft.Text(item.get("nivel", nombre_nivel), size=13, color=MUTED),
+                        content=ft.Text(
+                            item.get("nivel", nombre_nivel), size=13, color=MUTED
+                        ),
                     ),
                     ft.Container(
                         width=140,
@@ -249,7 +260,9 @@ async def get_alumno_materias_view(page: ft.Page) -> ft.Row:
             "Si una materia aparece más de una vez, se dicta con más de un docente."
         )
     else:
-        texto_info = f"No hay materias asignadas al curso {nombre_curso} ({nombre_nivel})."
+        texto_info = (
+            f"No hay materias asignadas al curso {nombre_curso} ({nombre_nivel})."
+        )
 
     info_card = ft.Container(
         bgcolor=TEAL_LIGHT,

@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
@@ -37,7 +38,9 @@ def _texto_seguro(valor) -> str:
     return texto or "-"
 
 
-def _estado_vacio(mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE) -> ft.Container:
+def _estado_vacio(
+    mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE
+) -> ft.Container:
     """Tarjeta de estado vacío o error, manteniendo el layout y sin datos ficticios."""
     return ft.Container(
         bgcolor=BG_WHITE,
@@ -107,7 +110,14 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
         estado["hijos"] = []
 
     if not estado["hijos"]:
-        return layout([_estado_vacio("No hay alumnos vinculados a esta cuenta.", ft.Icons.FAMILY_RESTROOM_OUTLINED)])
+        return layout(
+            [
+                _estado_vacio(
+                    "No hay alumnos vinculados a esta cuenta.",
+                    ft.Icons.FAMILY_RESTROOM_OUTLINED,
+                )
+            ]
+        )
 
     estado["legajo"] = estado["hijos"][0].get("legajo")
 
@@ -156,7 +166,9 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
         nivel = nivel_de(hijo) if hijo else None
         if not nivel:
             return []
-        return [g for g in estado["grupos"] if g.get("id_nivel") == nivel.get("id_nivel")]
+        return [
+            g for g in estado["grupos"] if g.get("id_nivel") == nivel.get("id_nivel")
+        ]
 
     def texto_grupo(grupo: dict) -> str:
         return f"{grupo.get('deporte', '-')} · {grupo.get('nivel', '-')} · {grupo.get('horario', '-')}"
@@ -171,7 +183,8 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
         border=ft.InputBorder.NONE,
         content_padding=ft.Padding(12, 0, 8, 12),
         options=[
-            ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h)) for h in estado["hijos"]
+            ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h))
+            for h in estado["hijos"]
         ],
         value=str(estado["legajo"]),
     )
@@ -190,7 +203,12 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nueva Inscripción Deportiva", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nueva Inscripción Deportiva",
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=BG_WHITE,
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -209,7 +227,9 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Text("Alumno:", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                    ft.Text(
+                        "Alumno:", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK
+                    ),
                     alumno_selector,
                 ],
             ),
@@ -217,7 +237,9 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 2. TARJETAS DE GRUPOS ====================
     grupos_holder = ft.Container()
@@ -235,7 +257,9 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
             padding=ft.Padding(8, 3, 8, 3),
             bgcolor=BADGE_GREEN_BG,
             border_radius=4,
-            content=ft.Text(texto, size=11, weight=ft.FontWeight.BOLD, color=BADGE_GREEN_TXT),
+            content=ft.Text(
+                texto, size=11, weight=ft.FontWeight.BOLD, color=BADGE_GREEN_TXT
+            ),
         )
 
     def tarjeta_grupo(grupo: dict, hijo: dict) -> ft.Container:
@@ -247,7 +271,11 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
                     spacing=8,
                     controls=[
                         badge_inscripto("Inscripto"),
-                        ft.Text(f"Fecha: {_texto_seguro(inscripcion.get('fecha_inscripcion'))}", size=12, color=MUTED),
+                        ft.Text(
+                            f"Fecha: {_texto_seguro(inscripcion.get('fecha_inscripcion'))}",
+                            size=12,
+                            color=MUTED,
+                        ),
                     ],
                 )
             )
@@ -290,10 +318,18 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
                                 spacing=8,
                                 controls=[
                                     ft.Icon(ft.Icons.SCHEDULE, size=14, color=ORANGE),
-                                    ft.Text(_texto_seguro(grupo.get("horario")), size=12, color=MUTED),
+                                    ft.Text(
+                                        _texto_seguro(grupo.get("horario")),
+                                        size=12,
+                                        color=MUTED,
+                                    ),
                                 ],
                             ),
-                            ft.Text(f"Grupo #{grupo.get('id_grupo', '-')}", size=11, color=MUTED),
+                            ft.Text(
+                                f"Grupo #{grupo.get('id_grupo', '-')}",
+                                size=11,
+                                color=MUTED,
+                            ),
                             *pie,
                         ],
                     ),
@@ -343,12 +379,20 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
                     ),
                     ft.Container(
                         width=200,
-                        content=ft.Text(inscripcion.get("deporte", "-"), size=14, color=TEXT_COLOR),
+                        content=ft.Text(
+                            inscripcion.get("deporte", "-"), size=14, color=TEXT_COLOR
+                        ),
                     ),
-                    ft.Container(width=320, content=ft.Text(horario, size=13, color=MUTED)),
+                    ft.Container(
+                        width=320, content=ft.Text(horario, size=13, color=MUTED)
+                    ),
                     ft.Container(
                         width=200,
-                        content=ft.Text(_texto_seguro(inscripcion.get("fecha_inscripcion")), size=13, color=MUTED),
+                        content=ft.Text(
+                            _texto_seguro(inscripcion.get("fecha_inscripcion")),
+                            size=13,
+                            color=MUTED,
+                        ),
                     ),
                 ],
             ),
@@ -414,7 +458,11 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("Todavía no hay inscripciones deportivas de sus hijos.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "Todavía no hay inscripciones deportivas de sus hijos.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
             min_width=1000,
@@ -435,7 +483,9 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
     # ==================== 5. DIÁLOGO DE INSCRIPCIÓN ====================
     def abrir_inscripcion(e=None, grupo: dict | None = None):
         if not estado["hijos"] or not estado["grupos"]:
-            mostrar_error("No hay alumnos o grupos deportivos disponibles para inscribir.")
+            mostrar_error(
+                "No hay alumnos o grupos deportivos disponibles para inscribir."
+            )
             return
 
         hijo_actual = hijo_seleccionado() or estado["hijos"][0]
@@ -443,14 +493,18 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
             label="Alumno *",
             width=380,
             options=[
-                ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h)) for h in estado["hijos"]
+                ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h))
+                for h in estado["hijos"]
             ],
             value=str(hijo_actual.get("legajo")),
         )
         grupo_field = ft.Dropdown(
             label="Grupo deportivo *",
             width=380,
-            options=[ft.dropdown.Option(key=str(g.get("id_grupo")), text=texto_grupo(g)) for g in estado["grupos"]],
+            options=[
+                ft.dropdown.Option(key=str(g.get("id_grupo")), text=texto_grupo(g))
+                for g in estado["grupos"]
+            ],
             value=str(grupo.get("id_grupo")) if grupo else None,
         )
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
@@ -488,7 +542,9 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Nueva Inscripción Deportiva", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Nueva Inscripción Deportiva", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,

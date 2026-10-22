@@ -1,6 +1,7 @@
 import os
-import httpx
 from typing import Any, Optional
+
+import httpx
 
 
 class APIClient:
@@ -19,13 +20,15 @@ class APIClient:
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, base_url: Optional[str] = None):
+    def __init__(self, base_url: str | None = None):
         if getattr(self, "_initialized", False):
             return
 
-        self.base_url = (base_url or os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")).rstrip("/")
-        self.token: Optional[str] = None
-        self._client: Optional[httpx.AsyncClient] = None
+        self.base_url = (
+            base_url or os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
+        ).rstrip("/")
+        self.token: str | None = None
+        self._client: httpx.AsyncClient | None = None
         self._initialized = True
 
     def _get_client(self) -> httpx.AsyncClient:
@@ -46,27 +49,35 @@ class APIClient:
         return headers
 
     # ==================== HELPERS INTERNOS ====================
-    async def _get(self, path: str, params: Optional[dict[str, Any]] = None) -> Any:
+    async def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
         client = self._get_client()
-        response = await client.get(f"{self.base_url}{path}", params=params, headers=self._get_headers())
+        response = await client.get(
+            f"{self.base_url}{path}", params=params, headers=self._get_headers()
+        )
         response.raise_for_status()
         return response.json()
 
     async def _post(self, path: str, data: dict[str, Any]) -> Any:
         client = self._get_client()
-        response = await client.post(f"{self.base_url}{path}", json=data, headers=self._get_headers())
+        response = await client.post(
+            f"{self.base_url}{path}", json=data, headers=self._get_headers()
+        )
         response.raise_for_status()
         return response.json()
 
     async def _put(self, path: str, data: dict[str, Any]) -> Any:
         client = self._get_client()
-        response = await client.put(f"{self.base_url}{path}", json=data, headers=self._get_headers())
+        response = await client.put(
+            f"{self.base_url}{path}", json=data, headers=self._get_headers()
+        )
         response.raise_for_status()
         return response.json()
 
     async def _delete(self, path: str) -> Any:
         client = self._get_client()
-        response = await client.delete(f"{self.base_url}{path}", headers=self._get_headers())
+        response = await client.delete(
+            f"{self.base_url}{path}", headers=self._get_headers()
+        )
         response.raise_for_status()
         if response.content:
             return response.json()
@@ -78,7 +89,9 @@ class APIClient:
         url = f"{self.base_url}/auth/login"
         payload = {"username": username, "password": password}
 
-        response = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
+        response = await client.post(
+            url, json=payload, headers={"Content-Type": "application/json"}
+        )
         response.raise_for_status()
 
         data = response.json()
@@ -89,7 +102,9 @@ class APIClient:
     async def get_mi_perfil(self) -> dict[str, Any]:
         return await self._get("/auth/me")
 
-    async def cambiar_password(self, password_actual: str, password_nueva: str) -> dict[str, Any]:
+    async def cambiar_password(
+        self, password_actual: str, password_nueva: str
+    ) -> dict[str, Any]:
         return await self._put(
             "/auth/me/password",
             {"password_actual": password_actual, "password_nueva": password_nueva},
@@ -105,7 +120,9 @@ class APIClient:
     async def create_usuario(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/auth/usuarios", data)
 
-    async def update_usuario(self, id_usuario: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_usuario(
+        self, id_usuario: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/auth/usuarios/{id_usuario}", data)
 
     # ==================== ALUMNOS ====================
@@ -143,7 +160,9 @@ class APIClient:
     async def create_profesor(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/personas/profesores", data)
 
-    async def update_profesor(self, legajo: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_profesor(
+        self, legajo: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/personas/profesores/{legajo}", data)
 
     async def delete_profesor(self, legajo: int) -> dict[str, Any]:
@@ -173,7 +192,7 @@ class APIClient:
         return await self._delete(f"/academico/niveles/{id_nivel}")
 
     # ==================== CURSOS ====================
-    async def get_cursos(self, id_nivel: Optional[int] = None) -> list[dict[str, Any]]:
+    async def get_cursos(self, id_nivel: int | None = None) -> list[dict[str, Any]]:
         params = {"id_nivel": id_nivel} if id_nivel is not None else None
         return await self._get("/academico/cursos", params=params)
 
@@ -193,7 +212,9 @@ class APIClient:
     async def create_materia(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/academico/materias", data)
 
-    async def update_materia(self, id_materia: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_materia(
+        self, id_materia: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/academico/materias/{id_materia}", data)
 
     async def delete_materia(self, id_materia: int) -> dict[str, Any]:
@@ -206,7 +227,9 @@ class APIClient:
     async def create_asignacion(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/academico/asignaciones", data)
 
-    async def update_asignacion(self, id_materia: int, id_curso: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_asignacion(
+        self, id_materia: int, id_curso: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/academico/asignaciones/{id_materia}/{id_curso}", data)
 
     async def delete_asignacion(self, id_materia: int, id_curso: int) -> dict[str, Any]:
@@ -219,7 +242,9 @@ class APIClient:
     async def create_horario(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/academico/horarios", data)
 
-    async def update_horario(self, id_horario: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_horario(
+        self, id_horario: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/academico/horarios/{id_horario}", data)
 
     async def delete_horario(self, id_horario: int) -> dict[str, Any]:
@@ -228,10 +253,10 @@ class APIClient:
     # ==================== CALIFICACIONES (notas) ====================
     async def get_calificaciones(
         self,
-        legajo_alumno: Optional[int] = None,
-        id_materia: Optional[int] = None,
-        id_curso: Optional[int] = None,
-        periodo: Optional[str] = None,
+        legajo_alumno: int | None = None,
+        id_materia: int | None = None,
+        id_curso: int | None = None,
+        periodo: str | None = None,
     ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {}
         if legajo_alumno is not None:
@@ -247,7 +272,9 @@ class APIClient:
     async def crear_calificacion(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/academico/calificaciones", data)
 
-    async def actualizar_calificacion(self, id_calificacion: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def actualizar_calificacion(
+        self, id_calificacion: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/academico/calificaciones/{id_calificacion}", data)
 
     async def eliminar_calificacion(self, id_calificacion: int) -> dict[str, Any]:
@@ -256,9 +283,9 @@ class APIClient:
     # ==================== ASISTENCIA ====================
     async def get_asistencia(
         self,
-        id_curso: Optional[int] = None,
-        fecha: Optional[str] = None,
-        legajo_alumno: Optional[int] = None,
+        id_curso: int | None = None,
+        fecha: str | None = None,
+        legajo_alumno: int | None = None,
     ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {}
         if id_curso is not None:
@@ -269,7 +296,9 @@ class APIClient:
             params["legajo_alumno"] = legajo_alumno
         return await self._get("/academico/asistencia", params=params or None)
 
-    async def registrar_asistencia_lote(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+    async def registrar_asistencia_lote(
+        self, data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         return await self._post("/academico/asistencia/lote", data)
 
     async def get_resumen_asistencia(self, legajo_alumno: int) -> dict[str, Any]:
@@ -285,7 +314,9 @@ class APIClient:
     async def create_deporte(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/servicios/deportes", data)
 
-    async def update_deporte(self, id_deporte: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_deporte(
+        self, id_deporte: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/servicios/deportes/{id_deporte}", data)
 
     async def delete_deporte(self, id_deporte: int) -> dict[str, Any]:
@@ -297,7 +328,9 @@ class APIClient:
     async def create_grupo_deporte(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/servicios/deportes/grupos", data)
 
-    async def update_grupo_deporte(self, id_grupo: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_grupo_deporte(
+        self, id_grupo: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/servicios/deportes/grupos/{id_grupo}", data)
 
     async def delete_grupo_deporte(self, id_grupo: int) -> dict[str, Any]:
@@ -316,7 +349,9 @@ class APIClient:
     async def create_recorrido(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/servicios/transporte/recorridos", data)
 
-    async def update_recorrido(self, id_recorrido: int, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_recorrido(
+        self, id_recorrido: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         return await self._put(f"/servicios/transporte/recorridos/{id_recorrido}", data)
 
     async def delete_recorrido(self, id_recorrido: int) -> dict[str, Any]:
@@ -329,7 +364,9 @@ class APIClient:
         return await self._post("/servicios/transporte/inscripciones", data)
 
     async def baja_transporte(self, legajo_alumno: int) -> dict[str, Any]:
-        return await self._delete(f"/servicios/transporte/inscripciones/{legajo_alumno}")
+        return await self._delete(
+            f"/servicios/transporte/inscripciones/{legajo_alumno}"
+        )
 
     # ==================== COMEDOR ====================
     async def get_inscripciones_comedor(self) -> list[dict[str, Any]]:
@@ -349,7 +386,7 @@ class APIClient:
         return await self._get("/comunidad/solicitudes")
 
     async def cambiar_estado_solicitud(
-        self, id_solicitud: int, estado: str, observaciones: Optional[str] = None
+        self, id_solicitud: int, estado: str, observaciones: str | None = None
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {"estado": estado}
         if observaciones is not None:

@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
@@ -39,7 +40,9 @@ def _fecha_corta(iso: str | None) -> str:
 
 def _icono_deporte(nombre: str | None) -> ft.IconData:
     """Devuelve un icono existente para la disciplina, o uno genérico."""
-    return ICONOS_DEPORTE.get((nombre or "").strip().lower(), ft.Icons.FITNESS_CENTER_OUTLINED)
+    return ICONOS_DEPORTE.get(
+        (nombre or "").strip().lower(), ft.Icons.FITNESS_CENTER_OUTLINED
+    )
 
 
 def _estado_vacio(titulo: str, mensaje: str) -> ft.Container:
@@ -59,7 +62,9 @@ def _estado_vacio(titulo: str, mensaje: str) -> ft.Container:
                     bgcolor=TEAL_LIGHT,
                     border_radius=28,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Icon(ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK),
+                    content=ft.Icon(
+                        ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK
+                    ),
                 ),
                 ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
                 ft.Text(mensaje, size=14, color=MUTED, text_align=ft.TextAlign.CENTER),
@@ -156,7 +161,9 @@ async def get_alumno_deportes_view(page: ft.Page) -> ft.Row:
             ],
         )
 
-    curso = next((c for c in cursos if c.get("id_curso") == alumno.get("id_curso")), None)
+    curso = next(
+        (c for c in cursos if c.get("id_curso") == alumno.get("id_curso")), None
+    )
     estado["nivel"] = next(
         (n for n in niveles if curso and n.get("id_nivel") == curso.get("id_nivel")),
         None,
@@ -164,12 +171,21 @@ async def get_alumno_deportes_view(page: ft.Page) -> ft.Row:
 
     nombre_curso = curso.get("nombre") if curso else "Curso sin asignar"
     nombre_nivel = estado["nivel"].get("nombre") if estado["nivel"] else None
-    nombre_completo = f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    nombre_completo = (
+        f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    )
 
     ids_inscriptos = {i.get("id_grupo") for i in estado["inscripciones"]}
     estado["grupos"] = sorted(
-        [g for g in grupos if estado["nivel"] and g.get("id_nivel") == estado["nivel"].get("id_nivel")],
-        key=lambda g: (0 if g.get("id_grupo") in ids_inscriptos else 1, g.get("id_grupo", 0)),
+        [
+            g
+            for g in grupos
+            if estado["nivel"] and g.get("id_nivel") == estado["nivel"].get("id_nivel")
+        ],
+        key=lambda g: (
+            0 if g.get("id_grupo") in ids_inscriptos else 1,
+            g.get("id_grupo", 0),
+        ),
     )
 
     # ==================== 2. AVISO DE ERROR DE CARGA ====================
@@ -189,20 +205,29 @@ async def get_alumno_deportes_view(page: ft.Page) -> ft.Row:
                 bgcolor=BADGE_GREEN_BG,
                 border_radius=4,
                 content=ft.Text(
-                    "Inscripto", size=12, weight=ft.FontWeight.W_600, color=BADGE_GREEN_TXT
+                    "Inscripto",
+                    size=12,
+                    weight=ft.FontWeight.W_600,
+                    color=BADGE_GREEN_TXT,
                 ),
             )
         return ft.Container(
             padding=ft.Padding(8, 4, 8, 4),
             bgcolor=TEAL_LIGHT,
             border_radius=4,
-            content=ft.Text("Disponible", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+            content=ft.Text(
+                "Disponible", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK
+            ),
         )
 
     def tarjeta_grupo(grupo: dict) -> ft.Container:
         inscripto = grupo.get("id_grupo") in ids_inscriptos
         inscripcion = next(
-            (i for i in estado["inscripciones"] if i.get("id_grupo") == grupo.get("id_grupo")),
+            (
+                i
+                for i in estado["inscripciones"]
+                if i.get("id_grupo") == grupo.get("id_grupo")
+            ),
             None,
         )
 
@@ -372,7 +397,12 @@ async def get_alumno_deportes_view(page: ft.Page) -> ft.Row:
                     ft.Row(
                         spacing=12,
                         controls=[
-                            ft.Container(width=4, height=36, border_radius=2, bgcolor=ONLINE_GREEN),
+                            ft.Container(
+                                width=4,
+                                height=36,
+                                border_radius=2,
+                                bgcolor=ONLINE_GREEN,
+                            ),
                             ft.Column(
                                 spacing=2,
                                 controls=[
@@ -437,7 +467,9 @@ async def get_alumno_deportes_view(page: ft.Page) -> ft.Row:
 
     # ==================== 5. AVISO INFORMATIVO REAL ====================
     if estado["inscripciones"]:
-        nombres = ", ".join(sorted({i.get("deporte", "-") for i in estado["inscripciones"]}))
+        nombres = ", ".join(
+            sorted({i.get("deporte", "-") for i in estado["inscripciones"]})
+        )
         texto_regla = f"Estás inscripto en {len(estado['inscripciones'])} disciplina(s): {nombres}."
     else:
         texto_regla = "No registrás inscripciones deportivas por el momento."

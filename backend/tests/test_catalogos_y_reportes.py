@@ -18,11 +18,23 @@ def test_eliminar_nivel_con_cursos_asociados_devuelve_409(client, cabeceras_admi
     assert curso.status_code == 201
     id_curso = curso.json()["id_curso"]
 
-    bloqueado = client.delete(f"/api/v1/academico/niveles/{id_nivel}", headers=cabeceras_admin)
+    bloqueado = client.delete(
+        f"/api/v1/academico/niveles/{id_nivel}", headers=cabeceras_admin
+    )
     assert bloqueado.status_code == 409
 
-    assert client.delete(f"/api/v1/academico/cursos/{id_curso}", headers=cabeceras_admin).status_code == 200
-    assert client.delete(f"/api/v1/academico/niveles/{id_nivel}", headers=cabeceras_admin).status_code == 200
+    assert (
+        client.delete(
+            f"/api/v1/academico/cursos/{id_curso}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
+    assert (
+        client.delete(
+            f"/api/v1/academico/niveles/{id_nivel}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
 
 
 def test_crud_completo_de_curso(client, cabeceras_admin):
@@ -48,8 +60,18 @@ def test_crud_completo_de_curso(client, cabeceras_admin):
     assert actualizado.status_code == 200
     assert actualizado.json()["nombre"] == "7° Grado B"
 
-    assert client.delete(f"/api/v1/academico/cursos/{id_curso}", headers=cabeceras_admin).status_code == 200
-    assert client.delete(f"/api/v1/academico/niveles/{nivel['id_nivel']}", headers=cabeceras_admin).status_code == 200
+    assert (
+        client.delete(
+            f"/api/v1/academico/cursos/{id_curso}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
+    assert (
+        client.delete(
+            f"/api/v1/academico/niveles/{nivel['id_nivel']}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
 
 
 def test_crud_completo_de_materia(client, cabeceras_admin):
@@ -68,7 +90,12 @@ def test_crud_completo_de_materia(client, cabeceras_admin):
     )
     assert actualizada.status_code == 200
 
-    assert client.delete(f"/api/v1/academico/materias/{id_materia}", headers=cabeceras_admin).status_code == 200
+    assert (
+        client.delete(
+            f"/api/v1/academico/materias/{id_materia}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
 
 
 def test_crud_completo_de_horario(client, cabeceras_admin):
@@ -88,7 +115,12 @@ def test_crud_completo_de_horario(client, cabeceras_admin):
     assert actualizado.status_code == 200
     assert actualizado.json()["descripcion"] == "Turno Nocturno (20:00 - 22:30)"
 
-    assert client.delete(f"/api/v1/academico/horarios/{id_horario}", headers=cabeceras_admin).status_code == 200
+    assert (
+        client.delete(
+            f"/api/v1/academico/horarios/{id_horario}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
 
 
 def test_asignacion_de_materia_curso_profesor(client, cabeceras_admin):
@@ -128,9 +160,25 @@ def test_asignacion_de_materia_curso_profesor(client, cabeceras_admin):
     )
     assert eliminar.status_code == 200
 
-    assert client.delete(f"/api/v1/academico/materias/{materia['id_materia']}", headers=cabeceras_admin).status_code == 200
-    assert client.delete(f"/api/v1/academico/cursos/{curso['id_curso']}", headers=cabeceras_admin).status_code == 200
-    assert client.delete(f"/api/v1/academico/niveles/{nivel['id_nivel']}", headers=cabeceras_admin).status_code == 200
+    assert (
+        client.delete(
+            f"/api/v1/academico/materias/{materia['id_materia']}",
+            headers=cabeceras_admin,
+        ).status_code
+        == 200
+    )
+    assert (
+        client.delete(
+            f"/api/v1/academico/cursos/{curso['id_curso']}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
+    assert (
+        client.delete(
+            f"/api/v1/academico/niveles/{nivel['id_nivel']}", headers=cabeceras_admin
+        ).status_code
+        == 200
+    )
 
 
 REPORTES = [

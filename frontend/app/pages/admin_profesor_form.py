@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -32,21 +33,29 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
     if token_almacenado and not api_client.token:
         api_client.set_token(token_almacenado)
 
-    feedback_text = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    feedback_text = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== CAMPOS DEL FORMULARIO ====================
     campo_legajo = input_con_label("Legajo *", "Ej: 2005")
     campo_dni = input_con_label("DNI *", "Ej: 32.400.912")
     campo_nombres = input_con_label("Nombres *", "Ej: Guillermina")
     campo_apellidos = input_con_label("Apellidos *", "Ej: Sánchez")
-    campo_especialidad = input_con_label("Especialidad Principal *", "Ej: Matemática Aplicada, Álgebra")
-    campo_estado = dropdown_con_label("Estado de Contrato *", "Activo", ["Activo", "Licencia", "Inactivo"])
+    campo_especialidad = input_con_label(
+        "Especialidad Principal *", "Ej: Matemática Aplicada, Álgebra"
+    )
+    campo_estado = dropdown_con_label(
+        "Estado de Contrato *", "Activo", ["Activo", "Licencia", "Inactivo"]
+    )
     campo_correo = input_con_label("Correo Laboral *", "ejemplo@educar.edu.ar")
     campo_telefono = input_con_label("Teléfono Particular *", "3624-XXXXXX")
 
     # ==================== 1. ENCABEZADO DE ACCIONES ====================
     btn_guardar = ft.Button(
-        content=ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+        content=ft.Text(
+            "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+        ),
         bgcolor=TEAL,
         height=37,
         style=ft.ButtonStyle(
@@ -96,7 +105,9 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
         }
 
         btn_guardar.disabled = True
-        btn_guardar.content = ft.Text("Guardando...", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+        btn_guardar.content = ft.Text(
+            "Guardando...", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+        )
         page.update()
 
         try:
@@ -104,7 +115,9 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
             page.go("/admin/profesores")
         except httpx.HTTPStatusError as err:
             btn_guardar.disabled = False
-            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            btn_guardar.content = ft.Text(
+                "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+            )
             detalle = "Error al crear el docente."
             try:
                 detalle = err.response.json().get("detail", detalle)
@@ -116,7 +129,9 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
             page.update()
         except httpx.RequestError:
             btn_guardar.disabled = False
-            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            btn_guardar.content = ft.Text(
+                "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+            )
             feedback_text.value = "⚠️ Error de conexión con el backend."
             feedback_text.color = BADGE_RED_TXT
             feedback_text.visible = True
@@ -144,7 +159,9 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                                 alignment=ft.Alignment(0, 0),
                                 tooltip="Volver a la nómina de profesores",
                                 on_click=lambda _: page.go("/admin/profesores"),
-                                content=ft.Icon(ft.Icons.ARROW_BACK, size=16, color=TEXT_COLOR),
+                                content=ft.Icon(
+                                    ft.Icons.ARROW_BACK, size=16, color=TEXT_COLOR
+                                ),
                             ),
                             ft.Text(
                                 "Nuevo Docente",
@@ -159,12 +176,19 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
                             ft.Button(
-                                content=ft.Text("Cancelar", size=14, weight=ft.FontWeight.W_600, color=MUTED),
+                                content=ft.Text(
+                                    "Cancelar",
+                                    size=14,
+                                    weight=ft.FontWeight.W_600,
+                                    color=MUTED,
+                                ),
                                 bgcolor=BG_WHITE,
                                 height=37,
                                 style=ft.ButtonStyle(
                                     side=ft.BorderSide(1, BORDER_COLOR),
-                                    shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
+                                    shape=ft.RoundedRectangleBorder(
+                                        radius=BORDER_RADIUS
+                                    ),
                                     padding=ft.Padding(20, 10, 20, 10),
                                 ),
                                 on_click=lambda _: page.go("/admin/profesores"),
@@ -187,7 +211,12 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=20,
             controls=[
-                ft.Text("Información Básica", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Información Básica",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Column(
                     spacing=16,
                     controls=[
@@ -232,8 +261,17 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                 ft.Column(
                     spacing=4,
                     controls=[
-                        ft.Text("Materias a Cargo", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.Text("Asigne las asignaturas correspondientes.", size=12, color=MUTED),
+                        ft.Text(
+                            "Materias a Cargo",
+                            size=18,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEAL_DARK,
+                        ),
+                        ft.Text(
+                            "Asigne las asignaturas correspondientes.",
+                            size=12,
+                            color=MUTED,
+                        ),
                     ],
                 ),
                 ft.Container(
@@ -242,7 +280,7 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                     padding=16,
                     content=ft.Text(
                         "Guarde el docente y luego asigne materias y cursos desde el módulo "
-                        "\"Materias\" (botón \"Asignar Materia\").",
+                        '"Materias" (botón "Asignar Materia").',
                         size=13,
                         color=MUTED,
                     ),

@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,26 +11,31 @@ class CalificacionBase(BaseModel):
     periodo: str = Field(min_length=2, max_length=30)
     tipo: str = Field(min_length=2, max_length=30)
     nota: float = Field(ge=0, le=10)
-    fecha: Optional[date] = None
-    observacion: Optional[str] = Field(default=None, max_length=200)
+    fecha: date | None = None
+    observacion: str | None = Field(default=None, max_length=200)
+
 
 class CalificacionCreate(CalificacionBase):
     pass
 
+
 class CalificacionUpdate(BaseModel):
-    periodo: Optional[str] = Field(default=None, max_length=30)
-    tipo: Optional[str] = Field(default=None, max_length=30)
-    nota: Optional[float] = Field(default=None, ge=0, le=10)
-    fecha: Optional[date] = None
-    observacion: Optional[str] = Field(default=None, max_length=200)
+    periodo: str | None = Field(default=None, max_length=30)
+    tipo: str | None = Field(default=None, max_length=30)
+    nota: float | None = Field(default=None, ge=0, le=10)
+    fecha: date | None = None
+    observacion: str | None = Field(default=None, max_length=200)
+
 
 class CalificacionResponse(CalificacionBase):
     id_calificacion: int
-    legajo_profesor: Optional[int] = None
+    legajo_profesor: int | None = None
     model_config = ConfigDict(from_attributes=True)
+
 
 class CalificacionDetalleResponse(BaseModel):
     """Calificación con nombres resueltos para las tablas de la interfaz."""
+
     id_calificacion: int
     legajo_alumno: int
     alumno: str
@@ -43,20 +47,23 @@ class CalificacionDetalleResponse(BaseModel):
     tipo: str
     nota: float
     fecha: date
-    observacion: Optional[str] = None
+    observacion: str | None = None
 
 
 # --- ASISTENCIA ---
 class AsistenciaItemCreate(BaseModel):
     legajo_alumno: int
     estado: str = Field(pattern="^(PRESENTE|AUSENTE|TARDE|JUSTIFICADO)$")
-    observacion: Optional[str] = Field(default=None, max_length=200)
+    observacion: str | None = Field(default=None, max_length=200)
+
 
 class AsistenciaLoteCreate(BaseModel):
     """Carga rápida de asistencia de un curso completo para una fecha."""
+
     id_curso: int
-    fecha: Optional[date] = None
-    registros: List[AsistenciaItemCreate] = Field(min_length=1)
+    fecha: date | None = None
+    registros: list[AsistenciaItemCreate] = Field(min_length=1)
+
 
 class AsistenciaResponse(BaseModel):
     id_asistencia: int
@@ -64,9 +71,10 @@ class AsistenciaResponse(BaseModel):
     id_curso: int
     fecha: date
     estado: str
-    observacion: Optional[str] = None
-    legajo_profesor: Optional[int] = None
+    observacion: str | None = None
+    legajo_profesor: int | None = None
     model_config = ConfigDict(from_attributes=True)
+
 
 class AsistenciaDetalleResponse(BaseModel):
     id_asistencia: int
@@ -76,7 +84,8 @@ class AsistenciaDetalleResponse(BaseModel):
     curso: str
     fecha: date
     estado: str
-    observacion: Optional[str] = None
+    observacion: str | None = None
+
 
 class ResumenAsistenciaResponse(BaseModel):
     legajo_alumno: int

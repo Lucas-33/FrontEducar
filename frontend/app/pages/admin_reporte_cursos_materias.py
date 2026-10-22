@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -62,8 +63,12 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
 
     estado["niveles"] = await consultar("niveles", api_client.get_niveles)
     estado["cursos"] = await consultar("cursos", api_client.get_cursos)
-    estado["alumnos"] = await consultar("alumnos", api_client.get_alumnos, solo_activos=False)
-    estado["asignaciones"] = await consultar("asignaciones", api_client.get_asignaciones)
+    estado["alumnos"] = await consultar(
+        "alumnos", api_client.get_alumnos, solo_activos=False
+    )
+    estado["asignaciones"] = await consultar(
+        "asignaciones", api_client.get_asignaciones
+    )
 
     nivel_por_id = {n["id_nivel"]: n["nombre"] for n in estado["niveles"]}
     nombre_nivel_por_curso = {
@@ -93,12 +98,28 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                 materias.append(materia)
         return materias
 
-    total_materias = len({a.get("id_materia") for a in estado["asignaciones"] if a.get("id_materia") is not None})
-    total_docentes_asignados = len({a.get("legajo_profesor") for a in estado["asignaciones"] if a.get("legajo_profesor") is not None})
+    total_materias = len(
+        {
+            a.get("id_materia")
+            for a in estado["asignaciones"]
+            if a.get("id_materia") is not None
+        }
+    )
+    total_docentes_asignados = len(
+        {
+            a.get("legajo_profesor")
+            for a in estado["asignaciones"]
+            if a.get("legajo_profesor") is not None
+        }
+    )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
     if errores:
-        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(errores)
+        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(
+            errores
+        )
         aviso_error.visible = True
 
     # ==================== 1. ENCABEZADO Y ACCIONES ====================
@@ -124,8 +145,17 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text("Nómina Curricular: Cursos y Materias", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text("Matrícula por curso, materias asignadas y docente a cargo", size=12, color=MUTED),
+                            ft.Text(
+                                "Nómina Curricular: Cursos y Materias",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                "Matrícula por curso, materias asignadas y docente a cargo",
+                                size=12,
+                                color=MUTED,
+                            ),
                         ],
                     ),
                 ],
@@ -137,26 +167,48 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.FILE_DOWNLOAD_OUTLINED, size=15, color=TEAL_DARK),
-                                ft.Text("Exportar Excel", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                                ft.Icon(
+                                    ft.Icons.FILE_DOWNLOAD_OUTLINED,
+                                    size=15,
+                                    color=TEAL_DARK,
+                                ),
+                                ft.Text(
+                                    "Exportar Excel",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=TEAL_DARK,
+                                ),
                             ],
                         ),
                         bgcolor=TEAL_LIGHT,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
-                        on_click=lambda _: page.launch_url(api_client.reporte_url("cursos-materias")),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
+                        on_click=lambda _: page.launch_url(
+                            api_client.reporte_url("cursos-materias")
+                        ),
                     ),
                     ft.Button(
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE),
-                                ft.Text("Imprimir PDF", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                                ft.Icon(
+                                    ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE
+                                ),
+                                ft.Text(
+                                    "Imprimir PDF",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=BG_WHITE,
+                                ),
                             ],
                         ),
                         bgcolor=ORANGE,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
                         on_click=lambda _: None,
                     ),
                 ],
@@ -165,7 +217,9 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== 2. INDICADORES REALES ====================
-    def kpi_card(titulo: str, valor: int, subtitulo: str, icono: ft.IconData) -> ft.Container:
+    def kpi_card(
+        titulo: str, valor: int, subtitulo: str, icono: ft.IconData
+    ) -> ft.Container:
         return ft.Container(
             col={"sm": 12, "md": 6, "lg": 3},
             bgcolor=BG_WHITE,
@@ -187,9 +241,25 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(str(valor), size=22, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text(titulo, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                            ft.Text(subtitulo, size=11, color=MUTED, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Text(
+                                str(valor),
+                                size=22,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                titulo,
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=TEXT_COLOR,
+                            ),
+                            ft.Text(
+                                subtitulo,
+                                size=11,
+                                color=MUTED,
+                                max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                            ),
                         ],
                     ),
                 ],
@@ -201,10 +271,30 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
         spacing=16,
         run_spacing=16,
         controls=[
-            kpi_card("Niveles educativos", len(estado["niveles"]), "Niveles cargados en el sistema", ft.Icons.LAYERS_OUTLINED),
-            kpi_card("Cursos y divisiones", len(estado["cursos"]), "Divisiones activas", ft.Icons.CLASS_OUTLINED),
-            kpi_card("Materias dictadas", total_materias, "Materias con al menos una asignación", ft.Icons.MENU_BOOK_OUTLINED),
-            kpi_card("Docentes asignados", total_docentes_asignados, "Docentes con materias a cargo", ft.Icons.PERSON_OUTLINE),
+            kpi_card(
+                "Niveles educativos",
+                len(estado["niveles"]),
+                "Niveles cargados en el sistema",
+                ft.Icons.LAYERS_OUTLINED,
+            ),
+            kpi_card(
+                "Cursos y divisiones",
+                len(estado["cursos"]),
+                "Divisiones activas",
+                ft.Icons.CLASS_OUTLINED,
+            ),
+            kpi_card(
+                "Materias dictadas",
+                total_materias,
+                "Materias con al menos una asignación",
+                ft.Icons.MENU_BOOK_OUTLINED,
+            ),
+            kpi_card(
+                "Docentes asignados",
+                total_docentes_asignados,
+                "Docentes con materias a cargo",
+                ft.Icons.PERSON_OUTLINE,
+            ),
         ],
     )
 
@@ -252,13 +342,21 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    materias_disponibles = sorted({a.get("materia") for a in estado["asignaciones"] if a.get("materia")})
+    materias_disponibles = sorted(
+        {a.get("materia") for a in estado["asignaciones"] if a.get("materia")}
+    )
 
-    filtro_materia_container = filtro_dropdown("Materia: Todas", 190, ["Todas"] + materias_disponibles)
+    filtro_materia_container = filtro_dropdown(
+        "Materia: Todas", 190, ["Todas"] + materias_disponibles
+    )
     filtro_materia: ft.Dropdown = filtro_materia_container.content
-    filtro_nivel_container = filtro_dropdown("Nivel: Todos", 160, ["Todos"] + [n["nombre"] for n in estado["niveles"]])
+    filtro_nivel_container = filtro_dropdown(
+        "Nivel: Todos", 160, ["Todos"] + [n["nombre"] for n in estado["niveles"]]
+    )
     filtro_nivel: ft.Dropdown = filtro_nivel_container.content
-    filtro_curso_container = filtro_dropdown("Curso: Todos", 170, ["Todos"] + [c["nombre"] for c in estado["cursos"]])
+    filtro_curso_container = filtro_dropdown(
+        "Curso: Todos", 170, ["Todos"] + [c["nombre"] for c in estado["cursos"]]
+    )
     filtro_curso: ft.Dropdown = filtro_curso_container.content
 
     filters_bar = ft.Row(
@@ -287,7 +385,13 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
     def curso_resumen_row(curso: dict) -> ft.Container:
         id_curso = curso["id_curso"]
         alumnos_curso = alumnos_del_curso(id_curso)
-        activos = len([a for a in alumnos_curso if str(a.get("estado_alumno", "")).upper() == "ACTIVO"])
+        activos = len(
+            [
+                a
+                for a in alumnos_curso
+                if str(a.get("estado_alumno", "")).upper() == "ACTIVO"
+            ]
+        )
         docentes = docentes_del_curso(id_curso)
         return ft.Container(
             height=54,
@@ -297,11 +401,49 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=150, content=ft.Text(nombre_nivel_por_curso.get(id_curso, "Sin nivel"), size=13, color=MUTED)),
-                    ft.Container(width=160, content=ft.Text(curso.get("nombre", ""), size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=130, content=ft.Text(str(len(alumnos_curso)), size=14, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
-                    ft.Container(width=140, content=ft.Text(str(activos), size=14, weight=ft.FontWeight.W_500, color=TEAL)),
-                    ft.Container(width=150, content=ft.Text(str(len(materias_del_curso(id_curso))), size=14, color=TEXT_COLOR)),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            nombre_nivel_por_curso.get(id_curso, "Sin nivel"),
+                            size=13,
+                            color=MUTED,
+                        ),
+                    ),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(
+                            curso.get("nombre", ""),
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(
+                            str(len(alumnos_curso)),
+                            size=14,
+                            weight=ft.FontWeight.W_500,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=140,
+                        content=ft.Text(
+                            str(activos),
+                            size=14,
+                            weight=ft.FontWeight.W_500,
+                            color=TEAL,
+                        ),
+                    ),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            str(len(materias_del_curso(id_curso))),
+                            size=14,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
                     ft.Container(
                         width=290,
                         content=ft.Text(
@@ -325,10 +467,17 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                 continue
             if estado["curso"] != "Todos" and curso.get("nombre") != estado["curso"]:
                 continue
-            if estado["materia"] != "Todas" and estado["materia"] not in materias_del_curso(curso["id_curso"]):
+            if estado["materia"] != "Todas" and estado[
+                "materia"
+            ] not in materias_del_curso(curso["id_curso"]):
                 continue
             if texto:
-                heno = f"{curso.get('nombre', '')} {nivel} " + " ".join(materias_del_curso(curso["id_curso"])) + " " + " ".join(docentes_del_curso(curso["id_curso"]))
+                heno = (
+                    f"{curso.get('nombre', '')} {nivel} "
+                    + " ".join(materias_del_curso(curso["id_curso"]))
+                    + " "
+                    + " ".join(docentes_del_curso(curso["id_curso"]))
+                )
                 if texto not in heno.lower():
                     continue
             resultado.append(curso)
@@ -355,11 +504,42 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=150, content=ft.Text(asignacion.get("nivel") or "Sin nivel", size=13, color=MUTED)),
-                    ft.Container(width=150, content=ft.Text(asignacion.get("curso") or "—", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=200, content=ft.Text(asignacion.get("materia") or "—", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=220, content=ft.Text(asignacion.get("profesor") or "Sin docente asignado", size=13, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
-                    ft.Container(width=130, content=ft.Text(str(inscriptos), size=14, color=TEAL)),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            asignacion.get("nivel") or "Sin nivel", size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            asignacion.get("curso") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=200,
+                        content=ft.Text(
+                            asignacion.get("materia") or "—",
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=220,
+                        content=ft.Text(
+                            asignacion.get("profesor") or "Sin docente asignado",
+                            size=13,
+                            weight=ft.FontWeight.W_500,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=130, content=ft.Text(str(inscriptos), size=14, color=TEAL)
+                    ),
                 ],
             ),
         )
@@ -368,13 +548,26 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
         texto = (estado["texto"] or "").lower()
         resultado = []
         for asignacion in estado["asignaciones"]:
-            if estado["nivel"] != "Todos" and (asignacion.get("nivel") or "") != estado["nivel"]:
+            if (
+                estado["nivel"] != "Todos"
+                and (asignacion.get("nivel") or "") != estado["nivel"]
+            ):
                 continue
-            if estado["curso"] != "Todos" and (asignacion.get("curso") or "") != estado["curso"]:
+            if (
+                estado["curso"] != "Todos"
+                and (asignacion.get("curso") or "") != estado["curso"]
+            ):
                 continue
-            if estado["materia"] != "Todas" and (asignacion.get("materia") or "") != estado["materia"]:
+            if (
+                estado["materia"] != "Todas"
+                and (asignacion.get("materia") or "") != estado["materia"]
+            ):
                 continue
-            if texto and texto not in f"{asignacion.get('materia', '')} {asignacion.get('curso', '')} {asignacion.get('profesor', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{asignacion.get('materia', '')} {asignacion.get('curso', '')} {asignacion.get('profesor', '')}".lower()
+            ):
                 continue
             resultado.append(asignacion)
         return resultado
@@ -392,7 +585,11 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay cursos que coincidan con los filtros aplicados.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay cursos que coincidan con los filtros aplicados.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
             min_width=1052,
@@ -404,7 +601,11 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay materias asignadas que coincidan con los filtros aplicados.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay materias asignadas que coincidan con los filtros aplicados.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
             min_width=882,
@@ -455,14 +656,24 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
             ft.Column(
                 spacing=12,
                 controls=[
-                    ft.Text("Resumen de Cursos y Divisiones por Nivel", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        "Resumen de Cursos y Divisiones por Nivel",
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEAL_DARK,
+                    ),
                     table_holder_resumen,
                 ],
             ),
             ft.Column(
                 spacing=12,
                 controls=[
-                    ft.Text("Asignaciones: Materia, Curso y Docente a Cargo", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        "Asignaciones: Materia, Curso y Docente a Cargo",
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEAL_DARK,
+                    ),
                     table_holder_asignaciones,
                 ],
             ),

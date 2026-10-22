@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.components.constants import (
     BG_WHITE,
     BORDER_COLOR,
@@ -47,6 +48,7 @@ def create_table_header(columns: list[tuple[str, int | None, bool]]) -> ft.Conta
 
 # frontend/app/components/table_view.py
 
+
 def create_table_container(
     header: ft.Container,
     rows: list[ft.Control],
@@ -88,7 +90,9 @@ def create_pagination_bar(
 ) -> ft.Row:
     """Genera la barra de paginación inferior unificada."""
 
-    def btn_pagina(texto: str, activo: bool = False, icon: ft.IconData | None = None) -> ft.Container:
+    def btn_pagina(
+        texto: str, activo: bool = False, icon: ft.IconData | None = None
+    ) -> ft.Container:
         return ft.Container(
             width=36,
             height=36,

@@ -1,5 +1,6 @@
 import flet as ft
 import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -11,7 +12,6 @@ from frontend.app.components.constants import (
     CARD_RADIUS,
     CONTROL_HEIGHT,
     MUTED,
-    ORANGE,
     TEAL,
     TEAL_DARK,
     TEAL_LIGHT,
@@ -155,7 +155,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
 
     feedback_text = ft.Text("", size=13, weight=ft.FontWeight.W_600, visible=False)
 
-    def envolver_campo(label: str, control: ft.Control, expand: bool = True) -> ft.Column:
+    def envolver_campo(
+        label: str, control: ft.Control, expand: bool = True
+    ) -> ft.Column:
         return ft.Column(
             spacing=6,
             expand=expand,
@@ -167,7 +169,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
 
     # ==================== 3. LÓGICA DE GUARDADO ====================
     btn_guardar = ft.Button(
-        content=ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+        content=ft.Text(
+            "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+        ),
         bgcolor=TEAL,
         height=37,
         style=ft.ButtonStyle(
@@ -219,7 +223,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                 payload["id_curso"] = id_curso
 
         btn_guardar.disabled = True
-        btn_guardar.content = ft.Text("Guardando...", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+        btn_guardar.content = ft.Text(
+            "Guardando...", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+        )
         page.update()
 
         try:
@@ -227,7 +233,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
             page.go("/admin/alumnos")
         except httpx.HTTPStatusError as err:
             btn_guardar.disabled = False
-            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            btn_guardar.content = ft.Text(
+                "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+            )
             detalle = "Error al crear el alumno."
             try:
                 data_err = err.response.json()
@@ -240,7 +248,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
             page.update()
         except httpx.RequestError:
             btn_guardar.disabled = False
-            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            btn_guardar.content = ft.Text(
+                "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+            )
             feedback_text.value = "⚠️ Error de conexión con el backend."
             feedback_text.color = BADGE_RED_TXT
             feedback_text.visible = True
@@ -282,7 +292,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                 controls=[
                     feedback_text,
                     ft.Button(
-                        content=ft.Text("Cancelar", size=14, weight=ft.FontWeight.W_600, color=MUTED),
+                        content=ft.Text(
+                            "Cancelar", size=14, weight=ft.FontWeight.W_600, color=MUTED
+                        ),
                         bgcolor=BG_WHITE,
                         height=37,
                         style=ft.ButtonStyle(
@@ -307,7 +319,12 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=20,
             controls=[
-                ft.Text("Información Personal", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Información Personal",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Column(
                     spacing=16,
                     controls=[
@@ -353,7 +370,12 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=20,
             controls=[
-                ft.Text("Información Académica", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Información Académica",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Row(
                     spacing=16,
                     controls=[
@@ -380,7 +402,12 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=16,
             controls=[
-                ft.Text("Pautas de Matriculación", size=17, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Pautas de Matriculación",
+                    size=17,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Text(
                     "1. El DNI debe ingresarse sin puntos ni caracteres especiales.\n\n"
                     "2. La fecha de nacimiento sigue el formato estándar AAAA-MM-DD.\n\n"
@@ -396,7 +423,11 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                         spacing=10,
                         controls=[
                             ft.Icon(ft.Icons.INFO_OUTLINE, size=18, color=TEAL),
-                            ft.Text("Los legajos vacíos se autogeneran según la secuencia institucional.", size=12, color=TEAL_DARK),
+                            ft.Text(
+                                "Los legajos vacíos se autogeneran según la secuencia institucional.",
+                                size=12,
+                                color=TEAL_DARK,
+                            ),
                         ],
                     ),
                 ),

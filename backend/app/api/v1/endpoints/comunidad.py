@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -23,18 +21,22 @@ router = APIRouter()
 
 # ==================== SOLICITUDES DE INSCRIPCIÓN ====================
 
+
 @router.post(
     "/solicitudes",
     response_model=SolicitudInscripcionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Enviar solicitud de admisión (formulario público, sin login)",
 )
-def crear_solicitud(solicitud_in: SolicitudInscripcionCreate, db: Session = Depends(get_db)):
+def crear_solicitud(
+    solicitud_in: SolicitudInscripcionCreate, db: Session = Depends(get_db)
+):
     return comunidad_service.crear_solicitud(db, solicitud_in)
+
 
 @router.get(
     "/solicitudes",
-    response_model=List[SolicitudInscripcionResponse],
+    response_model=list[SolicitudInscripcionResponse],
     summary="Listar solicitudes de admisión (solo ADMIN)",
 )
 def listar_solicitudes(
@@ -42,6 +44,7 @@ def listar_solicitudes(
     db: Session = Depends(get_db),
 ):
     return comunidad_service.get_solicitudes(db)
+
 
 @router.put(
     "/solicitudes/{id_solicitud}/estado",
@@ -58,7 +61,9 @@ def cambiar_estado_solicitud(
         db, id_solicitud, payload.estado, payload.observaciones
     )
 
+
 # ==================== MENSAJES DE CONTACTO ====================
+
 
 @router.post(
     "/contacto",
@@ -69,9 +74,10 @@ def cambiar_estado_solicitud(
 def crear_mensaje(mensaje_in: MensajeContactoCreate, db: Session = Depends(get_db)):
     return comunidad_service.crear_mensaje(db, mensaje_in)
 
+
 @router.get(
     "/contacto",
-    response_model=List[MensajeContactoResponse],
+    response_model=list[MensajeContactoResponse],
     summary="Listar mensajes de contacto (solo ADMIN)",
 )
 def listar_mensajes(
@@ -79,6 +85,7 @@ def listar_mensajes(
     db: Session = Depends(get_db),
 ):
     return comunidad_service.get_mensajes(db)
+
 
 @router.put(
     "/contacto/{id_mensaje}/leido",
@@ -92,7 +99,9 @@ def marcar_mensaje_leido(
 ):
     return comunidad_service.marcar_mensaje_leido(db, id_mensaje)
 
+
 # ==================== OPINIONES ====================
+
 
 @router.post(
     "/opiniones",
@@ -103,17 +112,19 @@ def marcar_mensaje_leido(
 def crear_opinion(opinion_in: OpinionCreate, db: Session = Depends(get_db)):
     return comunidad_service.crear_opinion(db, opinion_in)
 
+
 @router.get(
     "/opiniones",
-    response_model=List[OpinionResponse],
+    response_model=list[OpinionResponse],
     summary="Listar opiniones aprobadas (público, sin login)",
 )
 def listar_opiniones_publicas(db: Session = Depends(get_db)):
     return comunidad_service.get_opiniones_aprobadas(db)
 
+
 @router.get(
     "/opiniones/todas",
-    response_model=List[OpinionResponse],
+    response_model=list[OpinionResponse],
     summary="Listar todas las opiniones, incluidas las pendientes (solo ADMIN)",
 )
 def listar_todas_las_opiniones(
@@ -121,6 +132,7 @@ def listar_todas_las_opiniones(
     db: Session = Depends(get_db),
 ):
     return comunidad_service.get_opiniones(db)
+
 
 @router.put(
     "/opiniones/{id_opinion}/aprobar",
@@ -134,6 +146,7 @@ def aprobar_opinion(
 ):
     return comunidad_service.aprobar_opinion(db, id_opinion, True)
 
+
 @router.delete(
     "/opiniones/{id_opinion}",
     response_model=OpinionResponse,
@@ -146,7 +159,9 @@ def eliminar_opinion(
 ):
     return comunidad_service.eliminar_opinion(db, id_opinion)
 
+
 # ==================== POSTULACIONES LABORALES ====================
+
 
 @router.post(
     "/postulaciones",
@@ -154,12 +169,15 @@ def eliminar_opinion(
     status_code=status.HTTP_201_CREATED,
     summary="Enviar postulación laboral (público, sin login)",
 )
-def crear_postulacion(postulacion_in: PostulacionEmpleoCreate, db: Session = Depends(get_db)):
+def crear_postulacion(
+    postulacion_in: PostulacionEmpleoCreate, db: Session = Depends(get_db)
+):
     return comunidad_service.crear_postulacion(db, postulacion_in)
+
 
 @router.get(
     "/postulaciones",
-    response_model=List[PostulacionEmpleoResponse],
+    response_model=list[PostulacionEmpleoResponse],
     summary="Listar postulaciones laborales (solo ADMIN)",
 )
 def listar_postulaciones(

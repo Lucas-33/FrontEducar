@@ -1,5 +1,4 @@
 import flet as ft
-
 from app.ui.components.footer import create_footer
 from app.ui.components.navbar import create_navbar
 from app.ui.pages.home import home_view

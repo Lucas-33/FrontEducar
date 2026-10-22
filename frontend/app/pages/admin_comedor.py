@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -87,7 +88,9 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                 padding=ft.Padding(8, 4, 8, 4),
                 bgcolor=TEAL_LIGHT,
                 border_radius=4,
-                content=ft.Text("Servicio Activo", size=12, weight=ft.FontWeight.W_600, color=TEAL),
+                content=ft.Text(
+                    "Servicio Activo", size=12, weight=ft.FontWeight.W_600, color=TEAL
+                ),
             ),
         ],
     )
@@ -131,7 +134,9 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
             text_size=14,
             border=ft.InputBorder.NONE,
             content_padding=ft.Padding(12, 0, 8, 12),
-            options=[ft.dropdown.Option(opc) for opc in ["Todos", "Activo", "Inactivo"]],
+            options=[
+                ft.dropdown.Option(opc) for opc in ["Todos", "Activo", "Inactivo"]
+            ],
         ),
     )
     filtro_estado_dropdown: ft.Dropdown = filtro_estado_container.content
@@ -142,7 +147,12 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.PERSON_ADD, size=16, color=BG_WHITE),
-                ft.Text("Inscribir Alumno", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Inscribir Alumno",
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=BG_WHITE,
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -166,7 +176,9 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 4. TABLA DE INSCRIPTOS ====================
     columnas_comedor = [
@@ -236,9 +248,14 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                     ),
                     ft.Container(
                         width=140,
-                        content=ft.Text(_fecha_corta(item.get("fecha_alta")), size=13, color=MUTED),
+                        content=ft.Text(
+                            _fecha_corta(item.get("fecha_alta")), size=13, color=MUTED
+                        ),
                     ),
-                    ft.Container(width=110, content=status_badge("Activo" if activo else "Inactivo")),
+                    ft.Container(
+                        width=110,
+                        content=status_badge("Activo" if activo else "Inactivo"),
+                    ),
                     ft.Container(
                         expand=True,
                         alignment=ft.Alignment(1, 0),
@@ -249,8 +266,12 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE_OUTLINE,
                                     icon_size=16,
-                                    icon_color=BADGE_RED_TXT if activo else BORDER_COLOR,
-                                    tooltip="Baja del Comedor" if activo else "Inscripción ya dada de baja",
+                                    icon_color=BADGE_RED_TXT
+                                    if activo
+                                    else BORDER_COLOR,
+                                    tooltip="Baja del Comedor"
+                                    if activo
+                                    else "Inscripción ya dada de baja",
                                     padding=0,
                                     disabled=not activo,
                                     on_click=dar_de_baja if activo else None,
@@ -267,9 +288,16 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         resultado = []
         for i in estado["inscripciones"]:
             estado_legible = "Activo" if esta_activo(i) else "Inactivo"
-            if estado["estado_inscripcion"] != "Todos" and estado_legible != estado["estado_inscripcion"]:
+            if (
+                estado["estado_inscripcion"] != "Todos"
+                and estado_legible != estado["estado_inscripcion"]
+            ):
                 continue
-            if texto and texto not in f"{i.get('alumno', '')} {i.get('legajo_alumno', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{i.get('alumno', '')} {i.get('legajo_alumno', '')}".lower()
+            ):
                 continue
             resultado.append(i)
         return resultado
@@ -356,7 +384,9 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
             try:
-                await api_client.inscribir_comedor({"legajo_alumno": int(alumno_field.value)})
+                await api_client.inscribir_comedor(
+                    {"legajo_alumno": int(alumno_field.value)}
+                )
             except httpx.HTTPStatusError as err:
                 detalle = "Error al inscribir al alumno en el comedor."
                 try:
@@ -377,7 +407,9 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Inscribir Alumno al Comedor", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Inscribir Alumno al Comedor", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,
@@ -415,7 +447,12 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
                     spacing=4,
                     expand=True,
                     controls=[
-                        ft.Text("Registro del Servicio de Comedor", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                        ft.Text(
+                            "Registro del Servicio de Comedor",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
                         ft.Text(
                             "Las altas se registran con la fecha del día. Las bajas conservan el historial del alumno y pasan su estado a Inactivo.",
                             size=12,

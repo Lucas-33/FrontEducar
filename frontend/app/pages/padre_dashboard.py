@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_WHITE,
@@ -43,7 +44,9 @@ def _texto_seguro(valor) -> str:
     return texto or "-"
 
 
-def _estado_vacio(mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE) -> ft.Container:
+def _estado_vacio(
+    mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE
+) -> ft.Container:
     """Tarjeta de estado vacío o error, manteniendo el layout y sin datos ficticios."""
     return ft.Container(
         bgcolor=BG_WHITE,
@@ -116,7 +119,14 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
         estado["hijos"] = []
 
     if not estado["hijos"]:
-        return layout([_estado_vacio("No hay alumnos vinculados a esta cuenta.", ft.Icons.FAMILY_RESTROOM_OUTLINED)])
+        return layout(
+            [
+                _estado_vacio(
+                    "No hay alumnos vinculados a esta cuenta.",
+                    ft.Icons.FAMILY_RESTROOM_OUTLINED,
+                )
+            ]
+        )
 
     # ==================== 1. DATOS REALES COMPLEMENTARIOS ====================
     cargadores = (
@@ -148,7 +158,11 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
         return [a for a in estado["asignaciones"] if a.get("id_curso") == id_curso]
 
     def deportes_de(legajo) -> list[dict]:
-        return [i for i in estado["inscripciones_deporte"] if i.get("legajo_alumno") == legajo]
+        return [
+            i
+            for i in estado["inscripciones_deporte"]
+            if i.get("legajo_alumno") == legajo
+        ]
 
     def transporte_de(legajo) -> dict | None:
         for i in estado["inscripciones_transporte"]:
@@ -200,7 +214,9 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
                 spacing=3,
                 controls=[
                     ft.Text(titulo, size=11, color=MUTED),
-                    ft.Text(valor, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                    ft.Text(
+                        valor, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR
+                    ),
                 ],
             ),
         )
@@ -225,7 +241,12 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            ft.Text(titulo, size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                titulo,
+                                size=15,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Icon(icono, size=18, color=color_icono),
                         ],
                     ),
@@ -240,7 +261,9 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
             bgcolor=TEAL_LIGHT,
             border_radius=6,
             padding=8,
-            content=ft.Text(f"• {texto}", size=13, weight=ft.FontWeight.W_500, color=TEAL_DARK),
+            content=ft.Text(
+                f"• {texto}", size=13, weight=ft.FontWeight.W_500, color=TEAL_DARK
+            ),
         )
 
     def render_detalle():
@@ -256,7 +279,9 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
 
         curso_nombre = curso.get("nombre") if curso else "-"
         nivel_nombre = nivel.get("nombre") if nivel else "-"
-        estado_legible = (hijo.get("estado_alumno") or "").strip().capitalize() or "Sin estado"
+        estado_legible = (
+            hijo.get("estado_alumno") or ""
+        ).strip().capitalize() or "Sin estado"
         iniciales = (
             f"{(hijo.get('nombre') or ' ')[0]}{(hijo.get('apellido') or ' ')[0]}"
         ).upper().strip() or "A"
@@ -281,7 +306,12 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
                                         bgcolor=TEAL_LIGHT,
                                         border_radius=24,
                                         alignment=ft.Alignment(0, 0),
-                                        content=ft.Text(iniciales, size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                        content=ft.Text(
+                                            iniciales,
+                                            size=16,
+                                            weight=ft.FontWeight.BOLD,
+                                            color=TEAL_DARK,
+                                        ),
                                     ),
                                     ft.Column(
                                         spacing=2,
@@ -292,7 +322,11 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
                                                 weight=ft.FontWeight.BOLD,
                                                 color=TEAL_DARK,
                                             ),
-                                            ft.Text(descripcion_alumno(hijo), size=13, color=MUTED),
+                                            ft.Text(
+                                                descripcion_alumno(hijo),
+                                                size=13,
+                                                color=MUTED,
+                                            ),
                                         ],
                                     ),
                                 ],
@@ -312,10 +346,15 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
                             dato("Nivel educativo", nivel_nombre),
                             dato("Domicilio", _texto_seguro(hijo.get("domicilio"))),
                             dato("Teléfono", _texto_seguro(hijo.get("telefono"))),
-                            dato("Correo electrónico", _texto_seguro(hijo.get("correo_electronico"))),
+                            dato(
+                                "Correo electrónico",
+                                _texto_seguro(hijo.get("correo_electronico")),
+                            ),
                             dato(
                                 "Materias asignadas",
-                                str(len({a.get("id_materia") for a in materias})) if materias else "-",
+                                str(len({a.get("id_materia") for a in materias}))
+                                if materias
+                                else "-",
                             ),
                         ],
                     ),
@@ -338,7 +377,11 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
                 ),
             ]
             if materias
-            else [ft.Text("Sin materias asignadas para el curso actual.", size=13, color=MUTED)]
+            else [
+                ft.Text(
+                    "Sin materias asignadas para el curso actual.", size=13, color=MUTED
+                )
+            ]
         )
 
         cuerpo_deportes = (
@@ -349,20 +392,55 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
 
         cuerpo_comedor = (
             [
-                ft.Row(spacing=8, controls=[status_badge((comedor.get("estado") or "").capitalize()), ft.Text(f"Alta: {_texto_seguro(comedor.get('fecha_alta'))}", size=12, color=MUTED)]),
-                ft.Text("Servicio de comedor del alumno según registro institucional.", size=12, color=MUTED),
+                ft.Row(
+                    spacing=8,
+                    controls=[
+                        status_badge((comedor.get("estado") or "").capitalize()),
+                        ft.Text(
+                            f"Alta: {_texto_seguro(comedor.get('fecha_alta'))}",
+                            size=12,
+                            color=MUTED,
+                        ),
+                    ],
+                ),
+                ft.Text(
+                    "Servicio de comedor del alumno según registro institucional.",
+                    size=12,
+                    color=MUTED,
+                ),
             ]
             if comedor
-            else [ft.Text("Sin inscripción registrada al comedor.", size=13, color=MUTED)]
+            else [
+                ft.Text("Sin inscripción registrada al comedor.", size=13, color=MUTED)
+            ]
         )
 
         cuerpo_transporte = (
             [
-                ft.Text(_texto_seguro(transporte.get("recorrido")), size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                ft.Row(spacing=8, controls=[status_badge((transporte.get("estado") or "").capitalize()), ft.Text(f"Alta: {_texto_seguro(transporte.get('fecha_alta'))}", size=12, color=MUTED)]),
+                ft.Text(
+                    _texto_seguro(transporte.get("recorrido")),
+                    size=13,
+                    weight=ft.FontWeight.W_600,
+                    color=TEXT_COLOR,
+                ),
+                ft.Row(
+                    spacing=8,
+                    controls=[
+                        status_badge((transporte.get("estado") or "").capitalize()),
+                        ft.Text(
+                            f"Alta: {_texto_seguro(transporte.get('fecha_alta'))}",
+                            size=12,
+                            color=MUTED,
+                        ),
+                    ],
+                ),
             ]
             if transporte
-            else [ft.Text("Sin inscripción registrada al transporte.", size=13, color=MUTED)]
+            else [
+                ft.Text(
+                    "Sin inscripción registrada al transporte.", size=13, color=MUTED
+                )
+            ]
         )
 
         detalle_container.controls = [
@@ -438,7 +516,9 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
                 spacing=8,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Icon(ft.Icons.PERSON, size=18, color="white" if activo else TEAL),
+                    ft.Icon(
+                        ft.Icons.PERSON, size=18, color="white" if activo else TEAL
+                    ),
                     ft.Text(
                         _nombre_completo(hijo),
                         size=14,
@@ -454,7 +534,12 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
         spacing=12,
         wrap=True,
         controls=[
-            ft.Text("Seleccionar Hijo:", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+            ft.Text(
+                "Seleccionar Hijo:",
+                size=14,
+                weight=ft.FontWeight.W_600,
+                color=TEAL_DARK,
+            ),
             *botones_hijos,
         ],
     )

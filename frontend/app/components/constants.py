@@ -1,28 +1,26 @@
-import flet as ft
-
 # ==============================================================================
 # 1. PALETA INSTITUCIONAL (Identidad Visual)
 # ==============================================================================
-TEAL_DARK = "#0B4F4F"        # Títulos principales, brand y headers
-TEAL = "#0D6E6E"             # Botones de acción, acentos primarios y bordes activos
-TEAL_LIGHT = "#E6F2F2"       # Fondos de badges activos, hover de menú y destacados
-ORANGE = "#D97736"           # Call to action, botones destacados y advertencias
+TEAL_DARK = "#0B4F4F"  # Títulos principales, brand y headers
+TEAL = "#0D6E6E"  # Botones de acción, acentos primarios y bordes activos
+TEAL_LIGHT = "#E6F2F2"  # Fondos de badges activos, hover de menú y destacados
+ORANGE = "#D97736"  # Call to action, botones destacados y advertencias
 
 # ==============================================================================
 # 2. LIENZOS Y SUPERFICIES (Fondos)
 # ==============================================================================
-BG_WHITE = "#FFFFFF"         # Fondo de tarjetas, tablas y modales
-BG_PAGE = "#F5F7F7"          # Lienzo del panel administrativo interno
-BG_PAGE_ALT = "#FDFBF9"      # Lienzo de vistas públicas (Home, Login, Formularios)
-BG_SEARCH = "#F5F7F7"        # Fondo de buscador píldora en TopBar
-BORDER_COLOR = "#EAE6E1"     # Borde gris estándar para tarjetas e inputs
+BG_WHITE = "#FFFFFF"  # Fondo de tarjetas, tablas y modales
+BG_PAGE = "#F5F7F7"  # Lienzo del panel administrativo interno
+BG_PAGE_ALT = "#FDFBF9"  # Lienzo de vistas públicas (Home, Login, Formularios)
+BG_SEARCH = "#F5F7F7"  # Fondo de buscador píldora en TopBar
+BORDER_COLOR = "#EAE6E1"  # Borde gris estándar para tarjetas e inputs
 
 # ==============================================================================
 # 3. TEXTO Y TIPOGRAFÍA
 # ==============================================================================
-TEXT_COLOR = "#1E2A29"       # Texto principal
-TEXT_SECONDARY = "#5C6B69"   # Subtítulos y descripciones
-MUTED = "#5C6B69"            # Textos secundarios, labels y placeholders
+TEXT_COLOR = "#1E2A29"  # Texto principal
+TEXT_SECONDARY = "#5C6B69"  # Subtítulos y descripciones
+MUTED = "#5C6B69"  # Textos secundarios, labels y placeholders
 
 # ==============================================================================
 # 4. ESTADOS Y BADGES SEMÁNTICOS
@@ -53,8 +51,8 @@ BADGE_WARN_TXT = "#9A5427"
 # ==============================================================================
 # 5. DIMENSIONES ESTÁNDAR DE LA INTERFAZ
 # ==============================================================================
-SIDEBAR_WIDTH = 260          # Ancho fijo del menú lateral
-TOPBAR_HEIGHT = 70           # Altura fija de la barra superior
-CONTROL_HEIGHT = 41          # Altura estándar de TextFields, Dropdowns y Botones
-BORDER_RADIUS = 8            # Radio de borde estándar para controles
-CARD_RADIUS = 16             # Radio de borde estándar para tarjetas contenedoras
+SIDEBAR_WIDTH = 260  # Ancho fijo del menú lateral
+TOPBAR_HEIGHT = 70  # Altura fija de la barra superior
+CONTROL_HEIGHT = 41  # Altura estándar de TextFields, Dropdowns y Botones
+BORDER_RADIUS = 8  # Radio de borde estándar para controles
+CARD_RADIUS = 16  # Radio de borde estándar para tarjetas contenedoras

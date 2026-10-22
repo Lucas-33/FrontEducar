@@ -1,4 +1,5 @@
 """Entidades de interacción con la comunidad: admisiones, contacto, opiniones y empleo."""
+
 from sqlalchemy import Boolean, Column, Date, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
@@ -19,7 +20,9 @@ class SolicitudInscripcion(Base):
     telefono = Column(String(50), nullable=True)
     correo = Column(String(120), nullable=True)
     fecha = Column(Date, server_default=func.current_date(), nullable=False)
-    estado = Column(String(20), default="Pendiente", nullable=False)  # Pendiente / Aprobado / Rechazado
+    estado = Column(
+        String(20), default="Pendiente", nullable=False
+    )  # Pendiente / Aprobado / Rechazado
     observaciones = Column(String(300), nullable=True)
 
 

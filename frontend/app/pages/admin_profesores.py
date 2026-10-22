@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -84,7 +85,12 @@ async def get_admin_profesores_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nuevo Profesor", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nuevo Profesor",
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=BG_WHITE,
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -105,14 +111,20 @@ async def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     search_input,
-                    filtro_dropdown("Estado: Todos", 144, ["Todos", "Activo", "Licencia", "Inactivo"]),
+                    filtro_dropdown(
+                        "Estado: Todos",
+                        144,
+                        ["Todos", "Activo", "Licencia", "Inactivo"],
+                    ),
                 ],
             ),
             btn_nuevo_profesor,
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 2. TABLA DE PROFESORES ====================
     columnas_profesores = [
@@ -144,7 +156,9 @@ async def get_admin_profesores_view(page: ft.Page) -> ft.Row:
             try:
                 await api_client.delete_profesor(int(item["legajo"]))
             except Exception as err:
-                mostrar_error(f"No se pudo dar de baja al docente {item['legajo']}: {err}")
+                mostrar_error(
+                    f"No se pudo dar de baja al docente {item['legajo']}: {err}"
+                )
                 return
             await recargar()
 
@@ -156,14 +170,58 @@ async def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=80, content=ft.Text(str(item.get("legajo", "")), size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=105, content=ft.Text(str(item.get("dni", "")), size=13, color=TEXT_COLOR)),
-                    ft.Container(width=120, content=ft.Text(item.get("apellido", ""), size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=130, content=ft.Text(item.get("nombre", ""), size=14, color=TEXT_COLOR)),
-                    ft.Container(width=180, content=ft.Text(item.get("especialidad", ""), size=13, color=TEXT_COLOR)),
-                    ft.Container(width=190, content=ft.Text(item.get("correo_electronico", ""), size=13, color=MUTED)),
-                    ft.Container(width=115, content=ft.Text(item.get("telefono", ""), size=13, color=TEXT_COLOR)),
-                    ft.Container(width=95, content=status_badge(item.get("estado", "ACTIVO").capitalize())),
+                    ft.Container(
+                        width=80,
+                        content=ft.Text(
+                            str(item.get("legajo", "")),
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=105,
+                        content=ft.Text(
+                            str(item.get("dni", "")), size=13, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=120,
+                        content=ft.Text(
+                            item.get("apellido", ""),
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(
+                            item.get("nombre", ""), size=14, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=180,
+                        content=ft.Text(
+                            item.get("especialidad", ""), size=13, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=190,
+                        content=ft.Text(
+                            item.get("correo_electronico", ""), size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=115,
+                        content=ft.Text(
+                            item.get("telefono", ""), size=13, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=95,
+                        content=status_badge(item.get("estado", "ACTIVO").capitalize()),
+                    ),
                     ft.Container(
                         width=80,
                         alignment=ft.Alignment(1, 0),
@@ -206,7 +264,11 @@ async def get_admin_profesores_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay docentes que coincidan con la búsqueda.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay docentes que coincidan con la búsqueda.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
         )

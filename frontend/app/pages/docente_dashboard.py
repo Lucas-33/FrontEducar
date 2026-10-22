@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
@@ -108,7 +109,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
     except Exception:
         asignaciones = []
         hubo_error = True
-    estado["asignaciones"] = [a for a in asignaciones if a.get("legajo_profesor") == legajo_docente]
+    estado["asignaciones"] = [
+        a for a in asignaciones if a.get("legajo_profesor") == legajo_docente
+    ]
 
     try:
         estado["alumnos"] = await api_client.get_alumnos(solo_activos=False)
@@ -121,7 +124,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
     except Exception:
         deportes = []
         hubo_error = True
-    estado["deportes"] = [d for d in deportes if d.get("legajo_profesor_responsable") == legajo_docente]
+    estado["deportes"] = [
+        d for d in deportes if d.get("legajo_profesor_responsable") == legajo_docente
+    ]
 
     try:
         estado["grupos"] = await api_client.get_grupos_deporte()
@@ -136,10 +141,22 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
         hubo_error = True
 
     # ==================== 2. CÁLCULOS DERIVADOS ====================
-    ids_cursos = sorted({a.get("id_curso") for a in estado["asignaciones"] if a.get("id_curso") is not None})
-    alumnos_de_mis_cursos = [a for a in estado["alumnos"] if a.get("id_curso") in ids_cursos]
+    ids_cursos = sorted(
+        {
+            a.get("id_curso")
+            for a in estado["asignaciones"]
+            if a.get("id_curso") is not None
+        }
+    )
+    alumnos_de_mis_cursos = [
+        a for a in estado["alumnos"] if a.get("id_curso") in ids_cursos
+    ]
     alumnos_activos = len(
-        [a for a in alumnos_de_mis_cursos if (a.get("estado_alumno") or "").upper() == "ACTIVO"]
+        [
+            a
+            for a in alumnos_de_mis_cursos
+            if (a.get("estado_alumno") or "").upper() == "ACTIVO"
+        ]
     )
 
     alumnos_por_curso: dict = {}
@@ -161,7 +178,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
         if grupo.get("id_deporte") in ids_deportes:
             grupos_por_deporte.setdefault(grupo.get("id_deporte"), []).append(grupo)
 
-    ids_grupos = {g.get("id_grupo") for grupos in grupos_por_deporte.values() for g in grupos}
+    ids_grupos = {
+        g.get("id_grupo") for grupos in grupos_por_deporte.values() for g in grupos
+    }
     inscriptos_por_grupo: dict = {}
     for inscripcion in estado["inscripciones"]:
         if inscripcion.get("id_grupo") in ids_grupos:
@@ -202,12 +221,19 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                         spacing=6,
                         controls=[
                             ft.Icon(ft.Icons.PEOPLE_OUTLINE, size=16, color=BG_WHITE),
-                            ft.Text("Nómina de Alumnos", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                            ft.Text(
+                                "Nómina de Alumnos",
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=BG_WHITE,
+                            ),
                         ],
                     ),
                     bgcolor=ORANGE,
                     height=38,
-                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                    ),
                     on_click=lambda _: page.go("/portal/docente/alumnos"),
                 ),
             ],
@@ -223,7 +249,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== 4. TARJETAS DE RESUMEN (KPIs REALES) ====================
-    def kpi_docente(titulo: str, valor: str, subtitulo: str, icono: ft.IconData, bg_icon: str) -> ft.Container:
+    def kpi_docente(
+        titulo: str, valor: str, subtitulo: str, icono: ft.IconData, bg_icon: str
+    ) -> ft.Container:
         return ft.Container(
             expand=True,
             bgcolor=BG_WHITE,
@@ -236,7 +264,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            ft.Text(titulo, size=12, weight=ft.FontWeight.W_600, color=MUTED),
+                            ft.Text(
+                                titulo, size=12, weight=ft.FontWeight.W_600, color=MUTED
+                            ),
                             ft.Container(
                                 width=34,
                                 height=34,
@@ -250,7 +280,12 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(valor, size=26, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                valor,
+                                size=26,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(subtitulo, size=11, color=MUTED),
                         ],
                     ),
@@ -285,7 +320,8 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
             kpi_docente(
                 "DEPORTES A CARGO",
                 str(len(estado["deportes"])),
-                _resumen([d.get("nombre") or "-" for d in estado["deportes"]]) or "Sin deportes asignados",
+                _resumen([d.get("nombre") or "-" for d in estado["deportes"]])
+                or "Sin deportes asignados",
                 ft.Icons.FITNESS_CENTER_OUTLINED,
                 TEAL_LIGHT,
             ),
@@ -307,7 +343,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                         spacing=14,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
-                            ft.Container(width=4, height=38, border_radius=2, bgcolor=TEAL),
+                            ft.Container(
+                                width=4, height=38, border_radius=2, bgcolor=TEAL
+                            ),
                             ft.Column(
                                 spacing=2,
                                 controls=[
@@ -317,7 +355,11 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                                         weight=ft.FontWeight.BOLD,
                                         color=TEXT_COLOR,
                                     ),
-                                    ft.Text(f"{a.get('nivel') or 'Sin nivel'}", size=12, color=MUTED),
+                                    ft.Text(
+                                        f"{a.get('nivel') or 'Sin nivel'}",
+                                        size=12,
+                                        color=MUTED,
+                                    ),
                                 ],
                             ),
                         ],
@@ -327,7 +369,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                         bgcolor=BG_WHITE,
                         border_radius=4,
                         content=ft.Text(
-                            _plural(alumnos_por_curso.get(id_curso, 0), "alumno", "alumnos"),
+                            _plural(
+                                alumnos_por_curso.get(id_curso, 0), "alumno", "alumnos"
+                            ),
                             size=11,
                             weight=ft.FontWeight.BOLD,
                             color=TEAL_DARK,
@@ -342,7 +386,9 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
             spacing=10,
             controls=[
                 ft.Icon(ft.Icons.MENU_BOOK_OUTLINED, size=18, color=MUTED),
-                ft.Text("No tiene materias asignadas actualmente.", size=13, color=MUTED),
+                ft.Text(
+                    "No tiene materias asignadas actualmente.", size=13, color=MUTED
+                ),
             ],
         )
     ]
@@ -359,8 +405,16 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Mis Cursos y Materias", size=17, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.TextButton("Ver Todas mis Materias", on_click=lambda _: page.go("/portal/docente/materias")),
+                        ft.Text(
+                            "Mis Cursos y Materias",
+                            size=17,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEAL_DARK,
+                        ),
+                        ft.TextButton(
+                            "Ver Todas mis Materias",
+                            on_click=lambda _: page.go("/portal/docente/materias"),
+                        ),
                     ],
                 ),
                 ft.Column(spacing=10, controls=contenido_materias),
@@ -396,7 +450,12 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
-                            ft.Text(d.get("nombre") or "-", size=14, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+                            ft.Text(
+                                d.get("nombre") or "-",
+                                size=14,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEXT_COLOR,
+                            ),
                             ft.Container(
                                 padding=ft.Padding(8, 3, 8, 3),
                                 bgcolor=BG_WHITE,
@@ -438,8 +497,16 @@ async def get_docente_dashboard_view(page: ft.Page) -> ft.Row:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Mis Grupos Deportivos", size=17, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.TextButton("Ver Deportes", on_click=lambda _: page.go("/portal/docente/deportes")),
+                        ft.Text(
+                            "Mis Grupos Deportivos",
+                            size=17,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEAL_DARK,
+                        ),
+                        ft.TextButton(
+                            "Ver Deportes",
+                            on_click=lambda _: page.go("/portal/docente/deportes"),
+                        ),
                     ],
                 ),
                 ft.Column(spacing=10, controls=contenido_deportes),

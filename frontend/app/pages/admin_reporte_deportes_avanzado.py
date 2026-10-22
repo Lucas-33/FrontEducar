@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -75,10 +76,18 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
             return []
 
     estado["deportes"] = await consultar("deportes", api_client.get_deportes)
-    estado["grupos"] = await consultar("grupos deportivos", api_client.get_grupos_deporte)
-    estado["inscripciones"] = await consultar("inscripciones deportivas", api_client.get_inscripciones_deporte)
-    estado["profesores"] = await consultar("docentes", api_client.get_profesores, solo_activos=False)
-    estado["alumnos"] = await consultar("alumnos", api_client.get_alumnos, solo_activos=False)
+    estado["grupos"] = await consultar(
+        "grupos deportivos", api_client.get_grupos_deporte
+    )
+    estado["inscripciones"] = await consultar(
+        "inscripciones deportivas", api_client.get_inscripciones_deporte
+    )
+    estado["profesores"] = await consultar(
+        "docentes", api_client.get_profesores, solo_activos=False
+    )
+    estado["alumnos"] = await consultar(
+        "alumnos", api_client.get_alumnos, solo_activos=False
+    )
     estado["cursos"] = await consultar("cursos", api_client.get_cursos)
 
     grupo_por_id = {g["id_grupo"]: g for g in estado["grupos"]}
@@ -103,9 +112,13 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
     def curso_del_alumno(legajo) -> str:
         return nombre_curso.get(curso_por_legajo.get(legajo), "Sin curso asignado")
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
     if errores:
-        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(errores)
+        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(
+            errores
+        )
         aviso_error.visible = True
 
     # ==================== 1. ENCABEZADO Y ACCIONES ====================
@@ -131,8 +144,17 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text("Reporte Integral de Actividades Deportivas", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text("Alumnos por Deporte, Nivel, Horario y Profesor a Cargo", size=12, color=MUTED),
+                            ft.Text(
+                                "Reporte Integral de Actividades Deportivas",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                "Alumnos por Deporte, Nivel, Horario y Profesor a Cargo",
+                                size=12,
+                                color=MUTED,
+                            ),
                         ],
                     ),
                 ],
@@ -144,26 +166,48 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.FILE_DOWNLOAD_OUTLINED, size=15, color=TEAL_DARK),
-                                ft.Text("Exportar Excel", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                                ft.Icon(
+                                    ft.Icons.FILE_DOWNLOAD_OUTLINED,
+                                    size=15,
+                                    color=TEAL_DARK,
+                                ),
+                                ft.Text(
+                                    "Exportar Excel",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=TEAL_DARK,
+                                ),
                             ],
                         ),
                         bgcolor=TEAL_LIGHT,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
-                        on_click=lambda _: page.launch_url(api_client.reporte_url("deportes")),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
+                        on_click=lambda _: page.launch_url(
+                            api_client.reporte_url("deportes")
+                        ),
                     ),
                     ft.Button(
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE),
-                                ft.Text("Imprimir PDF", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                                ft.Icon(
+                                    ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE
+                                ),
+                                ft.Text(
+                                    "Imprimir PDF",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=BG_WHITE,
+                                ),
                             ],
                         ),
                         bgcolor=ORANGE,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
                         on_click=lambda _: None,
                     ),
                 ],
@@ -172,7 +216,9 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== 2. INDICADORES REALES ====================
-    def kpi_card(titulo: str, valor: int, subtitulo: str, icono: ft.IconData) -> ft.Container:
+    def kpi_card(
+        titulo: str, valor: int, subtitulo: str, icono: ft.IconData
+    ) -> ft.Container:
         return ft.Container(
             col={"sm": 12, "md": 6, "lg": 3},
             bgcolor=BG_WHITE,
@@ -194,30 +240,68 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(str(valor), size=22, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text(titulo, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                            ft.Text(subtitulo, size=11, color=MUTED, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Text(
+                                str(valor),
+                                size=22,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                titulo,
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=TEXT_COLOR,
+                            ),
+                            ft.Text(
+                                subtitulo,
+                                size=11,
+                                color=MUTED,
+                                max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                            ),
                         ],
                     ),
                 ],
             ),
         )
 
-    docentes_responsables = len({
-        d.get("legajo_profesor_responsable")
-        for d in estado["deportes"]
-        if d.get("legajo_profesor_responsable") is not None
-    })
+    docentes_responsables = len(
+        {
+            d.get("legajo_profesor_responsable")
+            for d in estado["deportes"]
+            if d.get("legajo_profesor_responsable") is not None
+        }
+    )
 
     kpis = ft.ResponsiveRow(
         columns=12,
         spacing=16,
         run_spacing=16,
         controls=[
-            kpi_card("Disciplinas deportivas", len(estado["deportes"]), "Deportes cargados en el sistema", ft.Icons.FITNESS_CENTER_OUTLINED),
-            kpi_card("Grupos conformados", len(estado["grupos"]), "Grupos por deporte y nivel", ft.Icons.GROUPS_OUTLINED),
-            kpi_card("Alumnos inscriptos", len(estado["inscripciones"]), "Fichas de inscripción registradas", ft.Icons.PEOPLE_OUTLINE),
-            kpi_card("Docentes responsables", docentes_responsables, "Profesores a cargo de disciplinas", ft.Icons.WORK_OUTLINE),
+            kpi_card(
+                "Disciplinas deportivas",
+                len(estado["deportes"]),
+                "Deportes cargados en el sistema",
+                ft.Icons.FITNESS_CENTER_OUTLINED,
+            ),
+            kpi_card(
+                "Grupos conformados",
+                len(estado["grupos"]),
+                "Grupos por deporte y nivel",
+                ft.Icons.GROUPS_OUTLINED,
+            ),
+            kpi_card(
+                "Alumnos inscriptos",
+                len(estado["inscripciones"]),
+                "Fichas de inscripción registradas",
+                ft.Icons.PEOPLE_OUTLINE,
+            ),
+            kpi_card(
+                "Docentes responsables",
+                docentes_responsables,
+                "Profesores a cargo de disciplinas",
+                ft.Icons.WORK_OUTLINE,
+            ),
         ],
     )
 
@@ -238,13 +322,22 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         overflow=ft.TextOverflow.ELLIPSIS,
                     ),
                 ),
-                ft.Text(f"{cantidad} inscriptos", size=12, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                ft.Text(
+                    f"{cantidad} inscriptos",
+                    size=12,
+                    weight=ft.FontWeight.W_600,
+                    color=TEAL_DARK,
+                ),
             ],
         )
 
     def deporte_card(deporte: dict) -> ft.Container:
-        grupos_deporte = [g for g in estado["grupos"] if g.get("id_deporte") == deporte["id_deporte"]]
-        total_inscriptos = sum(inscriptos_por_grupo.get(g["id_grupo"], 0) for g in grupos_deporte)
+        grupos_deporte = [
+            g for g in estado["grupos"] if g.get("id_deporte") == deporte["id_deporte"]
+        ]
+        total_inscriptos = sum(
+            inscriptos_por_grupo.get(g["id_grupo"], 0) for g in grupos_deporte
+        )
         return ft.Container(
             col={"sm": 12, "md": 6, "lg": 4},
             bgcolor=BG_WHITE,
@@ -264,16 +357,38 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                                 bgcolor=TEAL_LIGHT,
                                 border_radius=BORDER_RADIUS,
                                 alignment=ft.Alignment(0, 0),
-                                content=ft.Icon(ft.Icons.FITNESS_CENTER_OUTLINED, size=16, color=TEAL_DARK),
+                                content=ft.Icon(
+                                    ft.Icons.FITNESS_CENTER_OUTLINED,
+                                    size=16,
+                                    color=TEAL_DARK,
+                                ),
                             ),
                             ft.Container(
                                 expand=True,
-                                content=ft.Text(deporte.get("nombre", "Deporte"), size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                                content=ft.Text(
+                                    deporte.get("nombre", "Deporte"),
+                                    size=15,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=TEAL_DARK,
+                                    max_lines=1,
+                                    overflow=ft.TextOverflow.ELLIPSIS,
+                                ),
                             ),
                         ],
                     ),
-                    ft.Text(f"Responsable: {responsable_del_deporte(deporte)}", size=12, color=MUTED, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
-                    ft.Text(f"{len(grupos_deporte)} grupos · {total_inscriptos} inscriptos", size=12, weight=ft.FontWeight.W_600, color=TEAL),
+                    ft.Text(
+                        f"Responsable: {responsable_del_deporte(deporte)}",
+                        size=12,
+                        color=MUTED,
+                        max_lines=1,
+                        overflow=ft.TextOverflow.ELLIPSIS,
+                    ),
+                    ft.Text(
+                        f"{len(grupos_deporte)} grupos · {total_inscriptos} inscriptos",
+                        size=12,
+                        weight=ft.FontWeight.W_600,
+                        color=TEAL,
+                    ),
                     ft.Column(
                         spacing=4,
                         controls=[grupo_resumen_linea(g) for g in grupos_deporte]
@@ -286,7 +401,12 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
     seccion_resumen = ft.Column(
         spacing=16,
         controls=[
-            ft.Text("Resumen por Disciplina Deportiva", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+            ft.Text(
+                "Resumen por Disciplina Deportiva",
+                size=16,
+                weight=ft.FontWeight.BOLD,
+                color=TEAL_DARK,
+            ),
             ft.ResponsiveRow(
                 columns=12,
                 spacing=16,
@@ -300,7 +420,11 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         border=ft.Border.all(1, BORDER_COLOR),
                         border_radius=CARD_RADIUS,
                         alignment=ft.Alignment(0, 0),
-                        content=ft.Text("No hay disciplinas deportivas registradas en el sistema.", size=13, color=MUTED),
+                        content=ft.Text(
+                            "No hay disciplinas deportivas registradas en el sistema.",
+                            size=13,
+                            color=MUTED,
+                        ),
                     )
                 ],
             ),
@@ -351,14 +475,24 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    niveles_disponibles = sorted({g.get("nivel") for g in estado["grupos"] if g.get("nivel")})
-    horarios_disponibles = list({g.get("horario") for g in estado["grupos"] if g.get("horario")})
+    niveles_disponibles = sorted(
+        {g.get("nivel") for g in estado["grupos"] if g.get("nivel")}
+    )
+    horarios_disponibles = list(
+        {g.get("horario") for g in estado["grupos"] if g.get("horario")}
+    )
 
-    filtro_deporte_container = filtro_dropdown("Deporte: Todos", 170, ["Todos"] + [d["nombre"] for d in estado["deportes"]])
+    filtro_deporte_container = filtro_dropdown(
+        "Deporte: Todos", 170, ["Todos"] + [d["nombre"] for d in estado["deportes"]]
+    )
     filtro_deporte: ft.Dropdown = filtro_deporte_container.content
-    filtro_nivel_container = filtro_dropdown("Nivel: Todos", 150, ["Todos"] + niveles_disponibles)
+    filtro_nivel_container = filtro_dropdown(
+        "Nivel: Todos", 150, ["Todos"] + niveles_disponibles
+    )
     filtro_nivel: ft.Dropdown = filtro_nivel_container.content
-    filtro_horario_container = filtro_dropdown("Horario: Todos", 210, ["Todos"] + horarios_disponibles)
+    filtro_horario_container = filtro_dropdown(
+        "Horario: Todos", 210, ["Todos"] + horarios_disponibles
+    )
     filtro_horario: ft.Dropdown = filtro_horario_container.content
 
     filters_bar = ft.Row(
@@ -390,10 +524,16 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
     def inscripcion_row(inscripcion: dict) -> ft.Container:
         grupo = grupo_por_id.get(inscripcion.get("id_grupo")) or {}
         deporte = next(
-            (d for d in estado["deportes"] if d.get("nombre") == inscripcion.get("deporte")),
+            (
+                d
+                for d in estado["deportes"]
+                if d.get("nombre") == inscripcion.get("deporte")
+            ),
             None,
         )
-        responsable = responsable_del_deporte(deporte) if deporte else "Sin responsable asignado"
+        responsable = (
+            responsable_del_deporte(deporte) if deporte else "Sin responsable asignado"
+        )
         return ft.Container(
             height=50,
             padding=ft.Padding(16, 0, 16, 0),
@@ -402,14 +542,75 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=150, content=ft.Text(inscripcion.get("deporte") or "—", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=130, content=ft.Text(grupo.get("nivel") or "Sin nivel", size=13, color=MUTED)),
-                    ft.Container(width=110, content=ft.Text(curso_del_alumno(inscripcion.get("legajo_alumno")), size=13, color=TEXT_COLOR)),
-                    ft.Container(width=90, content=ft.Text(f"#{inscripcion.get('legajo_alumno', '')}", size=13, weight=ft.FontWeight.BOLD, color=TEAL)),
-                    ft.Container(width=170, content=ft.Text(str(inscripcion.get("alumno", "")).split(" (")[0], size=14, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
-                    ft.Container(width=190, content=ft.Text(grupo.get("horario") or "Sin horario asignado", size=12, color=TEXT_COLOR, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS)),
-                    ft.Container(width=170, content=ft.Text(responsable, size=13, color=MUTED, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS)),
-                    ft.Container(width=110, content=ft.Text(formatear_fecha(inscripcion.get("fecha_inscripcion")), size=12, color=MUTED)),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            inscripcion.get("deporte") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(
+                            grupo.get("nivel") or "Sin nivel", size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=110,
+                        content=ft.Text(
+                            curso_del_alumno(inscripcion.get("legajo_alumno")),
+                            size=13,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=90,
+                        content=ft.Text(
+                            f"#{inscripcion.get('legajo_alumno', '')}",
+                            size=13,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEAL,
+                        ),
+                    ),
+                    ft.Container(
+                        width=170,
+                        content=ft.Text(
+                            str(inscripcion.get("alumno", "")).split(" (")[0],
+                            size=14,
+                            weight=ft.FontWeight.W_500,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=190,
+                        content=ft.Text(
+                            grupo.get("horario") or "Sin horario asignado",
+                            size=12,
+                            color=TEXT_COLOR,
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS,
+                        ),
+                    ),
+                    ft.Container(
+                        width=170,
+                        content=ft.Text(
+                            responsable,
+                            size=13,
+                            color=MUTED,
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS,
+                        ),
+                    ),
+                    ft.Container(
+                        width=110,
+                        content=ft.Text(
+                            formatear_fecha(inscripcion.get("fecha_inscripcion")),
+                            size=12,
+                            color=MUTED,
+                        ),
+                    ),
                 ],
             ),
         )
@@ -419,13 +620,26 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
         resultado = []
         for inscripcion in estado["inscripciones"]:
             grupo = grupo_por_id.get(inscripcion.get("id_grupo")) or {}
-            if estado["deporte"] != "Todos" and (inscripcion.get("deporte") or "") != estado["deporte"]:
+            if (
+                estado["deporte"] != "Todos"
+                and (inscripcion.get("deporte") or "") != estado["deporte"]
+            ):
                 continue
-            if estado["nivel"] != "Todos" and (grupo.get("nivel") or "") != estado["nivel"]:
+            if (
+                estado["nivel"] != "Todos"
+                and (grupo.get("nivel") or "") != estado["nivel"]
+            ):
                 continue
-            if estado["horario"] != "Todos" and (grupo.get("horario") or "") != estado["horario"]:
+            if (
+                estado["horario"] != "Todos"
+                and (grupo.get("horario") or "") != estado["horario"]
+            ):
                 continue
-            if texto and texto not in f"{inscripcion.get('alumno', '')} {inscripcion.get('deporte', '')} {inscripcion.get('legajo_alumno', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{inscripcion.get('alumno', '')} {inscripcion.get('deporte', '')} {inscripcion.get('legajo_alumno', '')}".lower()
+            ):
                 continue
             resultado.append(inscripcion)
         return resultado
@@ -439,7 +653,11 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay alumnos inscriptos que coincidan con los filtros aplicados.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay alumnos inscriptos que coincidan con los filtros aplicados.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
             min_width=1152,

@@ -7,6 +7,7 @@ Uso (desde la raíz del proyecto):
 La API queda en http://127.0.0.1:8000 (Swagger en /docs) y la interfaz Flet
 se sirve en la raíz http://127.0.0.1:8000/.
 """
+
 import sys
 from pathlib import Path
 

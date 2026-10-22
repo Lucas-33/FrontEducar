@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_PAGE,
@@ -34,7 +35,9 @@ def _texto_seguro(valor) -> str:
     return texto or "-"
 
 
-def _estado_vacio(mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE) -> ft.Container:
+def _estado_vacio(
+    mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE
+) -> ft.Container:
     """Tarjeta de estado vacío o error, manteniendo el layout y sin datos ficticios."""
     return ft.Container(
         bgcolor=BG_WHITE,
@@ -107,7 +110,14 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
         estado["hijos"] = []
 
     if not estado["hijos"]:
-        return layout([_estado_vacio("No hay alumnos vinculados a esta cuenta.", ft.Icons.FAMILY_RESTROOM_OUTLINED)])
+        return layout(
+            [
+                _estado_vacio(
+                    "No hay alumnos vinculados a esta cuenta.",
+                    ft.Icons.FAMILY_RESTROOM_OUTLINED,
+                )
+            ]
+        )
 
     estado["legajo"] = estado["hijos"][0].get("legajo")
 
@@ -181,7 +191,9 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                     padding=ft.Padding(8, 4, 8, 4),
                     bgcolor=BG_WHITE,
                     border_radius=4,
-                    content=ft.Text("Información", size=12, weight=ft.FontWeight.W_600, color=TEAL),
+                    content=ft.Text(
+                        "Información", size=12, weight=ft.FontWeight.W_600, color=TEAL
+                    ),
                 ),
             ],
         ),
@@ -195,7 +207,8 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
         border=ft.InputBorder.NONE,
         content_padding=ft.Padding(12, 0, 8, 12),
         options=[
-            ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h)) for h in estado["hijos"]
+            ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h))
+            for h in estado["hijos"]
         ],
         value=str(estado["legajo"]),
     )
@@ -211,7 +224,12 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
         spacing=12,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
         controls=[
-            ft.Text("Seleccionar Alumno:", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+            ft.Text(
+                "Seleccionar Alumno:",
+                size=14,
+                weight=ft.FontWeight.W_600,
+                color=TEAL_DARK,
+            ),
             alumno_selector,
         ],
     )
@@ -229,7 +247,9 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                     spacing=10,
                     controls=[
                         ft.Icon(
-                            ft.Icons.CHECK_CIRCLE if es_valido else ft.Icons.ERROR_OUTLINE,
+                            ft.Icons.CHECK_CIRCLE
+                            if es_valido
+                            else ft.Icons.ERROR_OUTLINE,
                             size=18,
                             color=ONLINE_GREEN if es_valido else ORANGE,
                         ),
@@ -253,7 +273,9 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
     def render_detalle():
         hijo = hijo_seleccionado()
         if not hijo:
-            info_alumno_holder.content = _estado_vacio("Seleccione un alumno para ver su información.")
+            info_alumno_holder.content = _estado_vacio(
+                "Seleccione un alumno para ver su información."
+            )
             doc_holder.content = ft.Container()
             try:
                 page.update()
@@ -265,7 +287,9 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
         nivel = nivel_de(hijo)
         curso_nombre = curso.get("nombre") if curso else "-"
         nivel_nombre = nivel.get("nombre") if nivel else "-"
-        estado_legible = (hijo.get("estado_alumno") or "").strip().capitalize() or "Sin estado"
+        estado_legible = (
+            hijo.get("estado_alumno") or ""
+        ).strip().capitalize() or "Sin estado"
         iniciales = (
             f"{(hijo.get('nombre') or ' ')[0]}{(hijo.get('apellido') or ' ')[0]}"
         ).upper().strip() or "A"
@@ -290,7 +314,12 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                                         bgcolor=TEAL_LIGHT,
                                         border_radius=22,
                                         alignment=ft.Alignment(0, 0),
-                                        content=ft.Text(iniciales, size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                        content=ft.Text(
+                                            iniciales,
+                                            size=16,
+                                            weight=ft.FontWeight.BOLD,
+                                            color=TEAL_DARK,
+                                        ),
                                     ),
                                     ft.Column(
                                         spacing=2,
@@ -324,7 +353,12 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                                 content=ft.Column(
                                     spacing=4,
                                     controls=[
-                                        ft.Text("Legajo", size=12, weight=ft.FontWeight.W_600, color=MUTED),
+                                        ft.Text(
+                                            "Legajo",
+                                            size=12,
+                                            weight=ft.FontWeight.W_600,
+                                            color=MUTED,
+                                        ),
                                         ft.Text(
                                             f"#{hijo.get('legajo', '-')}",
                                             size=15,
@@ -339,7 +373,12 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                                 content=ft.Column(
                                     spacing=4,
                                     controls=[
-                                        ft.Text("Curso Actual", size=12, weight=ft.FontWeight.W_600, color=MUTED),
+                                        ft.Text(
+                                            "Curso Actual",
+                                            size=12,
+                                            weight=ft.FontWeight.W_600,
+                                            color=MUTED,
+                                        ),
                                         ft.Text(
                                             curso_nombre,
                                             size=15,
@@ -354,7 +393,12 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                                 content=ft.Column(
                                     spacing=4,
                                     controls=[
-                                        ft.Text("Nivel Educativo", size=12, weight=ft.FontWeight.W_600, color=MUTED),
+                                        ft.Text(
+                                            "Nivel Educativo",
+                                            size=12,
+                                            weight=ft.FontWeight.W_600,
+                                            color=MUTED,
+                                        ),
                                         ft.Text(
                                             nivel_nombre,
                                             size=15,
@@ -369,7 +413,12 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                                 content=ft.Column(
                                     spacing=4,
                                     controls=[
-                                        ft.Text("Estado de Matrícula", size=12, weight=ft.FontWeight.W_600, color=MUTED),
+                                        ft.Text(
+                                            "Estado de Matrícula",
+                                            size=12,
+                                            weight=ft.FontWeight.W_600,
+                                            color=MUTED,
+                                        ),
                                         ft.Text(
                                             estado_legible,
                                             size=15,
@@ -394,7 +443,12 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
             content=ft.Column(
                 spacing=16,
                 controls=[
-                    ft.Text("Datos Registrados del Alumno", size=17, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        "Datos Registrados del Alumno",
+                        size=17,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEAL_DARK,
+                    ),
                     ft.Text(
                         "Verifique esta información antes de iniciar el trámite. Si algún dato figura como «Sin registrar», acérquese a Secretaría para actualizarlo.",
                         size=13,
@@ -403,27 +457,37 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                     ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
                     item_requisito(
                         "D.N.I. del alumno",
-                        _texto_seguro(hijo.get("dni")) if hijo.get("dni") else "Sin registrar",
+                        _texto_seguro(hijo.get("dni"))
+                        if hijo.get("dni")
+                        else "Sin registrar",
                         bool(hijo.get("dni")),
                     ),
                     item_requisito(
                         "Domicilio declarado",
-                        _texto_seguro(hijo.get("domicilio")) if hijo.get("domicilio") else "Sin registrar",
+                        _texto_seguro(hijo.get("domicilio"))
+                        if hijo.get("domicilio")
+                        else "Sin registrar",
                         bool(hijo.get("domicilio")),
                     ),
                     item_requisito(
                         "Teléfono de contacto",
-                        _texto_seguro(hijo.get("telefono")) if hijo.get("telefono") else "Sin registrar",
+                        _texto_seguro(hijo.get("telefono"))
+                        if hijo.get("telefono")
+                        else "Sin registrar",
                         bool(hijo.get("telefono")),
                     ),
                     item_requisito(
                         "Correo electrónico de contacto",
-                        _texto_seguro(hijo.get("correo_electronico")) if hijo.get("correo_electronico") else "Sin registrar",
+                        _texto_seguro(hijo.get("correo_electronico"))
+                        if hijo.get("correo_electronico")
+                        else "Sin registrar",
                         bool(hijo.get("correo_electronico")),
                     ),
                     item_requisito(
                         "Curso asignado en el ciclo",
-                        f"{curso_nombre} (Nivel {nivel_nombre})" if tiene_curso else "Sin asignar",
+                        f"{curso_nombre} (Nivel {nivel_nombre})"
+                        if tiene_curso
+                        else "Sin asignar",
                         tiene_curso,
                     ),
                 ],
@@ -444,7 +508,11 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
     def abrir_info_inscripcion(e):
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Preinscripción Presencial — Secretaría Académica", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Preinscripción Presencial — Secretaría Académica",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
             content=ft.Column(
                 spacing=12,
                 width=420,
@@ -455,15 +523,41 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
                         size=13,
                         color=TEXT_COLOR,
                     ),
-                    ft.Text("Para completar la preinscripción al próximo ciclo:", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
-                    ft.Text("1. Verifique en esta página que los datos del alumno estén completos.", size=13, color=MUTED),
-                    ft.Text("2. Acérquese a Secretaría Académica con el D.N.I. del alumno y del tutor.", size=13, color=MUTED),
-                    ft.Text("3. Complete y firme la ficha de preinscripción del ciclo lectivo correspondiente.", size=13, color=MUTED),
-                    ft.Text("El equipo de Secretaría confirmará la vacante y el curso asignado.", size=12, color=MUTED),
+                    ft.Text(
+                        "Para completar la preinscripción al próximo ciclo:",
+                        size=13,
+                        weight=ft.FontWeight.W_600,
+                        color=TEAL_DARK,
+                    ),
+                    ft.Text(
+                        "1. Verifique en esta página que los datos del alumno estén completos.",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    ft.Text(
+                        "2. Acérquese a Secretaría Académica con el D.N.I. del alumno y del tutor.",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    ft.Text(
+                        "3. Complete y firme la ficha de preinscripción del ciclo lectivo correspondiente.",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    ft.Text(
+                        "El equipo de Secretaría confirmará la vacante y el curso asignado.",
+                        size=12,
+                        color=MUTED,
+                    ),
                 ],
             ),
             actions=[
-                ft.Button("Entendido", bgcolor=TEAL, color=BG_WHITE, on_click=lambda e: page.pop_dialog()),
+                ft.Button(
+                    "Entendido",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=lambda e: page.pop_dialog(),
+                ),
             ],
         )
         page.show_dialog(dlg)

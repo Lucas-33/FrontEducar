@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -92,7 +93,9 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== 2. TARJETAS DE MÉTRICAS (KPIS) ====================
-    def kpi_card(titulo: str, valor: str, subtitulo: str, icono: ft.IconData, icon_bg: str) -> ft.Container:
+    def kpi_card(
+        titulo: str, valor: str, subtitulo: str, icono: ft.IconData, icon_bg: str
+    ) -> ft.Container:
         return ft.Container(
             expand=True,
             height=158,
@@ -108,7 +111,9 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
-                            ft.Text(titulo, size=12, weight=ft.FontWeight.W_600, color=MUTED),
+                            ft.Text(
+                                titulo, size=12, weight=ft.FontWeight.W_600, color=MUTED
+                            ),
                             ft.Container(
                                 width=36,
                                 height=36,
@@ -122,7 +127,12 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=4,
                         controls=[
-                            ft.Text(valor, size=30, weight=ft.FontWeight.W_800, color=TEAL_DARK),
+                            ft.Text(
+                                valor,
+                                size=30,
+                                weight=ft.FontWeight.W_800,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(subtitulo, size=11, color=MUTED),
                         ],
                     ),
@@ -165,7 +175,14 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== 3. ACCESOS DIRECTOS COMPACTOS ====================
-    def shortcut_item(titulo: str, subtitulo: str, icono: ft.IconData, bg_icon: str, color_icon: str, ruta: str) -> ft.Container:
+    def shortcut_item(
+        titulo: str,
+        subtitulo: str,
+        icono: ft.IconData,
+        bg_icon: str,
+        color_icon: str,
+        ruta: str,
+    ) -> ft.Container:
         return ft.Container(
             height=60,
             bgcolor=BG_PAGE,
@@ -188,7 +205,12 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                         spacing=2,
                         alignment=ft.MainAxisAlignment.CENTER,
                         controls=[
-                            ft.Text(titulo, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                            ft.Text(
+                                titulo,
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=TEXT_COLOR,
+                            ),
                             ft.Text(subtitulo, size=11, color=MUTED),
                         ],
                     ),
@@ -206,14 +228,47 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=16,
             controls=[
-                ft.Text("Accesos Directos", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Accesos Directos",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Column(
                     spacing=10,
                     controls=[
-                        shortcut_item("Registrar Nuevo Alumno", "Formulario unificado K-12", ft.Icons.PERSON_ADD_ALT_1_OUTLINED, TEAL_LIGHT, TEAL_DARK, "/admin/alumnos/nuevo"),
-                        shortcut_item("Materias y Cursos", "Plan de estudios vigente", ft.Icons.MENU_BOOK_OUTLINED, BADGE_YELLOW_BG, ORANGE, "/admin/materias"),
-                        shortcut_item("Transporte Escolar", "4 recorridos oficiales", ft.Icons.DIRECTIONS_BUS_OUTLINED, TEAL_LIGHT, ONLINE_GREEN, "/admin/transporte"),
-                        shortcut_item("Reportes Directivos", "Listados consolidados", ft.Icons.PRINT_OUTLINED, BG_PAGE, MUTED, "/admin/reportes"),
+                        shortcut_item(
+                            "Registrar Nuevo Alumno",
+                            "Formulario unificado K-12",
+                            ft.Icons.PERSON_ADD_ALT_1_OUTLINED,
+                            TEAL_LIGHT,
+                            TEAL_DARK,
+                            "/admin/alumnos/nuevo",
+                        ),
+                        shortcut_item(
+                            "Materias y Cursos",
+                            "Plan de estudios vigente",
+                            ft.Icons.MENU_BOOK_OUTLINED,
+                            BADGE_YELLOW_BG,
+                            ORANGE,
+                            "/admin/materias",
+                        ),
+                        shortcut_item(
+                            "Transporte Escolar",
+                            "4 recorridos oficiales",
+                            ft.Icons.DIRECTIONS_BUS_OUTLINED,
+                            TEAL_LIGHT,
+                            ONLINE_GREEN,
+                            "/admin/transporte",
+                        ),
+                        shortcut_item(
+                            "Reportes Directivos",
+                            "Listados consolidados",
+                            ft.Icons.PRINT_OUTLINED,
+                            BG_PAGE,
+                            MUTED,
+                            "/admin/reportes",
+                        ),
                     ],
                 ),
             ],
@@ -221,7 +276,14 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== 4. ACTIVIDADES (FLUIDA) ====================
-    def activity_item(texto_bold: str, texto_regular: str, tiempo: str, categoria: str, color_linea: str, color_badge: str) -> ft.Row:
+    def activity_item(
+        texto_bold: str,
+        texto_regular: str,
+        tiempo: str,
+        categoria: str,
+        color_linea: str,
+        color_badge: str,
+    ) -> ft.Row:
         return ft.Row(
             spacing=14,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -233,8 +295,15 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                     controls=[
                         ft.Text(
                             spans=[
-                                ft.TextSpan(texto_bold, ft.TextStyle(weight=ft.FontWeight.BOLD, color=TEXT_COLOR)),
-                                ft.TextSpan(f" {texto_regular}", ft.TextStyle(color=TEXT_COLOR)),
+                                ft.TextSpan(
+                                    texto_bold,
+                                    ft.TextStyle(
+                                        weight=ft.FontWeight.BOLD, color=TEXT_COLOR
+                                    ),
+                                ),
+                                ft.TextSpan(
+                                    f" {texto_regular}", ft.TextStyle(color=TEXT_COLOR)
+                                ),
                             ],
                             size=13,
                         ),
@@ -244,7 +313,12 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                             controls=[
                                 ft.Text(tiempo, size=11, color=MUTED),
                                 ft.Text("•", size=11, color=MUTED),
-                                ft.Text(categoria.upper(), size=10, weight=ft.FontWeight.W_600, color=color_badge),
+                                ft.Text(
+                                    categoria.upper(),
+                                    size=10,
+                                    weight=ft.FontWeight.W_600,
+                                    color=color_badge,
+                                ),
                             ],
                         ),
                     ],
@@ -265,17 +339,54 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Últimos Movimientos del Sistema", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                        ft.TextButton("Ver Historial", style=ft.ButtonStyle(color=ORANGE, padding=0), on_click=lambda _: None),
+                        ft.Text(
+                            "Últimos Movimientos del Sistema",
+                            size=18,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEAL_DARK,
+                        ),
+                        ft.TextButton(
+                            "Ver Historial",
+                            style=ft.ButtonStyle(color=ORANGE, padding=0),
+                            on_click=lambda _: None,
+                        ),
                     ],
                 ),
                 ft.Column(
                     spacing=14,
                     controls=[
-                        activity_item("Preceptora Secundario", "Registró asistencia de 4to Año 'A'.", "Hace 10 mins", "Asistencia", TEAL, TEAL),
-                        activity_item("Administración Central", "Validó la inscripción del Legajo #4928.", "Hace 45 mins", "Inscripción", ONLINE_GREEN, ONLINE_GREEN),
-                        activity_item("Secretaría Inicial", "Actualizó cupos en Sala de 4 años.", "Hace 2 horas", "Sistema", AMBER_STATE, AMBER_STATE),
-                        activity_item("Prof. Martínez Román", "Cargó horarios de Física y Química.", "Ayer, 18:30", "Docentes", ORANGE, ORANGE),
+                        activity_item(
+                            "Preceptora Secundario",
+                            "Registró asistencia de 4to Año 'A'.",
+                            "Hace 10 mins",
+                            "Asistencia",
+                            TEAL,
+                            TEAL,
+                        ),
+                        activity_item(
+                            "Administración Central",
+                            "Validó la inscripción del Legajo #4928.",
+                            "Hace 45 mins",
+                            "Inscripción",
+                            ONLINE_GREEN,
+                            ONLINE_GREEN,
+                        ),
+                        activity_item(
+                            "Secretaría Inicial",
+                            "Actualizó cupos en Sala de 4 años.",
+                            "Hace 2 horas",
+                            "Sistema",
+                            AMBER_STATE,
+                            AMBER_STATE,
+                        ),
+                        activity_item(
+                            "Prof. Martínez Román",
+                            "Cargó horarios de Física y Química.",
+                            "Ayer, 18:30",
+                            "Docentes",
+                            ORANGE,
+                            ORANGE,
+                        ),
                     ],
                 ),
             ],

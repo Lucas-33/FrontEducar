@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
@@ -98,7 +99,9 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
     except Exception:
         asignaciones = []
         hubo_error = True
-    estado["asignaciones"] = [a for a in asignaciones if a.get("legajo_profesor") == legajo_docente]
+    estado["asignaciones"] = [
+        a for a in asignaciones if a.get("legajo_profesor") == legajo_docente
+    ]
 
     try:
         estado["alumnos"] = await api_client.get_alumnos(solo_activos=False)
@@ -106,7 +109,9 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
         estado["alumnos"] = []
         hubo_error = True
 
-    niveles_disponibles = sorted({a.get("nivel") for a in estado["asignaciones"] if a.get("nivel")})
+    niveles_disponibles = sorted(
+        {a.get("nivel") for a in estado["asignaciones"] if a.get("nivel")}
+    )
 
     def alumnos_de_curso(id_curso) -> list[dict]:
         return [a for a in estado["alumnos"] if a.get("id_curso") == id_curso]
@@ -150,7 +155,8 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
             text_size=14,
             border=ft.InputBorder.NONE,
             content_padding=ft.Padding(12, 0, 8, 12),
-            options=[ft.dropdown.Option("Todos")] + [ft.dropdown.Option(n) for n in niveles_disponibles],
+            options=[ft.dropdown.Option("Todos")]
+            + [ft.dropdown.Option(n) for n in niveles_disponibles],
         ),
     )
     filtro_nivel_dropdown: ft.Dropdown = filtro_nivel_container.content
@@ -161,7 +167,9 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.SYNC, size=16, color=BG_WHITE),
-                ft.Text("Actualizar", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Actualizar", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -186,7 +194,9 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
     )
 
     aviso_error = ft.Text(
-        "⚠️ Algunas asignaciones no se pudieron cargar desde el backend." if hubo_error else "",
+        "⚠️ Algunas asignaciones no se pudieron cargar desde el backend."
+        if hubo_error
+        else "",
         size=13,
         weight=ft.FontWeight.W_600,
         color=BADGE_RED_TXT,
@@ -253,7 +263,11 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
                     ft.Container(
                         width=170,
                         content=ft.Text(
-                            _plural(len(alumnos_de_curso(item.get("id_curso"))), "alumno", "alumnos"),
+                            _plural(
+                                len(alumnos_de_curso(item.get("id_curso"))),
+                                "alumno",
+                                "alumnos",
+                            ),
                             size=13,
                             weight=ft.FontWeight.W_500,
                             color=TEXT_COLOR,
@@ -270,7 +284,9 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
                             style=ft.ButtonStyle(
                                 shape=ft.RoundedRectangleBorder(radius=6),
                                 padding=ft.Padding(10, 4, 10, 4),
-                                text_style=ft.TextStyle(size=12, weight=ft.FontWeight.W_600),
+                                text_style=ft.TextStyle(
+                                    size=12, weight=ft.FontWeight.W_600
+                                ),
                             ),
                             on_click=lambda _: page.go("/portal/docente/alumnos"),
                         ),
@@ -286,7 +302,11 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
             nivel = a.get("nivel") or ""
             if estado["nivel"] != "Todos" and nivel != estado["nivel"]:
                 continue
-            if texto and texto not in f"{a.get('materia', '')} {a.get('curso', '')} {nivel}".lower():
+            if (
+                texto
+                and texto
+                not in f"{a.get('materia', '')} {a.get('curso', '')} {nivel}".lower()
+            ):
                 continue
             resultado.append(a)
         return resultado
@@ -355,10 +375,14 @@ async def get_docente_materias_view(page: ft.Page) -> ft.Row:
 
     def actualizar_info():
         ids_cursos_actuales = {
-            a.get("id_curso") for a in estado["asignaciones"] if a.get("id_curso") is not None
+            a.get("id_curso")
+            for a in estado["asignaciones"]
+            if a.get("id_curso") is not None
         }
         ids_materias_actuales = {
-            a.get("id_materia") for a in estado["asignaciones"] if a.get("id_materia") is not None
+            a.get("id_materia")
+            for a in estado["asignaciones"]
+            if a.get("id_materia") is not None
         }
         total_alumnos_actual = len(
             [a for a in estado["alumnos"] if a.get("id_curso") in ids_cursos_actuales]

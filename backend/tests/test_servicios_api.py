@@ -1,4 +1,5 @@
 """Tests de los servicios escolares (Deportes, Transporte, Comedor)."""
+
 from backend.tests.conftest import LEGAJO_ALUMNO_1
 
 

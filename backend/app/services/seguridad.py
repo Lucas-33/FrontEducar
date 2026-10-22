@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+
 import bcrypt
 import jwt
 from fastapi import HTTPException, status
@@ -8,19 +8,24 @@ from sqlalchemy.orm import Session
 
 from backend.app.models.seguridad import Usuario
 from backend.app.repositories import (
-    usuario_repository,
-    rol_repository,
     alumno_repository,
-    profesor_repository,
     padre_repository,
+    profesor_repository,
+    rol_repository,
+    usuario_repository,
 )
 from backend.app.schemas.seguridad import (
-    UsuarioCreate, UsuarioUpdate, Token, UsuarioAdminResponse,
+    Token,
+    UsuarioAdminResponse,
+    UsuarioCreate,
+    UsuarioUpdate,
 )
 
 SECRET_KEY = os.getenv("SECRET_KEY", "educar_secret_key_super_segura_2026")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 horas
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
+)  # 24 horas
 
 
 class SeguridadService:
@@ -48,9 +53,11 @@ class SeguridadService:
         return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
         to_encode = data.copy()
-        expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+        expire = datetime.now(timezone.utc) + (
+            expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        )
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -129,7 +136,9 @@ class SeguridadService:
         user = self.get_usuario_from_token(db, token)
         return self._to_admin_response(db, user)
 
-    def change_password(self, db: Session, user: Usuario, password_actual: str, password_nueva: str) -> dict:
+    def change_password(
+        self, db: Session, user: Usuario, password_actual: str, password_nueva: str
+    ) -> dict:
         """Cambia la contraseña del propio usuario autenticado."""
         if not self.verify_password(password_actual, user.password_hash):
             raise HTTPException(
@@ -206,11 +215,13 @@ class SeguridadService:
             vinculacion=vinculacion,
         )
 
-    def get_usuarios(self, db: Session) -> List[UsuarioAdminResponse]:
+    def get_usuarios(self, db: Session) -> list[UsuarioAdminResponse]:
         usuarios = usuario_repository.get_multi(db, limit=200)
         return [self._to_admin_response(db, u) for u in usuarios]
 
-    def update_usuario(self, db: Session, id_usuario: int, user_in: UsuarioUpdate) -> UsuarioAdminResponse:
+    def update_usuario(
+        self, db: Session, id_usuario: int, user_in: UsuarioUpdate
+    ) -> UsuarioAdminResponse:
         user = usuario_repository.get(db, id_usuario)
         if not user:
             raise HTTPException(

@@ -1,4 +1,7 @@
-from backend.app.services.seguridad import seguridad_service, SeguridadService
-from backend.app.services.academico import academico_service, AcademicoService
-from backend.app.services.personas import personas_service, PersonasService
-from backend.app.services.servicios import servicios_escolares_service, ServiciosEscolaresService
+from backend.app.services.academico import AcademicoService, academico_service
+from backend.app.services.personas import PersonasService, personas_service
+from backend.app.services.seguridad import SeguridadService, seguridad_service
+from backend.app.services.servicios import (
+    ServiciosEscolaresService,
+    servicios_escolares_service,
+)

@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -64,8 +65,12 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
             errores.append(f"{etiqueta}: error inesperado")
             return []
 
-    estado["alumnos"] = await consultar("alumnos", api_client.get_alumnos, solo_activos=False)
-    estado["profesores"] = await consultar("docentes", api_client.get_profesores, solo_activos=False)
+    estado["alumnos"] = await consultar(
+        "alumnos", api_client.get_alumnos, solo_activos=False
+    )
+    estado["profesores"] = await consultar(
+        "docentes", api_client.get_profesores, solo_activos=False
+    )
     estado["cursos"] = await consultar("cursos", api_client.get_cursos)
     estado["niveles"] = await consultar("niveles", api_client.get_niveles)
 
@@ -82,14 +87,30 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
             return "Sin nivel"
         return nivel_por_id.get(curso.get("id_nivel"), f"Nivel {curso.get('id_nivel')}")
 
-    alumnos_activos = len([a for a in estado["alumnos"] if str(a.get("estado_alumno", "")).upper() == "ACTIVO"])
+    alumnos_activos = len(
+        [
+            a
+            for a in estado["alumnos"]
+            if str(a.get("estado_alumno", "")).upper() == "ACTIVO"
+        ]
+    )
     alumnos_inactivos = len(estado["alumnos"]) - alumnos_activos
-    docentes_activos = len([p for p in estado["profesores"] if str(p.get("estado", "")).upper() == "ACTIVO"])
+    docentes_activos = len(
+        [
+            p
+            for p in estado["profesores"]
+            if str(p.get("estado", "")).upper() == "ACTIVO"
+        ]
+    )
     docentes_inactivos = len(estado["profesores"]) - docentes_activos
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
     if errores:
-        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(errores)
+        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(
+            errores
+        )
         aviso_error.visible = True
 
     # ==================== 1. ENCABEZADO Y ACCIONES ====================
@@ -115,8 +136,17 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text("Nómina Oficial: Alumnos por Curso y Nivel", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text("Matrícula por nivel educativo y plantel docente por especialidad", size=12, color=MUTED),
+                            ft.Text(
+                                "Nómina Oficial: Alumnos por Curso y Nivel",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                "Matrícula por nivel educativo y plantel docente por especialidad",
+                                size=12,
+                                color=MUTED,
+                            ),
                         ],
                     ),
                 ],
@@ -128,26 +158,48 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.FILE_DOWNLOAD_OUTLINED, size=15, color=TEAL_DARK),
-                                ft.Text("Exportar Excel", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                                ft.Icon(
+                                    ft.Icons.FILE_DOWNLOAD_OUTLINED,
+                                    size=15,
+                                    color=TEAL_DARK,
+                                ),
+                                ft.Text(
+                                    "Exportar Excel",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=TEAL_DARK,
+                                ),
                             ],
                         ),
                         bgcolor=TEAL_LIGHT,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
-                        on_click=lambda _: page.launch_url(api_client.reporte_url("alumnos")),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
+                        on_click=lambda _: page.launch_url(
+                            api_client.reporte_url("alumnos")
+                        ),
                     ),
                     ft.Button(
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE),
-                                ft.Text("Imprimir PDF", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                                ft.Icon(
+                                    ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE
+                                ),
+                                ft.Text(
+                                    "Imprimir PDF",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=BG_WHITE,
+                                ),
                             ],
                         ),
                         bgcolor=ORANGE,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
                         on_click=lambda _: None,
                     ),
                 ],
@@ -185,9 +237,25 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(str(valor), size=22, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text(titulo, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                            ft.Text(subtitulo, size=11, color=MUTED, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Text(
+                                str(valor),
+                                size=22,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                titulo,
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=TEXT_COLOR,
+                            ),
+                            ft.Text(
+                                subtitulo,
+                                size=11,
+                                color=MUTED,
+                                max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                            ),
                         ],
                     ),
                 ],
@@ -199,15 +267,41 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
         spacing=16,
         run_spacing=16,
         controls=[
-            kpi_card("Alumnos activos", alumnos_activos, f"{len(estado['alumnos'])} alumnos registrados", ft.Icons.PERSON_OUTLINE),
-            kpi_card("Alumnos inactivos", alumnos_inactivos, "Matrículas dadas de baja", ft.Icons.PERSON_OUTLINE, BADGE_RED_TXT, BADGE_RED_BG),
-            kpi_card("Docentes activos", docentes_activos, f"{len(estado['profesores'])} docentes registrados", ft.Icons.WORK_OUTLINE),
-            kpi_card("Docentes inactivos", docentes_inactivos, "Docentes fuera de actividad", ft.Icons.WORK_OUTLINE, BADGE_RED_TXT, BADGE_RED_BG),
+            kpi_card(
+                "Alumnos activos",
+                alumnos_activos,
+                f"{len(estado['alumnos'])} alumnos registrados",
+                ft.Icons.PERSON_OUTLINE,
+            ),
+            kpi_card(
+                "Alumnos inactivos",
+                alumnos_inactivos,
+                "Matrículas dadas de baja",
+                ft.Icons.PERSON_OUTLINE,
+                BADGE_RED_TXT,
+                BADGE_RED_BG,
+            ),
+            kpi_card(
+                "Docentes activos",
+                docentes_activos,
+                f"{len(estado['profesores'])} docentes registrados",
+                ft.Icons.WORK_OUTLINE,
+            ),
+            kpi_card(
+                "Docentes inactivos",
+                docentes_inactivos,
+                "Docentes fuera de actividad",
+                ft.Icons.WORK_OUTLINE,
+                BADGE_RED_TXT,
+                BADGE_RED_BG,
+            ),
         ],
     )
 
     # ==================== 3. DISTRIBUCIONES (BARRAS PROPORCIONALES) ====================
-    def barra_distribucion(nombre: str, valor: int, maximo: int, color: str = TEAL) -> ft.Column:
+    def barra_distribucion(
+        nombre: str, valor: int, maximo: int, color: str = TEAL
+    ) -> ft.Column:
         ancho = int(220 * valor / maximo) if maximo else 0
         return ft.Column(
             spacing=4,
@@ -218,9 +312,20 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                     controls=[
                         ft.Container(
                             expand=True,
-                            content=ft.Text(nombre, size=13, color=TEXT_COLOR, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                            content=ft.Text(
+                                nombre,
+                                size=13,
+                                color=TEXT_COLOR,
+                                max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                            ),
                         ),
-                        ft.Text(str(valor), size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                        ft.Text(
+                            str(valor),
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
                     ],
                 ),
                 ft.Container(
@@ -232,7 +337,12 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                     content=ft.Row(
                         spacing=0,
                         controls=[
-                            ft.Container(width=max(ancho, 4) if valor else 0, height=10, bgcolor=color, border_radius=5),
+                            ft.Container(
+                                width=max(ancho, 4) if valor else 0,
+                                height=10,
+                                bgcolor=color,
+                                border_radius=5,
+                            ),
                         ],
                     ),
                 ),
@@ -246,11 +356,17 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
 
     conteo_por_especialidad: dict[str, int] = {}
     for profesor in estado["profesores"]:
-        especialidad = (profesor.get("especialidad") or "Sin especialidad").strip() or "Sin especialidad"
-        conteo_por_especialidad[especialidad] = conteo_por_especialidad.get(especialidad, 0) + 1
+        especialidad = (
+            profesor.get("especialidad") or "Sin especialidad"
+        ).strip() or "Sin especialidad"
+        conteo_por_especialidad[especialidad] = (
+            conteo_por_especialidad.get(especialidad, 0) + 1
+        )
 
     maximo_nivel = max(conteo_por_nivel.values()) if conteo_por_nivel else 0
-    maximo_especialidad = max(conteo_por_especialidad.values()) if conteo_por_especialidad else 0
+    maximo_especialidad = (
+        max(conteo_por_especialidad.values()) if conteo_por_especialidad else 0
+    )
 
     def tarjeta_distribucion(
         titulo: str,
@@ -269,7 +385,12 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=4,
                         controls=[
-                            ft.Text(titulo, size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                titulo,
+                                size=15,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(subtitulo, size=12, color=MUTED),
                         ],
                     ),
@@ -281,16 +402,30 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
     distribucion_alumnos = tarjeta_distribucion(
         "Alumnos por Nivel Educativo",
         f"{alumnos_activos} activos de {len(estado['alumnos'])} alumnos registrados",
-        [barra_distribucion(nombre, cantidad, maximo_nivel) for nombre, cantidad in conteo_por_nivel.items()]
-        or [ft.Text("No hay alumnos registrados para distribuir.", size=13, color=MUTED)],
+        [
+            barra_distribucion(nombre, cantidad, maximo_nivel)
+            for nombre, cantidad in conteo_por_nivel.items()
+        ]
+        or [
+            ft.Text("No hay alumnos registrados para distribuir.", size=13, color=MUTED)
+        ],
     )
 
-    especialidades_ordenadas = sorted(conteo_por_especialidad.items(), key=lambda par: par[1], reverse=True)
+    especialidades_ordenadas = sorted(
+        conteo_por_especialidad.items(), key=lambda par: par[1], reverse=True
+    )
     distribucion_docentes = tarjeta_distribucion(
         "Docentes por Especialidad",
         f"{docentes_activos} activos de {len(estado['profesores'])} docentes registrados",
-        [barra_distribucion(nombre, cantidad, maximo_especialidad, color=ORANGE) for nombre, cantidad in especialidades_ordenadas]
-        or [ft.Text("No hay docentes registrados para distribuir.", size=13, color=MUTED)],
+        [
+            barra_distribucion(nombre, cantidad, maximo_especialidad, color=ORANGE)
+            for nombre, cantidad in especialidades_ordenadas
+        ]
+        or [
+            ft.Text(
+                "No hay docentes registrados para distribuir.", size=13, color=MUTED
+            )
+        ],
     )
 
     # ==================== 4. FILTROS ACADÉMICOS ====================
@@ -337,11 +472,17 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    filtro_nivel_container = filtro_dropdown("Nivel: Todos", 160, ["Todos"] + [n["nombre"] for n in estado["niveles"]])
+    filtro_nivel_container = filtro_dropdown(
+        "Nivel: Todos", 160, ["Todos"] + [n["nombre"] for n in estado["niveles"]]
+    )
     filtro_nivel: ft.Dropdown = filtro_nivel_container.content
-    filtro_curso_container = filtro_dropdown("Curso: Todos", 170, ["Todos"] + [c["nombre"] for c in estado["cursos"]])
+    filtro_curso_container = filtro_dropdown(
+        "Curso: Todos", 170, ["Todos"] + [c["nombre"] for c in estado["cursos"]]
+    )
     filtro_curso: ft.Dropdown = filtro_curso_container.content
-    filtro_matricula_container = filtro_dropdown("Estado: Todos", 145, ["Todos", "Activo", "Inactivo"])
+    filtro_matricula_container = filtro_dropdown(
+        "Estado: Todos", 145, ["Todos", "Activo", "Inactivo"]
+    )
     filtro_matricula: ft.Dropdown = filtro_matricula_container.content
 
     filters_bar = ft.Row(
@@ -371,7 +512,11 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
     pagination_holder = ft.Container()
 
     def alumno_reporte_row(item: dict) -> ft.Container:
-        contacto = item.get("correo_electronico") or item.get("telefono") or "Sin contacto registrado"
+        contacto = (
+            item.get("correo_electronico")
+            or item.get("telefono")
+            or "Sin contacto registrado"
+        )
         legajo = str(item.get("legajo", ""))
         return ft.Container(
             height=50,
@@ -381,13 +526,47 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=150, content=ft.Text(nivel_del_alumno(item), size=13, color=MUTED)),
-                    ft.Container(width=150, content=ft.Text(nombre_curso(item.get("id_curso")), size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=100, content=ft.Text(f"#{legajo}", size=13, weight=ft.FontWeight.BOLD, color=TEAL)),
-                    ft.Container(width=140, content=ft.Text(item.get("apellido", ""), size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=160, content=ft.Text(item.get("nombre", ""), size=14, color=TEXT_COLOR)),
-                    ft.Container(width=240, content=ft.Text(contacto, size=13, color=MUTED)),
-                    ft.Container(width=130, content=status_badge(item.get("estado_alumno") or "Sin estado")),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(nivel_del_alumno(item), size=13, color=MUTED),
+                    ),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            nombre_curso(item.get("id_curso")),
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=100,
+                        content=ft.Text(
+                            f"#{legajo}", size=13, weight=ft.FontWeight.BOLD, color=TEAL
+                        ),
+                    ),
+                    ft.Container(
+                        width=140,
+                        content=ft.Text(
+                            item.get("apellido", ""),
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(
+                            item.get("nombre", ""), size=14, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=240, content=ft.Text(contacto, size=13, color=MUTED)
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=status_badge(item.get("estado_alumno") or "Sin estado"),
+                    ),
                 ],
             ),
         )
@@ -396,13 +575,27 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
         texto = (estado["texto"] or "").lower()
         resultado = []
         for alumno in estado["alumnos"]:
-            if estado["nivel"] != "Todos" and nivel_del_alumno(alumno) != estado["nivel"]:
+            if (
+                estado["nivel"] != "Todos"
+                and nivel_del_alumno(alumno) != estado["nivel"]
+            ):
                 continue
-            if estado["curso"] != "Todos" and nombre_curso(alumno.get("id_curso")) != estado["curso"]:
+            if (
+                estado["curso"] != "Todos"
+                and nombre_curso(alumno.get("id_curso")) != estado["curso"]
+            ):
                 continue
-            if estado["matricula"] != "Todos" and str(alumno.get("estado_alumno") or "").capitalize() != estado["matricula"]:
+            if (
+                estado["matricula"] != "Todos"
+                and str(alumno.get("estado_alumno") or "").capitalize()
+                != estado["matricula"]
+            ):
                 continue
-            if texto and texto not in f"{alumno.get('apellido', '')} {alumno.get('nombre', '')} {alumno.get('legajo', '')} {alumno.get('dni', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{alumno.get('apellido', '')} {alumno.get('nombre', '')} {alumno.get('legajo', '')} {alumno.get('dni', '')}".lower()
+            ):
                 continue
             resultado.append(alumno)
         return resultado
@@ -416,7 +609,11 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay alumnos que coincidan con los filtros aplicados.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay alumnos que coincidan con los filtros aplicados.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
             min_width=1102,
