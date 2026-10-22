@@ -95,7 +95,7 @@ jobs:
           if-no-files-found: warn
         
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v4.0.0
+        uses: SonarSource/sonarcloud-github-action@02ef91136b8014e3630718503ff255b5d1dbae47
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
