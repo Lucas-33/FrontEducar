@@ -51,8 +51,24 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-24.04
 
+    # ESTO ES LO NUEVO: Levantamos un contenedor de PostgreSQL
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # ESTO CAMBIA: Conectamos la app a la base de PostgreSQL (en vez de sqlite)
     env:
-      DATABASE_URL: sqlite:///./test.db
+      TEST_DATABASE_URL: postgresql+psycopg2://postgres@127.0.0.1:5432/educar_test
       SECRET_KEY: clave-solo-para-tests
 
     steps:
@@ -81,7 +97,7 @@ jobs:
             --cov=backend \
             --cov-report=term-missing \
             --cov-report=xml \
-            --cov-fail-under=20 \
+            --cov-fail-under=50 \
             --junitxml=reporte-tests.xml
 
       - name: Guardar reportes
