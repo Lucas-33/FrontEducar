@@ -1,7 +1,8 @@
 from datetime import date
 
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
@@ -29,7 +30,13 @@ from frontend.app.components.table_view import (
 )
 
 PERIODOS = ["1° Trimestre", "2° Trimestre", "3° Trimestre", "Evaluación Final"]
-TIPOS_EVALUACION = ["Parcial", "Trabajo Práctico", "Oral", "Conceptual", "Recuperatorio"]
+TIPOS_EVALUACION = [
+    "Parcial",
+    "Trabajo Práctico",
+    "Oral",
+    "Conceptual",
+    "Recuperatorio",
+]
 ESTADOS_ASISTENCIA = ["PRESENTE", "AUSENTE", "TARDE", "JUSTIFICADO"]
 
 
@@ -71,7 +78,9 @@ def _badge_asistencia(estado: str) -> ft.Container:
         padding=ft.Padding(8, 4, 8, 4),
         bgcolor=bg,
         border_radius=4,
-        content=ft.Text(estado or "—", size=11, weight=ft.FontWeight.W_600, color=color),
+        content=ft.Text(
+            estado or "—", size=11, weight=ft.FontWeight.W_600, color=color
+        ),
     )
 
 
@@ -103,8 +112,17 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     ft.Icon(ft.Icons.PERSON_OFF_OUTLINED, size=44, color=MUTED),
-                    ft.Text("No se pudo identificar al docente.", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                    ft.Text("Inicie sesión nuevamente para cargar notas y asistencia.", size=13, color=MUTED),
+                    ft.Text(
+                        "No se pudo identificar al docente.",
+                        size=18,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEAL_DARK,
+                    ),
+                    ft.Text(
+                        "Inicie sesión nuevamente para cargar notas y asistencia.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 ],
             ),
         )
@@ -122,7 +140,11 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
 
     # ==================== 1. CARGA DE DATOS BASE ====================
     try:
-        asignaciones = [a for a in await api_client.get_asignaciones() if a.get("legajo_profesor") == legajo_docente]
+        asignaciones = [
+            a
+            for a in await api_client.get_asignaciones()
+            if a.get("legajo_profesor") == legajo_docente
+        ]
     except Exception:
         asignaciones = []
     try:
@@ -132,7 +154,13 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
 
     def alumnos_de_curso(id_curso) -> list[dict]:
         lista = [a for a in alumnos if a.get("id_curso") == id_curso]
-        return sorted(lista, key=lambda a: ((a.get("apellido") or "").lower(), (a.get("nombre") or "").lower()))
+        return sorted(
+            lista,
+            key=lambda a: (
+                (a.get("apellido") or "").lower(),
+                (a.get("nombre") or "").lower(),
+            ),
+        )
 
     estado = {
         "tab": "notas",
@@ -154,7 +182,12 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             spacing=8,
             controls=[
                 ft.Icon(ft.Icons.ASSESSMENT_OUTLINED, size=16, color=BG_WHITE),
-                ft.Text("Calificaciones", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Calificaciones",
+                    size=13,
+                    weight=ft.FontWeight.W_600,
+                    color=BG_WHITE,
+                ),
             ],
         ),
     )
@@ -168,7 +201,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             spacing=8,
             controls=[
                 ft.Icon(ft.Icons.FACT_CHECK_OUTLINED, size=16, color=TEXT_COLOR),
-                ft.Text("Asistencia", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                ft.Text(
+                    "Asistencia", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR
+                ),
             ],
         ),
     )
@@ -180,8 +215,12 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         tab_notas.content.controls[0].color = BG_WHITE if activo_notas else TEXT_COLOR
         tab_notas.content.controls[1].color = BG_WHITE if activo_notas else TEXT_COLOR
         tab_asistencia.bgcolor = TEAL_DARK if not activo_notas else BG_WHITE
-        tab_asistencia.content.controls[0].color = BG_WHITE if not activo_notas else TEXT_COLOR
-        tab_asistencia.content.controls[1].color = BG_WHITE if not activo_notas else TEXT_COLOR
+        tab_asistencia.content.controls[0].color = (
+            BG_WHITE if not activo_notas else TEXT_COLOR
+        )
+        tab_asistencia.content.controls[1].color = (
+            BG_WHITE if not activo_notas else TEXT_COLOR
+        )
         seccion_notas.visible = activo_notas
         seccion_asistencia.visible = not activo_notas
 
@@ -192,7 +231,10 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
 
     def mostrar_aviso(mensaje: str, error: bool = False):
         page.show_dialog(
-            ft.SnackBar(ft.Text(mensaje, color="white"), bgcolor=BADGE_RED_TXT if error else TEAL)
+            ft.SnackBar(
+                ft.Text(mensaje, color="white"),
+                bgcolor=BADGE_RED_TXT if error else TEAL,
+            )
         )
 
     # ==================== 3. SECCIÓN CALIFICACIONES ====================
@@ -203,7 +245,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         border=ft.InputBorder.NONE,
         content_padding=ft.Padding(12, 0, 8, 12),
         options=[
-            ft.dropdown.Option(key=str(indice), text=f"{a.get('materia')} — {a.get('curso')}")
+            ft.dropdown.Option(
+                key=str(indice), text=f"{a.get('materia')} — {a.get('curso')}"
+            )
             for indice, a in enumerate(asignaciones)
         ],
         value="0" if asignaciones else None,
@@ -243,14 +287,56 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             content=ft.Row(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=200, content=ft.Text(cal.get("alumno") or "—", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=170, content=ft.Text(cal.get("materia") or "—", size=13, color=TEXT_COLOR)),
-                    ft.Container(width=150, content=ft.Text(cal.get("curso") or "—", size=13, color=MUTED)),
-                    ft.Container(width=140, content=ft.Text(cal.get("periodo") or "—", size=12, color=MUTED)),
-                    ft.Container(width=130, content=ft.Text(cal.get("tipo") or "—", size=12, color=MUTED)),
-                    ft.Container(width=70, content=ft.Text(f"{nota:.1f}" if isinstance(nota, (int, float)) else "—", size=14, weight=ft.FontWeight.BOLD, color=color_nota)),
-                    ft.Container(width=100, content=ft.Text(_fecha_legible(cal.get("fecha")), size=12, color=MUTED)),
-                    ft.Container(expand=True, content=ft.Text(cal.get("observacion") or "—", size=12, color=MUTED)),
+                    ft.Container(
+                        width=200,
+                        content=ft.Text(
+                            cal.get("alumno") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=170,
+                        content=ft.Text(
+                            cal.get("materia") or "—", size=13, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(cal.get("curso") or "—", size=13, color=MUTED),
+                    ),
+                    ft.Container(
+                        width=140,
+                        content=ft.Text(
+                            cal.get("periodo") or "—", size=12, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(cal.get("tipo") or "—", size=12, color=MUTED),
+                    ),
+                    ft.Container(
+                        width=70,
+                        content=ft.Text(
+                            f"{nota:.1f}" if isinstance(nota, (int, float)) else "—",
+                            size=14,
+                            weight=ft.FontWeight.BOLD,
+                            color=color_nota,
+                        ),
+                    ),
+                    ft.Container(
+                        width=100,
+                        content=ft.Text(
+                            _fecha_legible(cal.get("fecha")), size=12, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        expand=True,
+                        content=ft.Text(
+                            cal.get("observacion") or "—", size=12, color=MUTED
+                        ),
+                    ),
                     ft.Container(
                         width=90,
                         alignment=ft.Alignment(1, 0),
@@ -272,7 +358,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                                     icon_color=BADGE_RED_TXT,
                                     tooltip="Eliminar nota",
                                     padding=0,
-                                    on_click=lambda e, c=cal: confirmar_eliminar_nota(c),
+                                    on_click=lambda e, c=cal: confirmar_eliminar_nota(
+                                        c
+                                    ),
                                 ),
                             ],
                         ),
@@ -314,7 +402,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                     ),
                 )
             ]
-        notas_holder.content = create_table_container(header=header_notas, rows=filas, min_width=1150)
+        notas_holder.content = create_table_container(
+            header=header_notas, rows=filas, min_width=1150
+        )
         paginacion_notas.content = create_pagination_bar(
             texto_info=f"Mostrando {len(visibles)} calificaciones",
             pagina_actual=1,
@@ -347,7 +437,10 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             focused_border_color=TEAL,
             text_size=13,
             options=[
-                ft.dropdown.Option(key=str(a.get("legajo")), text=f"{a.get('apellido')}, {a.get('nombre')} (#{a.get('legajo')})")
+                ft.dropdown.Option(
+                    key=str(a.get("legajo")),
+                    text=f"{a.get('apellido')}, {a.get('nombre')} (#{a.get('legajo')})",
+                )
                 for a in alumnos_opciones
             ],
             value=str(calificacion.get("legajo_alumno")) if calificacion else None,
@@ -380,7 +473,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             border_color=BORDER_COLOR,
             focused_border_color=TEAL,
             text_size=13,
-            value=str(calificacion.get("fecha"))[:10] if calificacion and calificacion.get("fecha") else str(date.today()),
+            value=str(calificacion.get("fecha"))[:10]
+            if calificacion and calificacion.get("fecha")
+            else str(date.today()),
         )
         observacion_field = ft.TextField(
             label="Observación (opcional)",
@@ -418,7 +513,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             }
             try:
                 if calificacion:
-                    await api_client.actualizar_calificacion(calificacion["id_calificacion"], payload)
+                    await api_client.actualizar_calificacion(
+                        calificacion["id_calificacion"], payload
+                    )
                 else:
                     await api_client.crear_calificacion(
                         {
@@ -452,7 +549,12 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                 tight=True,
                 scroll=ft.ScrollMode.AUTO,
                 controls=[
-                    ft.Text(f"{asignacion.get('materia')} — {asignacion.get('curso')}", size=13, weight=ft.FontWeight.W_600, color=TEAL),
+                    ft.Text(
+                        f"{asignacion.get('materia')} — {asignacion.get('curso')}",
+                        size=13,
+                        weight=ft.FontWeight.W_600,
+                        color=TEAL,
+                    ),
                     alumno_dd,
                     periodo_dd,
                     tipo_dd,
@@ -485,7 +587,12 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         dialogo = ft.AlertDialog(
             modal=True,
             bgcolor=BG_WHITE,
-            title=ft.Text("Eliminar calificación", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+            title=ft.Text(
+                "Eliminar calificación",
+                size=16,
+                weight=ft.FontWeight.BOLD,
+                color=TEAL_DARK,
+            ),
             content=ft.Text(
                 f"¿Confirma eliminar la nota {calificacion.get('nota')} de "
                 f"{calificacion.get('alumno')} ({calificacion.get('periodo')})?",
@@ -495,7 +602,12 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda _: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar_confirmado),
+                ft.Button(
+                    "Eliminar",
+                    bgcolor=BADGE_RED_TXT,
+                    color=BG_WHITE,
+                    on_click=eliminar_confirmado,
+                ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
@@ -513,12 +625,17 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             spacing=8,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Cargar Nota", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Cargar Nota", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
         height=CONTROL_HEIGHT,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS), padding=ft.Padding(20, 10, 20, 10)),
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
+            padding=ft.Padding(20, 10, 20, 10),
+        ),
         on_click=lambda _: abrir_dialogo_nota(),
     )
 
@@ -529,7 +646,11 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Row(spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER, controls=[asignacion_container, info_notas]),
+                    ft.Row(
+                        spacing=12,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[asignacion_container, info_notas],
+                    ),
                     btn_nueva_nota,
                 ],
             ),
@@ -544,7 +665,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
     for a in asignaciones:
         if a.get("id_curso") not in vistos:
             vistos.add(a.get("id_curso"))
-            cursos_docente.append({"id_curso": a.get("id_curso"), "curso": a.get("curso")})
+            cursos_docente.append(
+                {"id_curso": a.get("id_curso"), "curso": a.get("curso")}
+            )
     if cursos_docente:
         estado["curso_asistencia"] = cursos_docente[0]
 
@@ -555,7 +678,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         border=ft.InputBorder.NONE,
         content_padding=ft.Padding(12, 0, 8, 12),
         options=[
-            ft.dropdown.Option(key=str(indice), text=c.get("curso") or f"Curso #{c.get('id_curso')}")
+            ft.dropdown.Option(
+                key=str(indice), text=c.get("curso") or f"Curso #{c.get('id_curso')}"
+            )
             for indice, c in enumerate(cursos_docente)
         ],
         value="0" if cursos_docente else None,
@@ -595,8 +720,17 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=14,
             controls=[
-                ft.Text("Planilla de Asistencia Diaria", size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                ft.Text("Seleccione curso y fecha, presione «Ver Planilla», marque el estado de cada alumno y guarde.", size=12, color=MUTED),
+                ft.Text(
+                    "Planilla de Asistencia Diaria",
+                    size=15,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
+                ft.Text(
+                    "Seleccione curso y fecha, presione «Ver Planilla», marque el estado de cada alumno y guarde.",
+                    size=12,
+                    color=MUTED,
+                ),
                 planilla_holder,
             ],
         ),
@@ -607,7 +741,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
     def cargar_planilla(e=None):
         curso = estado["curso_asistencia"]
         if not curso:
-            mostrar_aviso("No tiene cursos asignados para cargar asistencia.", error=True)
+            mostrar_aviso(
+                "No tiene cursos asignados para cargar asistencia.", error=True
+            )
             return
         fecha_valor = (fecha_field_asistencia.value or "").strip()
         if len(fecha_valor) != 10 or fecha_valor[4] != "-" or fecha_valor[7] != "-":
@@ -632,7 +768,11 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
-                        ft.Text(f"{alumno.get('apellido')}, {alumno.get('nombre')} (#{alumno.get('legajo')})", size=13, color=TEXT_COLOR),
+                        ft.Text(
+                            f"{alumno.get('apellido')}, {alumno.get('nombre')} (#{alumno.get('legajo')})",
+                            size=13,
+                            color=TEXT_COLOR,
+                        ),
                         selector,
                     ],
                 )
@@ -641,14 +781,19 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         if filas:
             planilla_holder.controls = filas
         else:
-            planilla_holder.controls = [ft.Text("El curso no tiene alumnos registrados.", size=13, color=MUTED)]
+            planilla_holder.controls = [
+                ft.Text("El curso no tiene alumnos registrados.", size=13, color=MUTED)
+            ]
         page.update()
         page.run_task(recargar_registros)
 
     async def guardar_asistencia(e):
         curso = estado["curso_asistencia"]
         if not curso or not estados_por_alumno:
-            mostrar_aviso("Primero presione «Ver Planilla» para cargar los alumnos del curso.", error=True)
+            mostrar_aviso(
+                "Primero presione «Ver Planilla» para cargar los alumnos del curso.",
+                error=True,
+            )
             return
         fecha_valor = (fecha_field_asistencia.value or "").strip()
         registros = [
@@ -657,7 +802,11 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         ]
         try:
             await api_client.registrar_asistencia_lote(
-                {"id_curso": curso.get("id_curso"), "fecha": fecha_valor, "registros": registros}
+                {
+                    "id_curso": curso.get("id_curso"),
+                    "fecha": fecha_valor,
+                    "registros": registros,
+                }
             )
         except Exception as error:
             mostrar_aviso(_detalle_error(error), error=True)
@@ -670,12 +819,17 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             spacing=8,
             controls=[
                 ft.Icon(ft.Icons.VISIBILITY_OUTLINED, size=16, color=TEAL_DARK),
-                ft.Text("Ver Planilla", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                ft.Text(
+                    "Ver Planilla", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK
+                ),
             ],
         ),
         bgcolor=TEAL_LIGHT,
         height=CONTROL_HEIGHT,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS), padding=ft.Padding(20, 10, 20, 10)),
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
+            padding=ft.Padding(20, 10, 20, 10),
+        ),
         on_click=cargar_planilla,
     )
     btn_guardar_asistencia = ft.Button(
@@ -683,12 +837,20 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             spacing=8,
             controls=[
                 ft.Icon(ft.Icons.SAVE_OUTLINED, size=16, color=BG_WHITE),
-                ft.Text("Guardar Asistencia", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Guardar Asistencia",
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=BG_WHITE,
+                ),
             ],
         ),
         bgcolor=TEAL,
         height=CONTROL_HEIGHT,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS), padding=ft.Padding(20, 10, 20, 10)),
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS),
+            padding=ft.Padding(20, 10, 20, 10),
+        ),
         on_click=guardar_asistencia,
     )
 
@@ -719,7 +881,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         dialogo = ft.AlertDialog(
             modal=True,
             bgcolor=BG_WHITE,
-            title=ft.Text("Eliminar registro", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+            title=ft.Text(
+                "Eliminar registro", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+            ),
             content=ft.Text(
                 f"¿Confirma eliminar la asistencia de {registro.get('alumno')} del {_fecha_legible(registro.get('fecha'))}?",
                 size=13,
@@ -728,7 +892,12 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda _: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar_confirmado),
+                ft.Button(
+                    "Eliminar",
+                    bgcolor=BADGE_RED_TXT,
+                    color=BG_WHITE,
+                    on_click=eliminar_confirmado,
+                ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
@@ -742,11 +911,36 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
             content=ft.Row(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=220, content=ft.Text(registro.get("alumno") or "—", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=180, content=ft.Text(registro.get("curso") or "—", size=13, color=MUTED)),
-                    ft.Container(width=110, content=ft.Text(_fecha_legible(registro.get("fecha")), size=12, color=MUTED)),
-                    ft.Container(width=120, content=_badge_asistencia(registro.get("estado"))),
-                    ft.Container(expand=True, content=ft.Text(registro.get("observacion") or "—", size=12, color=MUTED)),
+                    ft.Container(
+                        width=220,
+                        content=ft.Text(
+                            registro.get("alumno") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=180,
+                        content=ft.Text(
+                            registro.get("curso") or "—", size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=110,
+                        content=ft.Text(
+                            _fecha_legible(registro.get("fecha")), size=12, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=120, content=_badge_asistencia(registro.get("estado"))
+                    ),
+                    ft.Container(
+                        expand=True,
+                        content=ft.Text(
+                            registro.get("observacion") or "—", size=12, color=MUTED
+                        ),
+                    ),
                     ft.Container(
                         width=80,
                         alignment=ft.Alignment(1, 0),
@@ -772,10 +966,16 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay registros de asistencia para el curso y fecha seleccionados.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay registros de asistencia para el curso y fecha seleccionados.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ]
-        asist_holder.content = create_table_container(header=header_asist, rows=filas, min_width=1000)
+        asist_holder.content = create_table_container(
+            header=header_asist, rows=filas, min_width=1000
+        )
         paginacion_asist.content = create_pagination_bar(
             texto_info=f"Mostrando {len(visibles)} registros",
             pagina_actual=1,
@@ -820,7 +1020,11 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Row(spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER, controls=[curso_container, fecha_container, btn_ver_planilla]),
+                    ft.Row(
+                        spacing=12,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[curso_container, fecha_container, btn_ver_planilla],
+                    ),
                     btn_guardar_asistencia,
                 ],
             ),

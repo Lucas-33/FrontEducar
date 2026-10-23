@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
@@ -130,7 +131,9 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
         inscripciones = []
         hubo_error = True
     ids_grupos = {g.get("id_grupo") for g in estado["grupos"]}
-    estado["inscripciones"] = [i for i in inscripciones if i.get("id_grupo") in ids_grupos]
+    estado["inscripciones"] = [
+        i for i in inscripciones if i.get("id_grupo") in ids_grupos
+    ]
 
     try:
         estado["alumnos"] = await api_client.get_alumnos(solo_activos=False)
@@ -145,7 +148,8 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
         hubo_error = True
 
     nombre_curso = {
-        c.get("id_curso"): c.get("nombre") or f"Curso {c.get('id_curso')}" for c in estado["cursos"]
+        c.get("id_curso"): c.get("nombre") or f"Curso {c.get('id_curso')}"
+        for c in estado["cursos"]
     }
     curso_por_legajo = {a.get("legajo"): a.get("id_curso") for a in estado["alumnos"]}
     grupo_por_id = {g.get("id_grupo"): g for g in estado["grupos"]}
@@ -205,7 +209,11 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
                             bgcolor=TEAL_LIGHT,
                             border_radius=4,
                             content=ft.Text(
-                                _plural(inscriptos_por_grupo.get(g.get("id_grupo"), 0), "inscripto", "inscriptos"),
+                                _plural(
+                                    inscriptos_por_grupo.get(g.get("id_grupo"), 0),
+                                    "inscripto",
+                                    "inscriptos",
+                                ),
                                 size=11,
                                 weight=ft.FontWeight.BOLD,
                                 color=TEAL_DARK,
@@ -215,7 +223,9 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
                 ),
             )
             for g in grupos_del_deporte
-        ] or [ft.Text("Sin grupos registrados para este deporte.", size=13, color=MUTED)]
+        ] or [
+            ft.Text("Sin grupos registrados para este deporte.", size=13, color=MUTED)
+        ]
 
         return ft.Container(
             bgcolor=BG_WHITE,
@@ -238,7 +248,11 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
                                         bgcolor=TEAL_LIGHT,
                                         border_radius=20,
                                         alignment=ft.Alignment(0, 0),
-                                        content=ft.Icon(ft.Icons.SPORTS_SOCCER, size=20, color=TEAL_DARK),
+                                        content=ft.Icon(
+                                            ft.Icons.SPORTS_SOCCER,
+                                            size=20,
+                                            color=TEAL_DARK,
+                                        ),
                                     ),
                                     ft.Column(
                                         spacing=2,
@@ -249,7 +263,11 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
                                                 weight=ft.FontWeight.BOLD,
                                                 color=TEAL_DARK,
                                             ),
-                                            ft.Text("Profesor responsable a cargo", size=13, color=MUTED),
+                                            ft.Text(
+                                                "Profesor responsable a cargo",
+                                                size=13,
+                                                color=MUTED,
+                                            ),
                                         ],
                                     ),
                                 ],
@@ -346,7 +364,11 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
 
     def inscripto_row(item: dict) -> ft.Container:
         legajo_alumno = item.get("legajo_alumno")
-        nombre = (item.get("alumno") or f"Alumno #{legajo_alumno}").split(" (#", 1)[0].strip()
+        nombre = (
+            (item.get("alumno") or f"Alumno #{legajo_alumno}")
+            .split(" (#", 1)[0]
+            .strip()
+        )
         curso = nombre_curso.get(curso_por_legajo.get(legajo_alumno), "-")
         nivel_grupo = (grupo_por_id.get(item.get("id_grupo")) or {}).get("nivel") or "-"
 
@@ -376,21 +398,36 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
                             color=TEXT_COLOR,
                         ),
                     ),
-                    ft.Container(width=150, content=ft.Text(curso, size=14, color=MUTED)),
+                    ft.Container(
+                        width=150, content=ft.Text(curso, size=14, color=MUTED)
+                    ),
                     ft.Container(
                         width=160,
-                        content=ft.Text(item.get("deporte") or "-", size=13, color=TEAL),
+                        content=ft.Text(
+                            item.get("deporte") or "-", size=13, color=TEAL
+                        ),
                     ),
-                    ft.Container(width=150, content=ft.Text(nivel_grupo, size=13, color=MUTED)),
+                    ft.Container(
+                        width=150, content=ft.Text(nivel_grupo, size=13, color=MUTED)
+                    ),
                     ft.Container(
                         width=130,
-                        content=ft.Text(_fecha_corta(item.get("fecha_inscripcion")), size=13, color=TEXT_COLOR),
+                        content=ft.Text(
+                            _fecha_corta(item.get("fecha_inscripcion")),
+                            size=13,
+                            color=TEXT_COLOR,
+                        ),
                     ),
                 ],
             ),
         )
 
-    nomina_titulo = ft.Text("Nómina de Deportistas Inscriptos", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK)
+    nomina_titulo = ft.Text(
+        "Nómina de Deportistas Inscriptos",
+        size=18,
+        weight=ft.FontWeight.BOLD,
+        color=TEAL_DARK,
+    )
 
     def render():
         if estado["deportes"]:
@@ -437,7 +474,9 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
 
     # ==================== 4. BARRA DE ACCIÓN ====================
     aviso_error = ft.Text(
-        "⚠️ Algunos datos de deportes no se pudieron cargar desde el backend." if hubo_error else "",
+        "⚠️ Algunos datos de deportes no se pudieron cargar desde el backend."
+        if hubo_error
+        else "",
         size=13,
         weight=ft.FontWeight.W_600,
         color=BADGE_RED_TXT,
@@ -458,7 +497,9 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.SYNC, size=16, color=BG_WHITE),
-                ft.Text("Actualizar", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Actualizar", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -492,16 +533,22 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
         try:
             deportes = await api_client.get_deportes()
             estado["deportes"] = [
-                d for d in deportes if d.get("legajo_profesor_responsable") == legajo_docente
+                d
+                for d in deportes
+                if d.get("legajo_profesor_responsable") == legajo_docente
             ]
             ids_deportes_actuales = {d.get("id_deporte") for d in estado["deportes"]}
 
             grupos = await api_client.get_grupos_deporte()
-            estado["grupos"] = [g for g in grupos if g.get("id_deporte") in ids_deportes_actuales]
+            estado["grupos"] = [
+                g for g in grupos if g.get("id_deporte") in ids_deportes_actuales
+            ]
             ids_grupos_actuales = {g.get("id_grupo") for g in estado["grupos"]}
 
             inscripciones = await api_client.get_inscripciones_deporte()
-            estado["inscripciones"] = [i for i in inscripciones if i.get("id_grupo") in ids_grupos_actuales]
+            estado["inscripciones"] = [
+                i for i in inscripciones if i.get("id_grupo") in ids_grupos_actuales
+            ]
 
             estado["alumnos"] = await api_client.get_alumnos(solo_activos=False)
             estado["cursos"] = await api_client.get_cursos()
@@ -514,7 +561,9 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
                 }
             )
             curso_por_legajo.clear()
-            curso_por_legajo.update({a.get("legajo"): a.get("id_curso") for a in estado["alumnos"]})
+            curso_por_legajo.update(
+                {a.get("legajo"): a.get("id_curso") for a in estado["alumnos"]}
+            )
             grupo_por_id.clear()
             grupo_por_id.update({g.get("id_grupo"): g for g in estado["grupos"]})
             grupos_por_deporte.clear()
@@ -523,7 +572,9 @@ async def get_docente_deportes_view(page: ft.Page) -> ft.Row:
             inscriptos_por_grupo.clear()
             for inscripcion in estado["inscripciones"]:
                 id_grupo = inscripcion.get("id_grupo")
-                inscriptos_por_grupo[id_grupo] = inscriptos_por_grupo.get(id_grupo, 0) + 1
+                inscriptos_por_grupo[id_grupo] = (
+                    inscriptos_por_grupo.get(id_grupo, 0) + 1
+                )
 
             aviso_error.visible = False
         except Exception as err:

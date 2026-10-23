@@ -1,7 +1,6 @@
 from datetime import date
-from typing import List, Optional
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend.app.repositories import (
@@ -28,7 +27,7 @@ class EvaluacionService:
         self,
         db: Session,
         calificacion_in: CalificacionCreate,
-        legajo_profesor: Optional[int] = None,
+        legajo_profesor: int | None = None,
     ):
         if not alumno_repository.get_by_legajo(db, calificacion_in.legajo_alumno):
             raise HTTPException(status_code=404, detail="El alumno no existe")
@@ -53,10 +52,14 @@ class EvaluacionService:
     def get_calificacion(self, db: Session, id_calificacion: int):
         registro = calificacion_repository.get(db, id_calificacion)
         if not registro:
-            raise HTTPException(status_code=404, detail=f"La calificación #{id_calificacion} no existe")
+            raise HTTPException(
+                status_code=404, detail=f"La calificación #{id_calificacion} no existe"
+            )
         return registro
 
-    def update_calificacion(self, db: Session, id_calificacion: int, calificacion_in: CalificacionUpdate):
+    def update_calificacion(
+        self, db: Session, id_calificacion: int, calificacion_in: CalificacionUpdate
+    ):
         registro = self.get_calificacion(db, id_calificacion)
         return calificacion_repository.update(db, registro, calificacion_in)
 
@@ -74,16 +77,18 @@ class EvaluacionService:
     def get_calificaciones_detalle(
         self,
         db: Session,
-        legajo_alumno: Optional[int] = None,
-        legajos_permitidos: Optional[List[int]] = None,
-        id_materia: Optional[int] = None,
-        id_curso: Optional[int] = None,
-        periodo: Optional[str] = None,
-    ) -> List[CalificacionDetalleResponse]:
+        legajo_alumno: int | None = None,
+        legajos_permitidos: list[int] | None = None,
+        id_materia: int | None = None,
+        id_curso: int | None = None,
+        periodo: str | None = None,
+    ) -> list[CalificacionDetalleResponse]:
         if legajo_alumno is not None:
             registros = calificacion_repository.get_by_alumno(db, legajo_alumno)
         elif id_materia is not None and id_curso is not None:
-            registros = calificacion_repository.get_by_materia_curso(db, id_materia, id_curso)
+            registros = calificacion_repository.get_by_materia_curso(
+                db, id_materia, id_curso
+            )
         elif id_curso is not None:
             registros = calificacion_repository.get_by_curso(db, id_curso)
         else:
@@ -98,16 +103,20 @@ class EvaluacionService:
         if periodo:
             registros = [r for r in registros if r.periodo == periodo]
 
-        resultado: List[CalificacionDetalleResponse] = []
+        resultado: list[CalificacionDetalleResponse] = []
         cache_materias = {}
         cache_cursos = {}
         for r in registros:
             if r.id_materia not in cache_materias:
                 materia = materia_repository.get(db, r.id_materia)
-                cache_materias[r.id_materia] = materia.nombre if materia else f"Materia #{r.id_materia}"
+                cache_materias[r.id_materia] = (
+                    materia.nombre if materia else f"Materia #{r.id_materia}"
+                )
             if r.id_curso not in cache_cursos:
                 curso = curso_repository.get(db, r.id_curso)
-                cache_cursos[r.id_curso] = curso.nombre if curso else f"Curso #{r.id_curso}"
+                cache_cursos[r.id_curso] = (
+                    curso.nombre if curso else f"Curso #{r.id_curso}"
+                )
             resultado.append(
                 CalificacionDetalleResponse(
                     id_calificacion=r.id_calificacion,
@@ -131,8 +140,8 @@ class EvaluacionService:
         self,
         db: Session,
         lote_in: AsistenciaLoteCreate,
-        legajo_profesor: Optional[int] = None,
-    ) -> List[AsistenciaDetalleResponse]:
+        legajo_profesor: int | None = None,
+    ) -> list[AsistenciaDetalleResponse]:
         if not curso_repository.get(db, lote_in.id_curso):
             raise HTTPException(status_code=404, detail="El curso no existe")
 
@@ -140,9 +149,12 @@ class EvaluacionService:
         for item in lote_in.registros:
             if not alumno_repository.get_by_legajo(db, item.legajo_alumno):
                 raise HTTPException(
-                    status_code=404, detail=f"El alumno con legajo #{item.legajo_alumno} no existe"
+                    status_code=404,
+                    detail=f"El alumno con legajo #{item.legajo_alumno} no existe",
                 )
-            existente = asistencia_repository.get_registro(db, item.legajo_alumno, fecha)
+            existente = asistencia_repository.get_registro(
+                db, item.legajo_alumno, fecha
+            )
             if existente:
                 existente.estado = item.estado
                 existente.observacion = item.observacion
@@ -160,18 +172,16 @@ class EvaluacionService:
                     )
                 )
         db.commit()
-        return self.get_asistencia_detalle(
-            db, id_curso=lote_in.id_curso, fecha=fecha
-        )
+        return self.get_asistencia_detalle(db, id_curso=lote_in.id_curso, fecha=fecha)
 
     def get_asistencia_detalle(
         self,
         db: Session,
-        id_curso: Optional[int] = None,
-        fecha: Optional[date] = None,
-        legajo_alumno: Optional[int] = None,
-        legajos_permitidos: Optional[List[int]] = None,
-    ) -> List[AsistenciaDetalleResponse]:
+        id_curso: int | None = None,
+        fecha: date | None = None,
+        legajo_alumno: int | None = None,
+        legajos_permitidos: list[int] | None = None,
+    ) -> list[AsistenciaDetalleResponse]:
         if legajo_alumno is not None:
             registros = asistencia_repository.get_by_alumno(db, legajo_alumno)
         else:
@@ -185,11 +195,13 @@ class EvaluacionService:
             registros = [r for r in registros if r.legajo_alumno in legajos_permitidos]
 
         cache_cursos = {}
-        resultado: List[AsistenciaDetalleResponse] = []
+        resultado: list[AsistenciaDetalleResponse] = []
         for r in registros:
             if r.id_curso not in cache_cursos:
                 curso = curso_repository.get(db, r.id_curso)
-                cache_cursos[r.id_curso] = curso.nombre if curso else f"Curso #{r.id_curso}"
+                cache_cursos[r.id_curso] = (
+                    curso.nombre if curso else f"Curso #{r.id_curso}"
+                )
             resultado.append(
                 AsistenciaDetalleResponse(
                     id_asistencia=r.id_asistencia,
@@ -208,11 +220,16 @@ class EvaluacionService:
     def delete_asistencia(self, db: Session, id_asistencia: int):
         registro = asistencia_repository.get(db, id_asistencia)
         if not registro:
-            raise HTTPException(status_code=404, detail=f"El registro de asistencia #{id_asistencia} no existe")
+            raise HTTPException(
+                status_code=404,
+                detail=f"El registro de asistencia #{id_asistencia} no existe",
+            )
         asistencia_repository.remove(db, id_asistencia)
         return registro
 
-    def resumen_asistencia(self, db: Session, legajo_alumno: int) -> ResumenAsistenciaResponse:
+    def resumen_asistencia(
+        self, db: Session, legajo_alumno: int
+    ) -> ResumenAsistenciaResponse:
         if not alumno_repository.get_by_legajo(db, legajo_alumno):
             raise HTTPException(status_code=404, detail="El alumno no existe")
         registros = asistencia_repository.get_by_alumno(db, legajo_alumno, limit=2000)
@@ -221,7 +238,11 @@ class EvaluacionService:
         ausentes = sum(1 for r in registros if r.estado == "AUSENTE")
         tardes = sum(1 for r in registros if r.estado == "TARDE")
         justificados = sum(1 for r in registros if r.estado == "JUSTIFICADO")
-        porcentaje = round(((presentes + tardes + justificados) / total) * 100, 1) if total else 0.0
+        porcentaje = (
+            round(((presentes + tardes + justificados) / total) * 100, 1)
+            if total
+            else 0.0
+        )
         return ResumenAsistenciaResponse(
             legajo_alumno=legajo_alumno,
             total=total,
@@ -233,10 +254,13 @@ class EvaluacionService:
         )
 
     # Útil para endpoints: hijos del tutor autenticado
-    def legajos_de_padre(self, db: Session, id_padre: Optional[int]) -> List[int]:
+    def legajos_de_padre(self, db: Session, id_padre: int | None) -> list[int]:
         if not id_padre:
             return []
-        return [rel.legajo_alumno for rel in padre_alumno_repository.get_alumnos_por_padre(db, id_padre)]
+        return [
+            rel.legajo_alumno
+            for rel in padre_alumno_repository.get_alumnos_por_padre(db, id_padre)
+        ]
 
 
 evaluacion_service = EvaluacionService()

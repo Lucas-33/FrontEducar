@@ -1,6 +1,8 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
+    BADGE_RED_TXT,
     BG_WHITE,
     BORDER_COLOR,
     BORDER_RADIUS,
@@ -11,7 +13,6 @@ from frontend.app.components.constants import (
     TEAL_DARK,
     TEAL_LIGHT,
     TEXT_COLOR,
-    BADGE_RED_TXT,
 )
 from frontend.app.components.portal_layout import portal_layout
 from frontend.app.components.table_view import (
@@ -33,7 +34,9 @@ def _texto_seguro(valor) -> str:
     return texto or "-"
 
 
-def _estado_vacio(mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE) -> ft.Container:
+def _estado_vacio(
+    mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE
+) -> ft.Container:
     """Tarjeta de estado vacío o error, manteniendo el layout y sin datos ficticios."""
     return ft.Container(
         bgcolor=BG_WHITE,
@@ -104,7 +107,14 @@ async def get_padre_docentes_view(page: ft.Page) -> ft.Row:
         estado["hijos"] = []
 
     if not estado["hijos"]:
-        return layout([_estado_vacio("No hay alumnos vinculados a esta cuenta.", ft.Icons.FAMILY_RESTROOM_OUTLINED)])
+        return layout(
+            [
+                _estado_vacio(
+                    "No hay alumnos vinculados a esta cuenta.",
+                    ft.Icons.FAMILY_RESTROOM_OUTLINED,
+                )
+            ]
+        )
 
     estado["legajo"] = estado["hijos"][0].get("legajo")
 
@@ -192,7 +202,8 @@ async def get_padre_docentes_view(page: ft.Page) -> ft.Row:
         border=ft.InputBorder.NONE,
         content_padding=ft.Padding(12, 0, 8, 12),
         options=[
-            ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h)) for h in estado["hijos"]
+            ft.dropdown.Option(key=str(h.get("legajo")), text=etiqueta_hijo(h))
+            for h in estado["hijos"]
         ],
         value=str(estado["legajo"]),
     )
@@ -217,14 +228,21 @@ async def get_padre_docentes_view(page: ft.Page) -> ft.Row:
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=12,
         controls=[
-            ft.Text("Filtrar por alumno:", size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+            ft.Text(
+                "Filtrar por alumno:",
+                size=14,
+                weight=ft.FontWeight.W_600,
+                color=TEAL_DARK,
+            ),
             alumno_selector,
             search_input,
             btn_refrescar,
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 2. TABLA DE DOCENTES ====================
     columnas = [
@@ -250,7 +268,9 @@ async def get_padre_docentes_view(page: ft.Page) -> ft.Row:
     def docente_fila(item: dict, curso_nombre: str) -> ft.Container:
         profesor = profesores_por_legajo.get(item.get("legajo_profesor"))
         nombre_docente = item.get("profesor") or (
-            f"{profesor.get('apellido', '')}, {profesor.get('nombre', '')}".strip(", ") if profesor else "-"
+            f"{profesor.get('apellido', '')}, {profesor.get('nombre', '')}".strip(", ")
+            if profesor
+            else "-"
         )
         especialidad = _texto_seguro((profesor or {}).get("especialidad"))
         correo = (profesor or {}).get("correo_electronico")
@@ -280,15 +300,23 @@ async def get_padre_docentes_view(page: ft.Page) -> ft.Row:
                     ft.Container(
                         width=220,
                         content=ft.Text(
-                            f"Prof. {nombre_docente}" if nombre_docente and nombre_docente != "-" else "-",
+                            f"Prof. {nombre_docente}"
+                            if nombre_docente and nombre_docente != "-"
+                            else "-",
                             size=14,
                             weight=ft.FontWeight.W_500,
                             color=TEXT_COLOR,
                         ),
                     ),
-                    ft.Container(width=200, content=ft.Text(curso_nombre, size=13, color=MUTED)),
-                    ft.Container(width=200, content=ft.Text(especialidad, size=13, color=MUTED)),
-                    ft.Container(width=240, content=ft.Text(contacto, size=13, color=TEAL)),
+                    ft.Container(
+                        width=200, content=ft.Text(curso_nombre, size=13, color=MUTED)
+                    ),
+                    ft.Container(
+                        width=200, content=ft.Text(especialidad, size=13, color=MUTED)
+                    ),
+                    ft.Container(
+                        width=240, content=ft.Text(contacto, size=13, color=TEAL)
+                    ),
                 ],
             ),
         )

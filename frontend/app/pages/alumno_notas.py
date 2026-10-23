@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
@@ -54,7 +55,9 @@ def _badge_asistencia(estado: str) -> ft.Container:
         padding=ft.Padding(8, 4, 8, 4),
         bgcolor=bg,
         border_radius=4,
-        content=ft.Text(estado or "—", size=11, weight=ft.FontWeight.W_600, color=color),
+        content=ft.Text(
+            estado or "—", size=11, weight=ft.FontWeight.W_600, color=color
+        ),
     )
 
 
@@ -80,8 +83,12 @@ def _kpi(titulo: str, valor: str, subtitulo: str, icono: ft.IconData) -> ft.Cont
                 ft.Column(
                     spacing=2,
                     controls=[
-                        ft.Text(titulo, size=10, weight=ft.FontWeight.BOLD, color=MUTED),
-                        ft.Text(valor, size=20, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                        ft.Text(
+                            titulo, size=10, weight=ft.FontWeight.BOLD, color=MUTED
+                        ),
+                        ft.Text(
+                            valor, size=20, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                        ),
                         ft.Text(subtitulo, size=10, color=MUTED),
                     ],
                 ),
@@ -117,8 +124,17 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     ft.Icon(ft.Icons.PERSON_OFF_OUTLINED, size=44, color=MUTED),
-                    ft.Text("No se pudo identificar al alumno.", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                    ft.Text("Inicie sesión nuevamente para consultar sus notas.", size=13, color=MUTED),
+                    ft.Text(
+                        "No se pudo identificar al alumno.",
+                        size=18,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEAL_DARK,
+                    ),
+                    ft.Text(
+                        "Inicie sesión nuevamente para consultar sus notas.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 ],
             ),
         )
@@ -158,26 +174,52 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
     except Exception:
         cursos = []
 
-    id_curso_actual = next((c.get("id_curso") for c in calificaciones if c.get("id_curso")), None) or next(
-        (a.get("id_curso") for a in asistencias if a.get("id_curso")), None
+    id_curso_actual = next(
+        (c.get("id_curso") for c in calificaciones if c.get("id_curso")), None
+    ) or next((a.get("id_curso") for a in asistencias if a.get("id_curso")), None)
+    curso_actual = next(
+        (c.get("nombre") for c in cursos if c.get("id_curso") == id_curso_actual), None
     )
-    curso_actual = next((c.get("nombre") for c in cursos if c.get("id_curso") == id_curso_actual), None)
 
     # ==================== 2. KPIs ====================
     notas = [c.get("nota") or 0 for c in calificaciones]
     promedio = f"{sum(notas) / len(notas):.2f}" if notas else "—"
     presentismo = f"{resumen.get('porcentaje_presentismo', 0):.1f}%" if resumen else "—"
-    inasistencias = (resumen.get("ausentes", 0) + resumen.get("justificados", 0)) if resumen else "—"
+    inasistencias = (
+        (resumen.get("ausentes", 0) + resumen.get("justificados", 0))
+        if resumen
+        else "—"
+    )
     materias = len({c.get("id_materia") for c in calificaciones})
 
     kpis_row = ft.ResponsiveRow(
         columns=12,
         spacing=16,
         controls=[
-            _kpi("PROMEDIO GENERAL", promedio, "Sobre todas las evaluaciones", ft.Icons.STAR_OUTLINE),
-            _kpi("PRESENTISMO", presentismo, "Asistencia registrada", ft.Icons.FACT_CHECK_OUTLINED),
-            _kpi("INASISTENCIAS", str(inasistencias), "Ausencias y justificadas", ft.Icons.EVENT_BUSY_OUTLINED),
-            _kpi("MATERIAS EVALUADAS", str(materias), f"{len(calificaciones)} calificaciones cargadas", ft.Icons.MENU_BOOK_OUTLINED),
+            _kpi(
+                "PROMEDIO GENERAL",
+                promedio,
+                "Sobre todas las evaluaciones",
+                ft.Icons.STAR_OUTLINE,
+            ),
+            _kpi(
+                "PRESENTISMO",
+                presentismo,
+                "Asistencia registrada",
+                ft.Icons.FACT_CHECK_OUTLINED,
+            ),
+            _kpi(
+                "INASISTENCIAS",
+                str(inasistencias),
+                "Ausencias y justificadas",
+                ft.Icons.EVENT_BUSY_OUTLINED,
+            ),
+            _kpi(
+                "MATERIAS EVALUADAS",
+                str(materias),
+                f"{len(calificaciones)} calificaciones cargadas",
+                ft.Icons.MENU_BOOK_OUTLINED,
+            ),
         ],
     )
 
@@ -204,13 +246,50 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
             content=ft.Row(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=200, content=ft.Text(cal.get("materia") or "—", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=160, content=ft.Text(cal.get("curso") or "—", size=13, color=MUTED)),
-                    ft.Container(width=140, content=ft.Text(cal.get("periodo") or "—", size=12, color=MUTED)),
-                    ft.Container(width=140, content=ft.Text(cal.get("tipo") or "—", size=12, color=MUTED)),
-                    ft.Container(width=70, content=ft.Text(f"{nota:.1f}" if isinstance(nota, (int, float)) else "—", size=14, weight=ft.FontWeight.BOLD, color=color_nota)),
-                    ft.Container(width=100, content=ft.Text(_fecha_legible(cal.get("fecha")), size=12, color=MUTED)),
-                    ft.Container(expand=True, content=ft.Text(cal.get("observacion") or "—", size=12, color=MUTED)),
+                    ft.Container(
+                        width=200,
+                        content=ft.Text(
+                            cal.get("materia") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(cal.get("curso") or "—", size=13, color=MUTED),
+                    ),
+                    ft.Container(
+                        width=140,
+                        content=ft.Text(
+                            cal.get("periodo") or "—", size=12, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=140,
+                        content=ft.Text(cal.get("tipo") or "—", size=12, color=MUTED),
+                    ),
+                    ft.Container(
+                        width=70,
+                        content=ft.Text(
+                            f"{nota:.1f}" if isinstance(nota, (int, float)) else "—",
+                            size=14,
+                            weight=ft.FontWeight.BOLD,
+                            color=color_nota,
+                        ),
+                    ),
+                    ft.Container(
+                        width=100,
+                        content=ft.Text(
+                            _fecha_legible(cal.get("fecha")), size=12, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        expand=True,
+                        content=ft.Text(
+                            cal.get("observacion") or "—", size=12, color=MUTED
+                        ),
+                    ),
                 ],
             ),
         )
@@ -219,10 +298,14 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
         ft.Container(
             padding=20,
             alignment=ft.Alignment(0, 0),
-            content=ft.Text("Todavía no hay calificaciones registradas.", size=13, color=MUTED),
+            content=ft.Text(
+                "Todavía no hay calificaciones registradas.", size=13, color=MUTED
+            ),
         )
     ]
-    tabla_notas = create_table_container(header=header_notas, rows=filas_notas, min_width=1050)
+    tabla_notas = create_table_container(
+        header=header_notas, rows=filas_notas, min_width=1050
+    )
     paginacion_notas = create_pagination_bar(
         texto_info=f"Mostrando {len(calificaciones)} calificaciones",
         pagina_actual=1,
@@ -232,7 +315,9 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
     # ==================== 4. PROMEDIO POR MATERIA ====================
     acumulado: dict[str, list[float]] = {}
     for c in calificaciones:
-        acumulado.setdefault(c.get("materia") or "Sin materia", []).append(c.get("nota") or 0)
+        acumulado.setdefault(c.get("materia") or "Sin materia", []).append(
+            c.get("nota") or 0
+        )
 
     filas_promedios = []
     for materia, valores in sorted(acumulado.items()):
@@ -246,18 +331,38 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
                 content=ft.Row(
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
-                        ft.Container(expand=True, content=ft.Text(materia, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                        ft.Container(width=100, content=ft.Text(f"{len(valores)} notas", size=12, color=MUTED)),
+                        ft.Container(
+                            expand=True,
+                            content=ft.Text(
+                                materia,
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=TEXT_COLOR,
+                            ),
+                        ),
+                        ft.Container(
+                            width=100,
+                            content=ft.Text(
+                                f"{len(valores)} notas", size=12, color=MUTED
+                            ),
+                        ),
                         ft.Container(
                             width=90,
-                            content=ft.Text(f"{prom:.2f}", size=14, weight=ft.FontWeight.BOLD, color=color),
+                            content=ft.Text(
+                                f"{prom:.2f}",
+                                size=14,
+                                weight=ft.FontWeight.BOLD,
+                                color=color,
+                            ),
                         ),
                     ],
                 ),
             )
         )
 
-    header_promedios = create_table_header([("Materia", None, False), ("Evaluaciones", 100, False), ("Promedio", 90, True)])
+    header_promedios = create_table_header(
+        [("Materia", None, False), ("Evaluaciones", 100, False), ("Promedio", 90, True)]
+    )
     tabla_promedios = create_table_container(
         header=header_promedios,
         rows=filas_promedios
@@ -265,16 +370,22 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
             ft.Container(
                 padding=20,
                 alignment=ft.Alignment(0, 0),
-                content=ft.Text("Sin datos para calcular promedios.", size=13, color=MUTED),
+                content=ft.Text(
+                    "Sin datos para calcular promedios.", size=13, color=MUTED
+                ),
             )
         ],
         min_width=600,
     )
 
     # ==================== 5. TABLA DE ASISTENCIAS ====================
-    header_asist = create_table_header([("Fecha", 130, False), ("Estado", 140, False), ("Observación", None, False)])
+    header_asist = create_table_header(
+        [("Fecha", 130, False), ("Estado", 140, False), ("Observación", None, False)]
+    )
     filas_asist = []
-    for registro in sorted(asistencias, key=lambda r: str(r.get("fecha")), reverse=True):
+    for registro in sorted(
+        asistencias, key=lambda r: str(r.get("fecha")), reverse=True
+    ):
         filas_asist.append(
             ft.Container(
                 height=48,
@@ -283,9 +394,23 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
                 content=ft.Row(
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
-                        ft.Container(width=130, content=ft.Text(_fecha_legible(registro.get("fecha")), size=13, color=TEXT_COLOR)),
-                        ft.Container(width=140, content=_badge_asistencia(registro.get("estado"))),
-                        ft.Container(expand=True, content=ft.Text(registro.get("observacion") or "—", size=12, color=MUTED)),
+                        ft.Container(
+                            width=130,
+                            content=ft.Text(
+                                _fecha_legible(registro.get("fecha")),
+                                size=13,
+                                color=TEXT_COLOR,
+                            ),
+                        ),
+                        ft.Container(
+                            width=140, content=_badge_asistencia(registro.get("estado"))
+                        ),
+                        ft.Container(
+                            expand=True,
+                            content=ft.Text(
+                                registro.get("observacion") or "—", size=12, color=MUTED
+                            ),
+                        ),
                     ],
                 ),
             )
@@ -298,7 +423,9 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
             ft.Container(
                 padding=20,
                 alignment=ft.Alignment(0, 0),
-                content=ft.Text("Todavía no hay registros de asistencia.", size=13, color=MUTED),
+                content=ft.Text(
+                    "Todavía no hay registros de asistencia.", size=13, color=MUTED
+                ),
             )
         ],
         min_width=600,
@@ -316,7 +443,12 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(titulo, size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                titulo,
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(subtitulo, size=12, color=MUTED),
                         ],
                     ),
@@ -350,7 +482,11 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         padding=12,
         visible=hubo_error,
-        content=ft.Text("Algunos datos no se pudieron cargar desde el servidor.", size=13, color=BADGE_RED_TXT),
+        content=ft.Text(
+            "Algunos datos no se pudieron cargar desde el servidor.",
+            size=13,
+            color=BADGE_RED_TXT,
+        ),
     )
 
     # ==================== 7. RETORNO CON PORTAL_LAYOUT ====================
@@ -365,9 +501,17 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
             info_card,
             aviso_error,
             kpis_row,
-            tarjeta("Mis Calificaciones", "Detalle de todas las evaluaciones registradas por tus docentes.", tabla_notas),
+            tarjeta(
+                "Mis Calificaciones",
+                "Detalle de todas las evaluaciones registradas por tus docentes.",
+                tabla_notas,
+            ),
             paginacion_notas,
-            tarjeta("Promedio por Materia", "Desempeño promedio calculado sobre las notas cargadas.", tabla_promedios),
+            tarjeta(
+                "Promedio por Materia",
+                "Desempeño promedio calculado sobre las notas cargadas.",
+                tabla_promedios,
+            ),
             tarjeta("Mis Asistencias", "Registro diario de presentismo.", tabla_asist),
         ],
     )

@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -79,8 +80,12 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
             return []
 
     estado["recorridos"] = await consultar("recorridos", api_client.get_recorridos)
-    estado["inscripciones"] = await consultar("inscripciones de transporte", api_client.get_inscripciones_transporte)
-    estado["alumnos"] = await consultar("alumnos", api_client.get_alumnos, solo_activos=False)
+    estado["inscripciones"] = await consultar(
+        "inscripciones de transporte", api_client.get_inscripciones_transporte
+    )
+    estado["alumnos"] = await consultar(
+        "alumnos", api_client.get_alumnos, solo_activos=False
+    )
     estado["cursos"] = await consultar("cursos", api_client.get_cursos)
     estado["niveles"] = await consultar("niveles", api_client.get_niveles)
 
@@ -100,12 +105,22 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
             return "Sin nivel"
         return nivel_por_id.get(curso.get("id_nivel"), f"Nivel {curso.get('id_nivel')}")
 
-    pasajeros_activos = len([i for i in estado["inscripciones"] if str(i.get("estado", "")).upper() == "ACTIVO"])
+    pasajeros_activos = len(
+        [
+            i
+            for i in estado["inscripciones"]
+            if str(i.get("estado", "")).upper() == "ACTIVO"
+        ]
+    )
     pasajeros_inactivos = len(estado["inscripciones"]) - pasajeros_activos
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
     if errores:
-        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(errores)
+        aviso_error.value = "⚠️ No se pudieron cargar algunos datos: " + " · ".join(
+            errores
+        )
         aviso_error.visible = True
 
     # ==================== 1. ENCABEZADO Y ACCIONES ====================
@@ -131,8 +146,17 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text("Hoja de Ruta: Pasajeros por Recorrido de Transporte", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text("Planilla operativa con estado de alta y datos de contacto de cada pasajero", size=12, color=MUTED),
+                            ft.Text(
+                                "Hoja de Ruta: Pasajeros por Recorrido de Transporte",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                "Planilla operativa con estado de alta y datos de contacto de cada pasajero",
+                                size=12,
+                                color=MUTED,
+                            ),
                         ],
                     ),
                 ],
@@ -144,26 +168,48 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.FILE_DOWNLOAD_OUTLINED, size=15, color=TEAL_DARK),
-                                ft.Text("Exportar Excel", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                                ft.Icon(
+                                    ft.Icons.FILE_DOWNLOAD_OUTLINED,
+                                    size=15,
+                                    color=TEAL_DARK,
+                                ),
+                                ft.Text(
+                                    "Exportar Excel",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=TEAL_DARK,
+                                ),
                             ],
                         ),
                         bgcolor=TEAL_LIGHT,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
-                        on_click=lambda _: page.launch_url(api_client.reporte_url("transporte")),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
+                        on_click=lambda _: page.launch_url(
+                            api_client.reporte_url("transporte")
+                        ),
                     ),
                     ft.Button(
                         content=ft.Row(
                             spacing=6,
                             controls=[
-                                ft.Icon(ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE),
-                                ft.Text("Imprimir PDF", size=13, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                                ft.Icon(
+                                    ft.Icons.PRINT_OUTLINED, size=15, color=BG_WHITE
+                                ),
+                                ft.Text(
+                                    "Imprimir PDF",
+                                    size=13,
+                                    weight=ft.FontWeight.W_600,
+                                    color=BG_WHITE,
+                                ),
                             ],
                         ),
                         bgcolor=ORANGE,
                         height=36,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
                         on_click=lambda _: None,
                     ),
                 ],
@@ -201,9 +247,25 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(str(valor), size=22, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text(titulo, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
-                            ft.Text(subtitulo, size=11, color=MUTED, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Text(
+                                str(valor),
+                                size=22,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                titulo,
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=TEXT_COLOR,
+                            ),
+                            ft.Text(
+                                subtitulo,
+                                size=11,
+                                color=MUTED,
+                                max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                            ),
                         ],
                     ),
                 ],
@@ -215,18 +277,48 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
         spacing=16,
         run_spacing=16,
         controls=[
-            kpi_card("Recorridos habilitados", len(estado["recorridos"]), "Rutas del servicio de transporte", ft.Icons.DIRECTIONS_BUS_OUTLINED),
-            kpi_card("Pasajeros registrados", len(estado["inscripciones"]), "Alumnos anotados en el servicio", ft.Icons.PEOPLE_OUTLINE),
-            kpi_card("Pasajeros activos", pasajeros_activos, "Altas vigentes en el servicio", ft.Icons.CHECK_CIRCLE_OUTLINE, ONLINE_GREEN, GREEN_LIGHT),
-            kpi_card("Pasajeros inactivos", pasajeros_inactivos, "Altas dadas de baja", ft.Icons.REMOVE_CIRCLE_OUTLINE, BADGE_RED_TXT, BADGE_RED_BG),
+            kpi_card(
+                "Recorridos habilitados",
+                len(estado["recorridos"]),
+                "Rutas del servicio de transporte",
+                ft.Icons.DIRECTIONS_BUS_OUTLINED,
+            ),
+            kpi_card(
+                "Pasajeros registrados",
+                len(estado["inscripciones"]),
+                "Alumnos anotados en el servicio",
+                ft.Icons.PEOPLE_OUTLINE,
+            ),
+            kpi_card(
+                "Pasajeros activos",
+                pasajeros_activos,
+                "Altas vigentes en el servicio",
+                ft.Icons.CHECK_CIRCLE_OUTLINE,
+                ONLINE_GREEN,
+                GREEN_LIGHT,
+            ),
+            kpi_card(
+                "Pasajeros inactivos",
+                pasajeros_inactivos,
+                "Altas dadas de baja",
+                ft.Icons.REMOVE_CIRCLE_OUTLINE,
+                BADGE_RED_TXT,
+                BADGE_RED_BG,
+            ),
         ],
     )
 
     # ==================== 3. RESUMEN POR RECORRIDO ====================
     def recorrido_card(recorrido: dict) -> ft.Container:
-        pasajeros = [i for i in estado["inscripciones"] if i.get("id_recorrido") == recorrido["id_recorrido"]]
+        pasajeros = [
+            i
+            for i in estado["inscripciones"]
+            if i.get("id_recorrido") == recorrido["id_recorrido"]
+        ]
         total = len(pasajeros)
-        activos = len([p for p in pasajeros if str(p.get("estado", "")).upper() == "ACTIVO"])
+        activos = len(
+            [p for p in pasajeros if str(p.get("estado", "")).upper() == "ACTIVO"]
+        )
         ancho = int(220 * activos / total) if total else 0
         return ft.Container(
             col={"sm": 12, "md": 6},
@@ -247,12 +339,17 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                                 bgcolor=TEAL_LIGHT,
                                 border_radius=BORDER_RADIUS,
                                 alignment=ft.Alignment(0, 0),
-                                content=ft.Icon(ft.Icons.DIRECTIONS_BUS_OUTLINED, size=16, color=TEAL_DARK),
+                                content=ft.Icon(
+                                    ft.Icons.DIRECTIONS_BUS_OUTLINED,
+                                    size=16,
+                                    color=TEAL_DARK,
+                                ),
                             ),
                             ft.Container(
                                 expand=True,
                                 content=ft.Text(
-                                    recorrido.get("descripcion") or f"Recorrido {recorrido.get('id_recorrido')}",
+                                    recorrido.get("descripcion")
+                                    or f"Recorrido {recorrido.get('id_recorrido')}",
                                     size=15,
                                     weight=ft.FontWeight.BOLD,
                                     color=TEAL_DARK,
@@ -262,7 +359,12 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                             ),
                         ],
                     ),
-                    ft.Text(f"{total} pasajeros registrados · {activos} activos", size=12, weight=ft.FontWeight.W_600, color=TEAL),
+                    ft.Text(
+                        f"{total} pasajeros registrados · {activos} activos",
+                        size=12,
+                        weight=ft.FontWeight.W_600,
+                        color=TEAL,
+                    ),
                     ft.Container(
                         width=220,
                         height=10,
@@ -272,7 +374,12 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                         content=ft.Row(
                             spacing=0,
                             controls=[
-                                ft.Container(width=max(ancho, 4) if activos else 0, height=10, bgcolor=ONLINE_GREEN, border_radius=5),
+                                ft.Container(
+                                    width=max(ancho, 4) if activos else 0,
+                                    height=10,
+                                    bgcolor=ONLINE_GREEN,
+                                    border_radius=5,
+                                ),
                             ],
                         ),
                     ),
@@ -283,7 +390,12 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
     seccion_resumen = ft.Column(
         spacing=16,
         controls=[
-            ft.Text("Resumen de Pasajeros por Recorrido", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+            ft.Text(
+                "Resumen de Pasajeros por Recorrido",
+                size=16,
+                weight=ft.FontWeight.BOLD,
+                color=TEAL_DARK,
+            ),
             ft.ResponsiveRow(
                 columns=12,
                 spacing=16,
@@ -297,7 +409,11 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                         border=ft.Border.all(1, BORDER_COLOR),
                         border_radius=CARD_RADIUS,
                         alignment=ft.Alignment(0, 0),
-                        content=ft.Text("No hay recorridos de transporte registrados en el sistema.", size=13, color=MUTED),
+                        content=ft.Text(
+                            "No hay recorridos de transporte registrados en el sistema.",
+                            size=13,
+                            color=MUTED,
+                        ),
                     )
                 ],
             ),
@@ -351,12 +467,20 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
     filtro_recorrido_container = filtro_dropdown(
         "Recorrido: Todos",
         230,
-        ["Todos"] + [r.get("descripcion") or f"Recorrido {r.get('id_recorrido')}" for r in estado["recorridos"]],
+        ["Todos"]
+        + [
+            r.get("descripcion") or f"Recorrido {r.get('id_recorrido')}"
+            for r in estado["recorridos"]
+        ],
     )
     filtro_recorrido: ft.Dropdown = filtro_recorrido_container.content
-    filtro_nivel_container = filtro_dropdown("Nivel: Todos", 150, ["Todos"] + [n["nombre"] for n in estado["niveles"]])
+    filtro_nivel_container = filtro_dropdown(
+        "Nivel: Todos", 150, ["Todos"] + [n["nombre"] for n in estado["niveles"]]
+    )
     filtro_nivel: ft.Dropdown = filtro_nivel_container.content
-    filtro_pasajero_container = filtro_dropdown("Estado: Todos", 145, ["Todos", "Activo", "Inactivo"])
+    filtro_pasajero_container = filtro_dropdown(
+        "Estado: Todos", 145, ["Todos", "Activo", "Inactivo"]
+    )
     filtro_pasajero: ft.Dropdown = filtro_pasajero_container.content
 
     filters_bar = ft.Row(
@@ -396,14 +520,66 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=160, content=ft.Text(inscripcion.get("recorrido") or "—", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=90, content=ft.Text(f"#{legajo}", size=13, weight=ft.FontWeight.BOLD, color=TEAL)),
-                    ft.Container(width=180, content=ft.Text(str(inscripcion.get("alumno", "")).split(" (")[0], size=14, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
-                    ft.Container(width=120, content=ft.Text(curso_del_pasajero(legajo), size=13, color=MUTED)),
-                    ft.Container(width=220, content=ft.Text(alumno.get("domicilio") or "Sin domicilio registrado", size=13, color=TEXT_COLOR, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS)),
-                    ft.Container(width=140, content=ft.Text(alumno.get("telefono") or "Sin teléfono", size=13, color=MUTED)),
-                    ft.Container(width=120, content=ft.Text(formatear_fecha(inscripcion.get("fecha_alta")), size=12, color=MUTED)),
-                    ft.Container(width=90, content=status_badge(inscripcion.get("estado") or "Sin estado")),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(
+                            inscripcion.get("recorrido") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=90,
+                        content=ft.Text(
+                            f"#{legajo}", size=13, weight=ft.FontWeight.BOLD, color=TEAL
+                        ),
+                    ),
+                    ft.Container(
+                        width=180,
+                        content=ft.Text(
+                            str(inscripcion.get("alumno", "")).split(" (")[0],
+                            size=14,
+                            weight=ft.FontWeight.W_500,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=120,
+                        content=ft.Text(
+                            curso_del_pasajero(legajo), size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=220,
+                        content=ft.Text(
+                            alumno.get("domicilio") or "Sin domicilio registrado",
+                            size=13,
+                            color=TEXT_COLOR,
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS,
+                        ),
+                    ),
+                    ft.Container(
+                        width=140,
+                        content=ft.Text(
+                            alumno.get("telefono") or "Sin teléfono",
+                            size=13,
+                            color=MUTED,
+                        ),
+                    ),
+                    ft.Container(
+                        width=120,
+                        content=ft.Text(
+                            formatear_fecha(inscripcion.get("fecha_alta")),
+                            size=12,
+                            color=MUTED,
+                        ),
+                    ),
+                    ft.Container(
+                        width=90,
+                        content=status_badge(inscripcion.get("estado") or "Sin estado"),
+                    ),
                 ],
             ),
         )
@@ -412,13 +588,28 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
         texto = (estado["texto"] or "").lower()
         resultado = []
         for inscripcion in estado["inscripciones"]:
-            if estado["recorrido"] != "Todos" and (inscripcion.get("recorrido") or "") != estado["recorrido"]:
+            if (
+                estado["recorrido"] != "Todos"
+                and (inscripcion.get("recorrido") or "") != estado["recorrido"]
+            ):
                 continue
-            if estado["nivel"] != "Todos" and nivel_del_pasajero(inscripcion.get("legajo_alumno")) != estado["nivel"]:
+            if (
+                estado["nivel"] != "Todos"
+                and nivel_del_pasajero(inscripcion.get("legajo_alumno"))
+                != estado["nivel"]
+            ):
                 continue
-            if estado["pasajero"] != "Todos" and str(inscripcion.get("estado") or "").capitalize() != estado["pasajero"]:
+            if (
+                estado["pasajero"] != "Todos"
+                and str(inscripcion.get("estado") or "").capitalize()
+                != estado["pasajero"]
+            ):
                 continue
-            if texto and texto not in f"{inscripcion.get('alumno', '')} {inscripcion.get('legajo_alumno', '')} {inscripcion.get('recorrido', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{inscripcion.get('alumno', '')} {inscripcion.get('legajo_alumno', '')} {inscripcion.get('recorrido', '')}".lower()
+            ):
                 continue
             resultado.append(inscripcion)
         return resultado
@@ -432,7 +623,11 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay pasajeros que coincidan con los filtros aplicados.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay pasajeros que coincidan con los filtros aplicados.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
             min_width=1152,

@@ -1,21 +1,26 @@
-from typing import Any, Generic, List, Optional, Type, TypeVar
+from typing import Any, Generic, TypeVar
+
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from backend.app.core.database import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
+
 class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    def __init__(self, model: Type[ModelType]):
+    def __init__(self, model: type[ModelType]):
         self.model = model
 
-    def get(self, db: Session, id_val: Any) -> Optional[ModelType]:
+    def get(self, db: Session, id_val: Any) -> ModelType | None:
         return db.get(self.model, id_val)
 
-    def get_multi(self, db: Session, skip: int = 0, limit: int = 100) -> List[ModelType]:
+    def get_multi(
+        self, db: Session, skip: int = 0, limit: int = 100
+    ) -> list[ModelType]:
         stmt = select(self.model).offset(skip).limit(limit)
         return list(db.scalars(stmt).all())
 
@@ -27,15 +32,21 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db.refresh(db_obj)
         return db_obj
 
-    def update(self, db: Session, db_obj: ModelType, obj_in: UpdateSchemaType | dict[str, Any]) -> ModelType:
-        obj_data = obj_in if isinstance(obj_in, dict) else obj_in.model_dump(exclude_unset=True)
+    def update(
+        self, db: Session, db_obj: ModelType, obj_in: UpdateSchemaType | dict[str, Any]
+    ) -> ModelType:
+        obj_data = (
+            obj_in
+            if isinstance(obj_in, dict)
+            else obj_in.model_dump(exclude_unset=True)
+        )
         for field, value in obj_data.items():
             setattr(db_obj, field, value)
         db.commit()
         db.refresh(db_obj)
         return db_obj
 
-    def remove(self, db: Session, id_val: Any) -> Optional[ModelType]:
+    def remove(self, db: Session, id_val: Any) -> ModelType | None:
         obj = db.get(self.model, id_val)
         if obj:
             db.delete(obj)

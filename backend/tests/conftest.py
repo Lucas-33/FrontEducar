@@ -7,6 +7,7 @@ desarrollo (`educar_db`).
 
 La URL se puede personalizar con la variable de entorno `TEST_DATABASE_URL`.
 """
+
 import os
 from datetime import date
 
@@ -16,10 +17,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
-from backend.app import models  # noqa: F401  (registra todas las tablas en Base.metadata)
+from backend.app import (
+    models,  # noqa: F401  (registra todas las tablas en Base.metadata)
+)
 from backend.app.core.database import Base, get_db
 from backend.app.main import app
-from backend.app.models.academico import Curso, Materia, MateriaCursoProfesor, NivelEducativo
+from backend.app.models.academico import (
+    Curso,
+    Materia,
+    MateriaCursoProfesor,
+    NivelEducativo,
+)
 from backend.app.models.personas import Alumno, Padre, PadreAlumno, Profesor
 from backend.app.models.seguridad import Rol, Usuario
 from backend.app.services.seguridad import seguridad_service
@@ -40,7 +48,9 @@ ID_PADRE = 9001
 def _crear_base_si_falta():
     """Crea la base de datos de prueba conectándose a la base de mantenimiento."""
     url = make_url(TEST_DATABASE_URL)
-    engine_admin = create_engine(url.set(database="postgres"), isolation_level="AUTOCOMMIT")
+    engine_admin = create_engine(
+        url.set(database="postgres"), isolation_level="AUTOCOMMIT"
+    )
     try:
         with engine_admin.connect() as conexion:
             existe = conexion.exec_driver_sql(

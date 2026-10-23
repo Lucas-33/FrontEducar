@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -8,42 +7,45 @@ from pydantic import BaseModel, ConfigDict, Field
 class SolicitudInscripcionCreate(BaseModel):
     postulante: str = Field(min_length=3, max_length=120)
     dni: str = Field(min_length=6, max_length=20)
-    fecha_nacimiento: Optional[str] = Field(default=None, max_length=20)
+    fecha_nacimiento: str | None = Field(default=None, max_length=20)
     nivel: str = Field(min_length=3, max_length=80)
     tutor: str = Field(min_length=3, max_length=120)
-    telefono: Optional[str] = Field(default=None, max_length=50)
-    correo: Optional[str] = Field(default=None, max_length=120)
+    telefono: str | None = Field(default=None, max_length=50)
+    correo: str | None = Field(default=None, max_length=120)
+
 
 class SolicitudInscripcionEstadoUpdate(BaseModel):
     estado: str = Field(pattern="^(Pendiente|Aprobado|Rechazado)$")
-    observaciones: Optional[str] = Field(default=None, max_length=300)
+    observaciones: str | None = Field(default=None, max_length=300)
+
 
 class SolicitudInscripcionResponse(BaseModel):
     id_solicitud: int
     postulante: str
     dni: str
-    fecha_nacimiento: Optional[str] = None
+    fecha_nacimiento: str | None = None
     nivel: str
     tutor: str
-    telefono: Optional[str] = None
-    correo: Optional[str] = None
+    telefono: str | None = None
+    correo: str | None = None
     fecha: date
     estado: str
-    observaciones: Optional[str] = None
+    observaciones: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
 # --- MENSAJE DE CONTACTO ---
 class MensajeContactoCreate(BaseModel):
     nombre: str = Field(min_length=3, max_length=120)
-    telefono: Optional[str] = Field(default=None, max_length=50)
+    telefono: str | None = Field(default=None, max_length=50)
     correo: str = Field(min_length=5, max_length=120)
     mensaje: str = Field(min_length=5)
+
 
 class MensajeContactoResponse(BaseModel):
     id_mensaje: int
     nombre: str
-    telefono: Optional[str] = None
+    telefono: str | None = None
     correo: str
     mensaje: str
     fecha: datetime
@@ -54,14 +56,15 @@ class MensajeContactoResponse(BaseModel):
 # --- OPINIÓN ---
 class OpinionCreate(BaseModel):
     nombre: str = Field(min_length=3, max_length=120)
-    vinculo: Optional[str] = Field(default=None, max_length=80)
+    vinculo: str | None = Field(default=None, max_length=80)
     comentario: str = Field(min_length=5)
     estrellas: int = Field(default=5, ge=1, le=5)
+
 
 class OpinionResponse(BaseModel):
     id_opinion: int
     nombre: str
-    vinculo: Optional[str] = None
+    vinculo: str | None = None
     comentario: str
     estrellas: int
     fecha: date
@@ -73,18 +76,19 @@ class OpinionResponse(BaseModel):
 class PostulacionEmpleoCreate(BaseModel):
     nombre: str = Field(min_length=3, max_length=120)
     correo: str = Field(min_length=5, max_length=120)
-    telefono: Optional[str] = Field(default=None, max_length=50)
+    telefono: str | None = Field(default=None, max_length=50)
     puesto: str = Field(default="Postulación espontánea", max_length=150)
-    area: Optional[str] = Field(default=None, max_length=120)
-    mensaje: Optional[str] = None
+    area: str | None = Field(default=None, max_length=120)
+    mensaje: str | None = None
+
 
 class PostulacionEmpleoResponse(BaseModel):
     id_postulacion: int
     nombre: str
     correo: str
-    telefono: Optional[str] = None
+    telefono: str | None = None
     puesto: str
-    area: Optional[str] = None
-    mensaje: Optional[str] = None
+    area: str | None = None
+    mensaje: str | None = None
     fecha: datetime
     model_config = ConfigDict(from_attributes=True)

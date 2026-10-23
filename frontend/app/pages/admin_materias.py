@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -119,7 +120,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nueva Materia", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nueva Materia", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -136,7 +139,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.LINK, size=16, color=TEAL),
-                ft.Text("Asignar Materia", size=14, weight=ft.FontWeight.W_600, color=TEAL),
+                ft.Text(
+                    "Asignar Materia", size=14, weight=ft.FontWeight.W_600, color=TEAL
+                ),
             ],
         ),
         bgcolor=BG_WHITE,
@@ -165,7 +170,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 2. TABLA DE MATERIAS ====================
     columnas_materias = [
@@ -271,13 +278,29 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
                     ),
                     ft.Container(
                         width=220,
-                        content=ft.Text(item["nombre"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                        content=ft.Text(
+                            item["nombre"],
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
                     ),
-                    ft.Container(width=200, content=ft.Text(datos["niveles"], size=14, color=MUTED)),
-                    ft.Container(width=280, content=ft.Text(datos["cursos"], size=13, color=TEXT_COLOR)),
+                    ft.Container(
+                        width=200,
+                        content=ft.Text(datos["niveles"], size=14, color=MUTED),
+                    ),
                     ft.Container(
                         width=280,
-                        content=ft.Text(datos["docentes"], size=13, weight=ft.FontWeight.W_500, color=TEXT_COLOR),
+                        content=ft.Text(datos["cursos"], size=13, color=TEXT_COLOR),
+                    ),
+                    ft.Container(
+                        width=280,
+                        content=ft.Text(
+                            datos["docentes"],
+                            size=13,
+                            weight=ft.FontWeight.W_500,
+                            color=TEXT_COLOR,
+                        ),
                     ),
                     fila_acciones(
                         lambda e, m=item: abrir_editar_materia(m),
@@ -291,7 +314,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
         texto = (estado["texto"] or "").strip().lower()
         resultado = []
         for m in estado["materias"]:
-            if estado["nivel"] != "Todos" and estado["nivel"] not in niveles_materia(m["id_materia"]):
+            if estado["nivel"] != "Todos" and estado["nivel"] not in niveles_materia(
+                m["id_materia"]
+            ):
                 continue
             etiqueta = f"{m.get('nombre', '')} mat-{m.get('id_materia', '')}".lower()
             if texto and texto not in etiqueta:
@@ -385,10 +410,14 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
         dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text("Nueva Materia", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[nombre_field, error_text]),
+            content=ft.Column(
+                spacing=14, width=380, tight=True, controls=[nombre_field, error_text]
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Materia", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Materia", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -405,7 +434,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
         if not estado["profesores"]:
             faltantes.append("profesores")
         if faltantes:
-            mostrar_error(f"No se puede asignar: no hay {' ni '.join(faltantes)} cargados.")
+            mostrar_error(
+                f"No se puede asignar: no hay {' ni '.join(faltantes)} cargados."
+            )
             return
 
         materia_field = ft.Dropdown(
@@ -471,7 +502,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Asignar Materia a Curso", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Asignar Materia a Curso", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,
@@ -514,7 +547,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
             try:
-                await api_client.update_materia(materia["id_materia"], {"nombre": nombre})
+                await api_client.update_materia(
+                    materia["id_materia"], {"nombre": nombre}
+                )
             except httpx.HTTPStatusError as err:
                 detalle = "Error al actualizar la materia."
                 try:
@@ -535,11 +570,22 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Editar Materia MAT-{materia['id_materia']}", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[nombre_field, error_text]),
+            title=ft.Text(
+                f"Editar Materia MAT-{materia['id_materia']}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
+            content=ft.Column(
+                spacing=14, width=380, tight=True, controls=[nombre_field, error_text]
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Guardar Cambios", bgcolor=TEAL, color=BG_WHITE, on_click=guardar_edicion),
+                ft.Button(
+                    "Guardar Cambios",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=guardar_edicion,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -587,7 +633,9 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar),
+                ft.Button(
+                    "Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar
+                ),
             ],
         )
         page.show_dialog(dlg)

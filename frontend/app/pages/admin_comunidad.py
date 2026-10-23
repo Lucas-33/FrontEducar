@@ -1,10 +1,10 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
     BADGE_GREEN_TXT,
-    BADGE_RED_BG,
     BADGE_RED_TXT,
     BADGE_YELLOW_BG,
     BADGE_YELLOW_TXT,
@@ -82,7 +82,9 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
     try:
         opiniones = await api_client.get_opiniones_todas()
     except Exception:
-        error_carga = (error_carga + " " if error_carga else "") + "No se pudieron cargar las opiniones."
+        error_carga = (
+            error_carga + " " if error_carga else ""
+        ) + "No se pudieron cargar las opiniones."
 
     # ==================== HELPERS DE UI ====================
     def tarjeta(titulo: str, subtitulo: str, contenido: ft.Control) -> ft.Container:
@@ -97,7 +99,12 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(titulo, size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                titulo,
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(subtitulo, size=12, color=MUTED),
                         ],
                     ),
@@ -144,12 +151,19 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
             await api_client.marcar_mensaje_leido(mensaje["id_mensaje"])
         except Exception:
             page.show_dialog(
-                ft.SnackBar(ft.Text("No se pudo marcar el mensaje como leído.", color="white"), bgcolor=BADGE_RED_TXT)
+                ft.SnackBar(
+                    ft.Text("No se pudo marcar el mensaje como leído.", color="white"),
+                    bgcolor=BADGE_RED_TXT,
+                )
             )
             return
         mensaje["leido"] = True
         render_mensajes()
-        page.show_dialog(ft.SnackBar(ft.Text("Mensaje marcado como leído.", color="white"), bgcolor=TEAL))
+        page.show_dialog(
+            ft.SnackBar(
+                ft.Text("Mensaje marcado como leído.", color="white"), bgcolor=TEAL
+            )
+        )
 
     def ver_mensaje(e, mensaje: dict):
         dialogo = ft.AlertDialog(
@@ -166,9 +180,21 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
                 width=440,
                 tight=True,
                 controls=[
-                    ft.Text(f"Correo: {mensaje.get('correo') or '—'}", size=13, color=TEXT_COLOR),
-                    ft.Text(f"Teléfono: {mensaje.get('telefono') or '—'}", size=13, color=TEXT_COLOR),
-                    ft.Text(f"Recibido: {_fecha_hora_legible(mensaje.get('fecha'))}", size=13, color=MUTED),
+                    ft.Text(
+                        f"Correo: {mensaje.get('correo') or '—'}",
+                        size=13,
+                        color=TEXT_COLOR,
+                    ),
+                    ft.Text(
+                        f"Teléfono: {mensaje.get('telefono') or '—'}",
+                        size=13,
+                        color=TEXT_COLOR,
+                    ),
+                    ft.Text(
+                        f"Recibido: {_fecha_hora_legible(mensaje.get('fecha'))}",
+                        size=13,
+                        color=MUTED,
+                    ),
                     ft.Divider(color=BORDER_COLOR, height=1),
                     ft.Text(mensaje.get("mensaje") or "", size=13, color=TEXT_COLOR),
                 ],
@@ -195,11 +221,38 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
             content=ft.Row(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=150, content=ft.Text(mensaje.get("nombre") or "—", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=190, content=ft.Text(mensaje.get("correo") or "—", size=13, color=TEXT_COLOR)),
-                    ft.Container(width=130, content=ft.Text(mensaje.get("telefono") or "—", size=13, color=MUTED)),
-                    ft.Container(expand=True, content=ft.Text(resumen, size=13, color=MUTED)),
-                    ft.Container(width=140, content=ft.Text(_fecha_hora_legible(mensaje.get("fecha")), size=12, color=MUTED)),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            mensaje.get("nombre") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=190,
+                        content=ft.Text(
+                            mensaje.get("correo") or "—", size=13, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(
+                            mensaje.get("telefono") or "—", size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        expand=True, content=ft.Text(resumen, size=13, color=MUTED)
+                    ),
+                    ft.Container(
+                        width=140,
+                        content=ft.Text(
+                            _fecha_hora_legible(mensaje.get("fecha")),
+                            size=12,
+                            color=MUTED,
+                        ),
+                    ),
                     ft.Container(width=90, content=badge),
                     ft.Container(
                         width=100,
@@ -234,9 +287,15 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
 
     def render_mensajes():
         if not mensajes:
-            filas_mensajes.controls = [header_mensajes, sin_datos("No hay mensajes de contacto recibidos.")]
+            filas_mensajes.controls = [
+                header_mensajes,
+                sin_datos("No hay mensajes de contacto recibidos."),
+            ]
         else:
-            filas_mensajes.controls = [header_mensajes, *[fila_mensaje(m) for m in mensajes]]
+            filas_mensajes.controls = [
+                header_mensajes,
+                *[fila_mensaje(m) for m in mensajes],
+            ]
         page.update()
 
     # ==================== 2. MODERACIÓN DE OPINIONES ====================
@@ -258,12 +317,20 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
             await api_client.aprobar_opinion(opinion["id_opinion"])
         except Exception:
             page.show_dialog(
-                ft.SnackBar(ft.Text("No se pudo aprobar la opinión.", color="white"), bgcolor=BADGE_RED_TXT)
+                ft.SnackBar(
+                    ft.Text("No se pudo aprobar la opinión.", color="white"),
+                    bgcolor=BADGE_RED_TXT,
+                )
             )
             return
         opinion["aprobada"] = True
         render_opiniones()
-        page.show_dialog(ft.SnackBar(ft.Text("Opinión aprobada y publicada en el sitio.", color="white"), bgcolor=TEAL))
+        page.show_dialog(
+            ft.SnackBar(
+                ft.Text("Opinión aprobada y publicada en el sitio.", color="white"),
+                bgcolor=TEAL,
+            )
+        )
 
     def confirmar_eliminar(e, opinion: dict):
         async def eliminar_confirmado(e2):
@@ -272,19 +339,29 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
             except Exception:
                 page.pop_dialog()
                 page.show_dialog(
-                    ft.SnackBar(ft.Text("No se pudo eliminar la opinión.", color="white"), bgcolor=BADGE_RED_TXT)
+                    ft.SnackBar(
+                        ft.Text("No se pudo eliminar la opinión.", color="white"),
+                        bgcolor=BADGE_RED_TXT,
+                    )
                 )
                 return
             page.pop_dialog()
             if opinion in opiniones:
                 opiniones.remove(opinion)
             render_opiniones()
-            page.show_dialog(ft.SnackBar(ft.Text("Opinión rechazada y eliminada.", color="white"), bgcolor=TEAL))
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text("Opinión rechazada y eliminada.", color="white"),
+                    bgcolor=TEAL,
+                )
+            )
 
         dialogo = ft.AlertDialog(
             modal=True,
             bgcolor=BG_WHITE,
-            title=ft.Text("Rechazar opinión", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+            title=ft.Text(
+                "Rechazar opinión", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+            ),
             content=ft.Text(
                 f"¿Confirma que desea rechazar y eliminar la opinión de {opinion.get('nombre') or 'Anónimo'}?",
                 size=13,
@@ -293,7 +370,12 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda _: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar_confirmado),
+                ft.Button(
+                    "Eliminar",
+                    bgcolor=BADGE_RED_TXT,
+                    color=BG_WHITE,
+                    on_click=eliminar_confirmado,
+                ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
@@ -316,11 +398,33 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
             content=ft.Row(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=150, content=ft.Text(opinion.get("nombre") or "—", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=150, content=ft.Text(opinion.get("vinculo") or "—", size=13, color=MUTED)),
-                    ft.Container(expand=True, content=ft.Text(comentario, size=13, color=MUTED)),
-                    ft.Container(width=90, content=_estrellas(opinion.get("estrellas"))),
-                    ft.Container(width=110, content=ft.Text(_fecha_legible(opinion.get("fecha")), size=12, color=MUTED)),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            opinion.get("nombre") or "—",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=150,
+                        content=ft.Text(
+                            opinion.get("vinculo") or "—", size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        expand=True, content=ft.Text(comentario, size=13, color=MUTED)
+                    ),
+                    ft.Container(
+                        width=90, content=_estrellas(opinion.get("estrellas"))
+                    ),
+                    ft.Container(
+                        width=110,
+                        content=ft.Text(
+                            _fecha_legible(opinion.get("fecha")), size=12, color=MUTED
+                        ),
+                    ),
                     ft.Container(width=100, content=badge),
                     ft.Container(
                         width=100,
@@ -344,7 +448,9 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
                                     icon_color=BADGE_RED_TXT,
                                     tooltip="Rechazar / eliminar",
                                     padding=0,
-                                    on_click=lambda e, o=opinion: confirmar_eliminar(e, o),
+                                    on_click=lambda e, o=opinion: confirmar_eliminar(
+                                        e, o
+                                    ),
                                 ),
                             ],
                         ),
@@ -355,9 +461,15 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
 
     def render_opiniones():
         if not opiniones:
-            filas_opiniones.controls = [header_opiniones, sin_datos("No hay opiniones registradas.")]
+            filas_opiniones.controls = [
+                header_opiniones,
+                sin_datos("No hay opiniones registradas."),
+            ]
         else:
-            filas_opiniones.controls = [header_opiniones, *[fila_opinion(o) for o in opiniones]]
+            filas_opiniones.controls = [
+                header_opiniones,
+                *[fila_opinion(o) for o in opiniones],
+            ]
         page.update()
 
     render_mensajes()

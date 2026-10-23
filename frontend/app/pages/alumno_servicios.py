@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
@@ -37,14 +38,18 @@ def _badge_estado(activo: bool, con_registro: bool) -> ft.Container:
             padding=ft.Padding(8, 4, 8, 4),
             bgcolor=BADGE_GREEN_BG,
             border_radius=4,
-            content=ft.Text("Activo", size=12, weight=ft.FontWeight.W_600, color=BADGE_GREEN_TXT),
+            content=ft.Text(
+                "Activo", size=12, weight=ft.FontWeight.W_600, color=BADGE_GREEN_TXT
+            ),
         )
     if con_registro:
         return ft.Container(
             padding=ft.Padding(8, 4, 8, 4),
             bgcolor="#FEEBEB",
             border_radius=4,
-            content=ft.Text("Inactivo", size=12, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT),
+            content=ft.Text(
+                "Inactivo", size=12, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT
+            ),
         )
     return ft.Container(
         padding=ft.Padding(8, 4, 8, 4),
@@ -82,7 +87,9 @@ def _estado_vacio(titulo: str, mensaje: str) -> ft.Container:
                     bgcolor=TEAL_LIGHT,
                     border_radius=28,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Icon(ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK),
+                    content=ft.Icon(
+                        ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK
+                    ),
                 ),
                 ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
                 ft.Text(mensaje, size=14, color=MUTED, text_align=ft.TextAlign.CENTER),
@@ -190,8 +197,12 @@ async def get_alumno_servicios_view(page: ft.Page) -> ft.Row:
         (c for c in cursos if c.get("id_curso") == alumno.get("id_curso")), None
     )
 
-    nombre_curso = estado["curso"].get("nombre") if estado["curso"] else "Curso sin asignar"
-    nombre_completo = f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    nombre_curso = (
+        estado["curso"].get("nombre") if estado["curso"] else "Curso sin asignar"
+    )
+    nombre_completo = (
+        f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    )
 
     transporte = estado["transporte"]
     comedor = estado["comedor"]
@@ -258,7 +269,9 @@ async def get_alumno_servicios_view(page: ft.Page) -> ft.Row:
                                     bgcolor=TEAL_LIGHT,
                                     border_radius=20,
                                     alignment=ft.Alignment(0, 0),
-                                    content=ft.Icon(ft.Icons.RESTAURANT, size=20, color=TEAL_DARK),
+                                    content=ft.Icon(
+                                        ft.Icons.RESTAURANT, size=20, color=TEAL_DARK
+                                    ),
                                 ),
                                 ft.Text(
                                     "Comedor Escolar",
@@ -319,7 +332,8 @@ async def get_alumno_servicios_view(page: ft.Page) -> ft.Row:
             border_radius=BORDER_RADIUS,
             padding=12,
             content=ft.Text(
-                "No registrás inscripción al transporte institucional. " + texto_recorridos,
+                "No registrás inscripción al transporte institucional. "
+                + texto_recorridos,
                 size=12,
                 color=MUTED,
             ),
@@ -347,7 +361,9 @@ async def get_alumno_servicios_view(page: ft.Page) -> ft.Row:
                                     border_radius=20,
                                     alignment=ft.Alignment(0, 0),
                                     content=ft.Icon(
-                                        ft.Icons.DIRECTIONS_BUS, size=20, color=TEAL_DARK
+                                        ft.Icons.DIRECTIONS_BUS,
+                                        size=20,
+                                        color=TEAL_DARK,
                                     ),
                                 ),
                                 ft.Text(
@@ -380,7 +396,9 @@ async def get_alumno_servicios_view(page: ft.Page) -> ft.Row:
                         ),
                         _fila_detalle(
                             "Fecha de alta:",
-                            _fecha_corta(transporte.get("fecha_alta")) if transporte else "-",
+                            _fecha_corta(transporte.get("fecha_alta"))
+                            if transporte
+                            else "-",
                         ),
                         _fila_detalle("Legajo del alumno:", f"#{legajo}", TEAL),
                     ],
@@ -411,7 +429,9 @@ async def get_alumno_servicios_view(page: ft.Page) -> ft.Row:
             spacing=10,
             controls=[
                 ft.Icon(ft.Icons.INFO_OUTLINE, size=20, color=TEAL),
-                ft.Text(texto_resumen, size=13, color=TEAL_DARK, weight=ft.FontWeight.W_500),
+                ft.Text(
+                    texto_resumen, size=13, color=TEAL_DARK, weight=ft.FontWeight.W_500
+                ),
             ],
         ),
     )

@@ -1,6 +1,7 @@
 # src/views/inscripcion.py
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 
 # Variables de color extraídas del CSS
@@ -19,7 +20,9 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
     """Retorna únicamente los bloques centrales de la página de Inscripción."""
 
     # ==================== HELPERS DE FORMULARIO ====================
-    def crear_campo(hint: str, keyboard_type: ft.KeyboardType = ft.KeyboardType.TEXT) -> ft.TextField:
+    def crear_campo(
+        hint: str, keyboard_type: ft.KeyboardType = ft.KeyboardType.TEXT
+    ) -> ft.TextField:
         return ft.TextField(
             hint_text=hint,
             keyboard_type=keyboard_type,
@@ -37,7 +40,9 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
             content=ft.Column(
                 spacing=8,
                 controls=[
-                    ft.Text(label, size=13, weight=ft.FontWeight.W_500, color=TEXT_COLOR),
+                    ft.Text(
+                        label, size=13, weight=ft.FontWeight.W_500, color=TEXT_COLOR
+                    ),
                     control,
                 ],
             ),
@@ -63,11 +68,21 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
         text_size=14,
     )
     campo_tutor = crear_campo("Ej. Martín Gómez")
-    campo_telefono = crear_campo("Ej. +54 362 4123456", keyboard_type=ft.KeyboardType.PHONE)
+    campo_telefono = crear_campo(
+        "Ej. +54 362 4123456", keyboard_type=ft.KeyboardType.PHONE
+    )
     campo_correo = crear_campo("tutor@ejemplo.com", keyboard_type=ft.KeyboardType.EMAIL)
 
     def limpiar_formulario():
-        for campo in [campo_nombre, campo_apellido, campo_fecha_nac, campo_dni, campo_tutor, campo_telefono, campo_correo]:
+        for campo in [
+            campo_nombre,
+            campo_apellido,
+            campo_fecha_nac,
+            campo_dni,
+            campo_tutor,
+            campo_telefono,
+            campo_correo,
+        ]:
             campo.value = ""
         campo_nivel.value = None
         page.update()
@@ -75,13 +90,23 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
     async def enviar_solicitud(e):
         # Validación de campos obligatorios
         if not campo_nombre.value or not campo_apellido.value or not campo_dni.value:
-            mostrar_dialogo("Datos incompletos", "Complete nombre, apellido y DNI del postulante.", error=True)
+            mostrar_dialogo(
+                "Datos incompletos",
+                "Complete nombre, apellido y DNI del postulante.",
+                error=True,
+            )
             return
         if not campo_nivel.value:
-            mostrar_dialogo("Datos incompletos", "Seleccione el nivel al que postula.", error=True)
+            mostrar_dialogo(
+                "Datos incompletos", "Seleccione el nivel al que postula.", error=True
+            )
             return
         if not campo_tutor.value:
-            mostrar_dialogo("Datos incompletos", "Indique el nombre del padre, madre o tutor.", error=True)
+            mostrar_dialogo(
+                "Datos incompletos",
+                "Indique el nombre del padre, madre o tutor.",
+                error=True,
+            )
             return
 
         payload = {
@@ -156,12 +181,26 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                 ft.Column(
                     spacing=8,
                     controls=[
-                        ft.Text("Formulario de Solicitud", size=28, weight=ft.FontWeight.BOLD, color=GREEN),
-                        ft.Text("Por favor, complete los datos para iniciar el proceso de postulación.", size=14, color=MUTED),
+                        ft.Text(
+                            "Formulario de Solicitud",
+                            size=28,
+                            weight=ft.FontWeight.BOLD,
+                            color=GREEN,
+                        ),
+                        ft.Text(
+                            "Por favor, complete los datos para iniciar el proceso de postulación.",
+                            size=14,
+                            color=MUTED,
+                        ),
                     ],
                 ),
                 # Datos del Postulante
-                ft.Text("DATOS DEL POSTULANTE", size=16, weight=ft.FontWeight.BOLD, color=ORANGE),
+                ft.Text(
+                    "DATOS DEL POSTULANTE",
+                    size=16,
+                    weight=ft.FontWeight.BOLD,
+                    color=ORANGE,
+                ),
                 ft.ResponsiveRow(
                     columns=12,
                     controls=[
@@ -174,7 +213,12 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                             content=ft.Column(
                                 spacing=8,
                                 controls=[
-                                    ft.Text("Nivel al que postula", size=13, weight=ft.FontWeight.W_500, color=TEXT_COLOR),
+                                    ft.Text(
+                                        "Nivel al que postula",
+                                        size=13,
+                                        weight=ft.FontWeight.W_500,
+                                        color=TEXT_COLOR,
+                                    ),
                                     campo_nivel,
                                 ],
                             ),
@@ -183,7 +227,12 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                 ),
                 ft.Divider(color=BORDER_COLOR, height=20),
                 # Datos del Padre / Tutor
-                ft.Text("DATOS DEL PADRE / TUTOR", size=16, weight=ft.FontWeight.BOLD, color=ORANGE),
+                ft.Text(
+                    "DATOS DEL PADRE / TUTOR",
+                    size=16,
+                    weight=ft.FontWeight.BOLD,
+                    color=ORANGE,
+                ),
                 ft.ResponsiveRow(
                     columns=12,
                     controls=[
@@ -229,7 +278,12 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                     content=ft.Column(
                         spacing=24,
                         controls=[
-                            ft.Text("Requisitos de Inscripción", size=24, weight=ft.FontWeight.BOLD, color="white"),
+                            ft.Text(
+                                "Requisitos de Inscripción",
+                                size=24,
+                                weight=ft.FontWeight.BOLD,
+                                color="white",
+                            ),
                             ft.Column(
                                 spacing=16,
                                 controls=[
@@ -243,11 +297,17 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                                                 bgcolor=TEAL,
                                                 border_radius=10,
                                                 alignment=ft.Alignment(0, 0),
-                                                content=ft.Icon(ft.Icons.CHECK, color="white", size=12),
+                                                content=ft.Icon(
+                                                    ft.Icons.CHECK,
+                                                    color="white",
+                                                    size=12,
+                                                ),
                                             ),
                                             ft.Container(
                                                 expand=True,
-                                                content=ft.Text(req, size=14, color="white"),
+                                                content=ft.Text(
+                                                    req, size=14, color="white"
+                                                ),
                                             ),
                                         ],
                                     )
@@ -266,7 +326,12 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                     content=ft.Column(
                         spacing=12,
                         controls=[
-                            ft.Text("¿Tiene dudas?", size=18, weight=ft.FontWeight.BOLD, color=GREEN),
+                            ft.Text(
+                                "¿Tiene dudas?",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=GREEN,
+                            ),
                             ft.Text(
                                 "Nuestro equipo de admisiones está disponible para guiarlo paso a paso. Agende una reunión presencial o telefónica.",
                                 size=14,
@@ -277,14 +342,18 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                                 bgcolor="transparent",
                                 color=TEAL,
                                 url="tel:+543624458900",
-                                style=ft.ButtonStyle(overlay_color="transparent", elevation=0, padding=0),
+                                style=ft.ButtonStyle(
+                                    overlay_color="transparent", elevation=0, padding=0
+                                ),
                             ),
                             ft.Button(
                                 "💬 WhatsApp: +54 9 362 455-1212",
                                 bgcolor="transparent",
                                 color=TEAL,
                                 url="https://wa.me/5493624551212",
-                                style=ft.ButtonStyle(overlay_color="transparent", elevation=0, padding=0),
+                                style=ft.ButtonStyle(
+                                    overlay_color="transparent", elevation=0, padding=0
+                                ),
                             ),
                         ],
                     ),

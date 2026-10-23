@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -97,10 +98,14 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
     # Opciones de filtros (si las entidades base fallan, se derivan de los grupos reales)
     nombres_nivel = [n["nombre"] for n in estado["niveles"] if n.get("nombre")]
     if not nombres_nivel:
-        nombres_nivel = sorted({g.get("nivel", "") for g in estado["grupos"] if g.get("nivel")})
+        nombres_nivel = sorted(
+            {g.get("nivel", "") for g in estado["grupos"] if g.get("nivel")}
+        )
     nombres_deporte = [d["nombre"] for d in estado["deportes"] if d.get("nombre")]
     if not nombres_deporte:
-        nombres_deporte = sorted({g.get("deporte", "") for g in estado["grupos"] if g.get("deporte")})
+        nombres_deporte = sorted(
+            {g.get("deporte", "") for g in estado["grupos"] if g.get("deporte")}
+        )
 
     # ==================== 1. TARJETAS DE MÉTRICAS (KPIs) ====================
     def kpi_card(
@@ -126,7 +131,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
-                            ft.Text(titulo, size=12, weight=ft.FontWeight.W_600, color=MUTED),
+                            ft.Text(
+                                titulo, size=12, weight=ft.FontWeight.W_600, color=MUTED
+                            ),
                             ft.Container(
                                 width=36,
                                 height=36,
@@ -140,7 +147,12 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=4,
                         controls=[
-                            ft.Text(valor, size=30, weight=ft.FontWeight.W_800, color=valor_color),
+                            ft.Text(
+                                valor,
+                                size=30,
+                                weight=ft.FontWeight.W_800,
+                                color=valor_color,
+                            ),
                             ft.Text(subtitulo, size=11, color=MUTED),
                         ],
                     ),
@@ -150,10 +162,16 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
 
     def render_kpis() -> ft.Row:
         con_docente = len(
-            [d for d in estado["deportes"] if d.get("legajo_profesor_responsable") is not None]
+            [
+                d
+                for d in estado["deportes"]
+                if d.get("legajo_profesor_responsable") is not None
+            ]
         )
         sin_docente = len(estado["deportes"]) - con_docente
-        niveles_con_grupos = {g.get("nivel", "") for g in estado["grupos"] if g.get("nivel")}
+        niveles_con_grupos = {
+            g.get("nivel", "") for g in estado["grupos"] if g.get("nivel")
+        }
         total_inscripciones = len(estado["inscripciones"])
         total_grupos = len(estado["grupos"])
         promedio = (total_inscripciones / total_grupos) if total_grupos else 0
@@ -171,21 +189,27 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
                 kpi_card(
                     "GRUPOS DEPORTIVOS",
                     str(total_grupos),
-                    f"En {len(niveles_con_grupos)} niveles educativos" if niveles_con_grupos else "Sin grupos registrados",
+                    f"En {len(niveles_con_grupos)} niveles educativos"
+                    if niveles_con_grupos
+                    else "Sin grupos registrados",
                     ft.Icons.GROUP_WORK_OUTLINED,
                     TEAL_LIGHT,
                 ),
                 kpi_card(
                     "ALUMNOS INSCRIPTOS",
                     str(total_inscripciones),
-                    f"Promedio {promedio:.1f} por grupo" if total_grupos else "Sin inscripciones registradas",
+                    f"Promedio {promedio:.1f} por grupo"
+                    if total_grupos
+                    else "Sin inscripciones registradas",
                     ft.Icons.HOW_TO_REG_OUTLINED,
                     TEAL_LIGHT,
                 ),
                 kpi_card(
                     "DOCENTES A CARGO",
                     str(con_docente),
-                    f"{sin_docente} disciplinas sin responsable" if sin_docente else "Todas las disciplinas cubiertas",
+                    f"{sin_docente} disciplinas sin responsable"
+                    if sin_docente
+                    else "Todas las disciplinas cubiertas",
                     ft.Icons.SUPERVISOR_ACCOUNT_OUTLINED,
                     "#FFF3E7" if sin_docente else TEAL_LIGHT,
                     ORANGE if sin_docente else TEAL_DARK,
@@ -237,8 +261,12 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
             ),
         )
 
-    filtro_nivel_container = filtro_dropdown("Nivel: Todos", 150, ["Todos"] + nombres_nivel)
-    filtro_deporte_container = filtro_dropdown("Disciplina: Todas", 170, ["Todos"] + nombres_deporte)
+    filtro_nivel_container = filtro_dropdown(
+        "Nivel: Todos", 150, ["Todos"] + nombres_nivel
+    )
+    filtro_deporte_container = filtro_dropdown(
+        "Disciplina: Todas", 170, ["Todos"] + nombres_deporte
+    )
     filtro_nivel_dropdown: ft.Dropdown = filtro_nivel_container.content
     filtro_deporte_dropdown: ft.Dropdown = filtro_deporte_container.content
 
@@ -248,7 +276,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nuevo Deporte", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nuevo Deporte", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -284,7 +314,11 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
             ft.Row(
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[search_input, filtro_nivel_container, filtro_deporte_container],
+                controls=[
+                    search_input,
+                    filtro_nivel_container,
+                    filtro_deporte_container,
+                ],
             ),
             ft.Row(
                 spacing=12,
@@ -294,7 +328,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 3. TABLA DE GRUPOS DEPORTIVOS ====================
     columnas_grupos = [
@@ -333,7 +369,12 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
                 controls=[
                     ft.Container(
                         width=190,
-                        content=ft.Text(item.get("deporte", "-"), size=14, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                        content=ft.Text(
+                            item.get("deporte", "-"),
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
                     ),
                     ft.Container(
                         width=190,
@@ -350,11 +391,18 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
                     ),
                     ft.Container(
                         width=260,
-                        content=ft.Text(item.get("horario", "-"), size=13, color=TEXT_COLOR),
+                        content=ft.Text(
+                            item.get("horario", "-"), size=13, color=TEXT_COLOR
+                        ),
                     ),
                     ft.Container(
                         width=110,
-                        content=ft.Text(str(inscriptos), size=13, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+                        content=ft.Text(
+                            str(inscriptos),
+                            size=13,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEXT_COLOR,
+                        ),
                     ),
                     ft.Container(
                         expand=True,
@@ -385,7 +433,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
                                     icon_color=BADGE_RED_TXT,
                                     tooltip="Eliminar grupo",
                                     padding=0,
-                                    on_click=lambda e, g=item: confirmar_eliminar_grupo(g),
+                                    on_click=lambda e, g=item: confirmar_eliminar_grupo(
+                                        g
+                                    ),
                                 ),
                             ],
                         ),
@@ -494,7 +544,11 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
                             size=13,
                             color=TEXT_COLOR,
                         ),
-                        ft.Text(_fecha_corta(i.get("fecha_inscripcion")), size=12, color=MUTED),
+                        ft.Text(
+                            _fecha_corta(i.get("fecha_inscripcion")),
+                            size=12,
+                            color=MUTED,
+                        ),
                     ],
                 ),
             )
@@ -505,7 +559,11 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Alumnos Inscriptos — {grupo.get('deporte', '')}", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                f"Alumnos Inscriptos — {grupo.get('deporte', '')}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
             content=ft.Column(
                 spacing=12,
                 width=420,
@@ -527,7 +585,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
 
     # ==================== 5. DIÁLOGO NUEVO DEPORTE ====================
     def abrir_nuevo_deporte(e):
-        nombre_field = ft.TextField(label="Nombre de la disciplina *", hint_text="Ej: Natación", width=380)
+        nombre_field = ft.TextField(
+            label="Nombre de la disciplina *", hint_text="Ej: Natación", width=380
+        )
         profesor_field = ft.Dropdown(
             label="Profesor responsable",
             width=380,
@@ -552,7 +612,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
 
             payload = {
                 "nombre": nombre,
-                "legajo_profesor_responsable": int(profesor_field.value) if profesor_field.value else None,
+                "legajo_profesor_responsable": int(profesor_field.value)
+                if profesor_field.value
+                else None,
             }
             try:
                 await api_client.create_deporte(payload)
@@ -576,7 +638,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Nueva Disciplina Deportiva", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Nueva Disciplina Deportiva", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,
@@ -585,7 +649,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Deporte", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Deporte", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -595,7 +661,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
     # ==================== 6. DIÁLOGO NUEVO GRUPO ====================
     def abrir_nuevo_grupo(e):
         if not estado["deportes"] or not estado["niveles"] or not estado["horarios"]:
-            mostrar_error("Para crear un grupo se necesitan disciplinas, niveles y horarios cargados.")
+            mostrar_error(
+                "Para crear un grupo se necesitan disciplinas, niveles y horarios cargados."
+            )
             return
 
         deporte_field = ft.Dropdown(
@@ -625,7 +693,11 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
 
         async def guardar(e):
-            if not deporte_field.value or not nivel_field.value or not horario_field.value:
+            if (
+                not deporte_field.value
+                or not nivel_field.value
+                or not horario_field.value
+            ):
                 error_text.value = "Disciplina, nivel y horario son obligatorios."
                 error_text.visible = True
                 error_text.update()
@@ -667,7 +739,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Grupo", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Grupo", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -706,7 +780,11 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
 
         async def guardar_edicion(e):
-            if not deporte_field.value or not nivel_field.value or not horario_field.value:
+            if (
+                not deporte_field.value
+                or not nivel_field.value
+                or not horario_field.value
+            ):
                 error_text.value = "Disciplina, nivel y horario son obligatorios."
                 error_text.visible = True
                 error_text.update()
@@ -740,7 +818,11 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Editar Grupo Deportivo #{grupo['id_grupo']}", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                f"Editar Grupo Deportivo #{grupo['id_grupo']}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,
@@ -749,7 +831,12 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Guardar Cambios", bgcolor=TEAL, color=BG_WHITE, on_click=guardar_edicion),
+                ft.Button(
+                    "Guardar Cambios",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=guardar_edicion,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -780,7 +867,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Eliminar Grupo Deportivo", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Eliminar Grupo Deportivo", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,
@@ -798,7 +887,9 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar),
+                ft.Button(
+                    "Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar
+                ),
             ],
         )
         page.show_dialog(dlg)

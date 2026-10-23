@@ -1,6 +1,7 @@
 """Diálogo reutilizable para que el usuario autenticado cambie su contraseña."""
-import httpx
+
 import flet as ft
+import httpx
 
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
@@ -75,7 +76,9 @@ def abrir_cambio_password(page: ft.Page):
     dialog = ft.AlertDialog(
         modal=True,
         bgcolor=BG_WHITE,
-        title=ft.Text("Cambiar mi contraseña", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+        title=ft.Text(
+            "Cambiar mi contraseña", size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+        ),
         content=ft.Column(
             spacing=14,
             width=360,

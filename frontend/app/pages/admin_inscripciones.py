@@ -1,5 +1,5 @@
-import httpx
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -82,7 +82,10 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
         text_size=14,
         border=ft.InputBorder.NONE,
         content_padding=ft.Padding(12, 0, 8, 12),
-        options=[ft.dropdown.Option(opc) for opc in ["Todos", "Inicial", "Primario", "Secundario"]],
+        options=[
+            ft.dropdown.Option(opc)
+            for opc in ["Todos", "Inicial", "Primario", "Secundario"]
+        ],
     )
     dropdown_estado = ft.Dropdown(
         hint_text="Estado: Todos",
@@ -90,7 +93,10 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
         text_size=14,
         border=ft.InputBorder.NONE,
         content_padding=ft.Padding(12, 0, 8, 12),
-        options=[ft.dropdown.Option(opc) for opc in ["Todos", "Pendiente", "Aprobado", "Rechazado"]],
+        options=[
+            ft.dropdown.Option(opc)
+            for opc in ["Todos", "Pendiente", "Aprobado", "Rechazado"]
+        ],
     )
     dropdown_nivel.on_change = lambda _: render_tabla()
     dropdown_estado.on_change = lambda _: render_tabla()
@@ -125,8 +131,15 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
                 content=ft.Row(
                     spacing=8,
                     controls=[
-                        ft.Icon(ft.Icons.FILE_DOWNLOAD_OUTLINED, size=16, color=BG_WHITE),
-                        ft.Text("Exportar Listado", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                        ft.Icon(
+                            ft.Icons.FILE_DOWNLOAD_OUTLINED, size=16, color=BG_WHITE
+                        ),
+                        ft.Text(
+                            "Exportar Listado",
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=BG_WHITE,
+                        ),
                     ],
                 ),
                 bgcolor=TEAL,
@@ -157,17 +170,25 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
 
     async def cambiar_estado(e, solicitud: dict, nuevo_estado: str):
         try:
-            await api_client.cambiar_estado_solicitud(solicitud["id_solicitud"], nuevo_estado)
+            await api_client.cambiar_estado_solicitud(
+                solicitud["id_solicitud"], nuevo_estado
+            )
         except Exception:
             page.show_dialog(
-                ft.SnackBar(ft.Text("No se pudo actualizar la solicitud.", color="white"), bgcolor=BADGE_RED_TXT)
+                ft.SnackBar(
+                    ft.Text("No se pudo actualizar la solicitud.", color="white"),
+                    bgcolor=BADGE_RED_TXT,
+                )
             )
             return
         solicitud["estado"] = nuevo_estado
         render_tabla()
         page.show_dialog(
             ft.SnackBar(
-                ft.Text(f"Solicitud #{solicitud['id_solicitud']} marcada como {nuevo_estado}.", color="white"),
+                ft.Text(
+                    f"Solicitud #{solicitud['id_solicitud']} marcada como {nuevo_estado}.",
+                    color="white",
+                ),
                 bgcolor=ONLINE_GREEN,
             )
         )
@@ -177,7 +198,13 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
             return ft.Row(
                 spacing=8,
                 controls=[
-                    ft.Text(f"{label}:", size=13, weight=ft.FontWeight.W_600, color=MUTED, width=150),
+                    ft.Text(
+                        f"{label}:",
+                        size=13,
+                        weight=ft.FontWeight.W_600,
+                        color=MUTED,
+                        width=150,
+                    ),
                     ft.Text(valor or "—", size=13, color=TEXT_COLOR, expand=True),
                 ],
             )
@@ -198,7 +225,10 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
                 controls=[
                     dato("Postulante", solicitud.get("postulante")),
                     dato("DNI", solicitud.get("dni")),
-                    dato("Fecha de nacimiento", _fecha_legible(solicitud.get("fecha_nacimiento"))),
+                    dato(
+                        "Fecha de nacimiento",
+                        _fecha_legible(solicitud.get("fecha_nacimiento")),
+                    ),
                     dato("Nivel postulado", solicitud.get("nivel")),
                     dato("Padre / Tutor", solicitud.get("tutor")),
                     dato("Teléfono", solicitud.get("telefono")),
@@ -222,14 +252,60 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=130, content=ft.Text(_nro_solicitud(solicitud), size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=180, content=ft.Text(solicitud.get("postulante") or "—", size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=120, content=ft.Text(solicitud.get("dni") or "—", size=14, color=TEXT_COLOR)),
-                    ft.Container(width=180, content=ft.Text(solicitud.get("nivel") or "—", size=13, color=MUTED)),
-                    ft.Container(width=160, content=ft.Text(solicitud.get("tutor") or "—", size=14, color=TEXT_COLOR)),
-                    ft.Container(width=130, content=ft.Text(solicitud.get("telefono") or solicitud.get("correo") or "—", size=13, color=MUTED)),
-                    ft.Container(width=110, content=ft.Text(_fecha_legible(solicitud.get("fecha")), size=13, color=MUTED)),
-                    ft.Container(width=110, content=status_badge(solicitud.get("estado") or "Pendiente")),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(
+                            _nro_solicitud(solicitud),
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=180,
+                        content=ft.Text(
+                            solicitud.get("postulante") or "—",
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=120,
+                        content=ft.Text(
+                            solicitud.get("dni") or "—", size=14, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=180,
+                        content=ft.Text(
+                            solicitud.get("nivel") or "—", size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(
+                            solicitud.get("tutor") or "—", size=14, color=TEXT_COLOR
+                        ),
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(
+                            solicitud.get("telefono") or solicitud.get("correo") or "—",
+                            size=13,
+                            color=MUTED,
+                        ),
+                    ),
+                    ft.Container(
+                        width=110,
+                        content=ft.Text(
+                            _fecha_legible(solicitud.get("fecha")), size=13, color=MUTED
+                        ),
+                    ),
+                    ft.Container(
+                        width=110,
+                        content=status_badge(solicitud.get("estado") or "Pendiente"),
+                    ),
                     ft.Container(
                         expand=True,
                         alignment=ft.Alignment(1, 0),
@@ -243,7 +319,9 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
                                     icon_color=ONLINE_GREEN,
                                     tooltip="Aprobar Admisión",
                                     padding=0,
-                                    on_click=lambda e, s=solicitud: cambiar_estado(e, s, "Aprobado"),
+                                    on_click=lambda e, s=solicitud: cambiar_estado(
+                                        e, s, "Aprobado"
+                                    ),
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.REMOVE_RED_EYE_OUTLINED,
@@ -251,7 +329,9 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
                                     icon_color=TEAL,
                                     tooltip="Ver Documentación",
                                     padding=0,
-                                    on_click=lambda e, s=solicitud: ver_documentacion(e, s),
+                                    on_click=lambda e, s=solicitud: ver_documentacion(
+                                        e, s
+                                    ),
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.CANCEL_OUTLINED,
@@ -259,7 +339,9 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
                                     icon_color=BADGE_RED_TXT,
                                     tooltip="Rechazar",
                                     padding=0,
-                                    on_click=lambda e, s=solicitud: cambiar_estado(e, s, "Rechazado"),
+                                    on_click=lambda e, s=solicitud: cambiar_estado(
+                                        e, s, "Rechazado"
+                                    ),
                                 ),
                             ],
                         ),
@@ -277,7 +359,11 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
 
         filas = []
         for s in solicitudes:
-            if texto and texto not in (s.get("postulante") or "").lower() and texto not in (s.get("dni") or ""):
+            if (
+                texto
+                and texto not in (s.get("postulante") or "").lower()
+                and texto not in (s.get("dni") or "")
+            ):
                 continue
             if nivel and nivel != "Todos" and nivel not in (s.get("nivel") or ""):
                 continue
@@ -286,7 +372,9 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
             filas.append(solicitud_row(s))
 
         filas_column.controls = [header_table, *filas]
-        info_text.value = f"Mostrando {len(filas)} de {len(solicitudes)} solicitudes recibidas"
+        info_text.value = (
+            f"Mostrando {len(filas)} de {len(solicitudes)} solicitudes recibidas"
+        )
         page.update()
 
     render_tabla()

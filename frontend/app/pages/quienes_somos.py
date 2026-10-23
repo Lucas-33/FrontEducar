@@ -8,6 +8,7 @@ TEAL_LIGHT = "#E6F2F2"
 ORANGE = "#D97736"
 MUTED = "#5C6B69"
 
+
 def get_quienes_somos_view(page: ft.Page) -> list[ft.Control]:
     """Retorna únicamente los bloques centrales de la página Quiénes Somos."""
 
@@ -23,7 +24,12 @@ def get_quienes_somos_view(page: ft.Page) -> list[ft.Control]:
                     content=ft.Column(
                         spacing=16,
                         controls=[
-                            ft.Text("CONOCENOS", size=14, weight=ft.FontWeight.BOLD, color=ORANGE),
+                            ft.Text(
+                                "CONOCENOS",
+                                size=14,
+                                weight=ft.FontWeight.BOLD,
+                                color=ORANGE,
+                            ),
                             ft.Text(
                                 "Nuestra Historia y Filosofía",
                                 size=36,
@@ -104,7 +110,12 @@ def get_quienes_somos_view(page: ft.Page) -> list[ft.Control]:
             spacing=20,
             controls=[
                 ft.Text("GALERÍA", size=14, weight=ft.FontWeight.BOLD, color=ORANGE),
-                ft.Text("La Vida en Nuestro Campus", size=36, weight=ft.FontWeight.BOLD, color=GREEN),
+                ft.Text(
+                    "La Vida en Nuestro Campus",
+                    size=36,
+                    weight=ft.FontWeight.BOLD,
+                    color=GREEN,
+                ),
                 ft.Container(height=20),
                 ft.ResponsiveRow(
                     columns=12,

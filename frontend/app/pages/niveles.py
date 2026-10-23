@@ -60,7 +60,9 @@ def get_niveles_view(page: ft.Page) -> list[ft.Control]:
                 spacing=24,
                 alignment=ft.MainAxisAlignment.CENTER,
                 controls=[
-                    ft.Text(titulo, size=32, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        titulo, size=32, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                    ),
                     ft.Text(
                         descripcion,
                         size=16,
@@ -89,7 +91,9 @@ def get_niveles_view(page: ft.Page) -> list[ft.Control]:
             ),
         )
 
-        controles = [col_info, col_imagen] if imagen_a_la_derecha else [col_imagen, col_info]
+        controles = (
+            [col_info, col_imagen] if imagen_a_la_derecha else [col_imagen, col_info]
+        )
 
         return ft.ResponsiveRow(
             columns=12,
@@ -148,7 +152,9 @@ def get_niveles_view(page: ft.Page) -> list[ft.Control]:
     )
 
     # ==================== SECCIÓN 2: SERVICIOS DE APOYO ====================
-    def tarjeta_servicio(icono: ft.IconData, titulo: str, descripcion: str) -> ft.Container:
+    def tarjeta_servicio(
+        icono: ft.IconData, titulo: str, descripcion: str
+    ) -> ft.Container:
         return ft.Container(
             col={"sm": 12, "md": 4},
             bgcolor=BG_WHITE,
@@ -165,7 +171,9 @@ def get_niveles_view(page: ft.Page) -> list[ft.Control]:
                         alignment=ft.Alignment(0, 0),
                         content=ft.Icon(icono, color=TEAL, size=24),
                     ),
-                    ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                    ),
                     ft.Text(
                         descripcion,
                         size=14,

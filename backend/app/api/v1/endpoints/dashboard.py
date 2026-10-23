@@ -1,4 +1,5 @@
 """Resumen numérico para el panel de control administrativo."""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -28,10 +29,14 @@ def resumen_dashboard(
     comunidad = comunidad_service.resumen(db)
 
     transporte_activos = [
-        i for i in inscripcion_transporte_repository.get_multi(db, limit=1000) if i.estado == "ACTIVO"
+        i
+        for i in inscripcion_transporte_repository.get_multi(db, limit=1000)
+        if i.estado == "ACTIVO"
     ]
     comedor_activos = [
-        i for i in inscripcion_comedor_repository.get_multi(db, limit=1000) if i.estado == "ACTIVO"
+        i
+        for i in inscripcion_comedor_repository.get_multi(db, limit=1000)
+        if i.estado == "ACTIVO"
     ]
 
     return {

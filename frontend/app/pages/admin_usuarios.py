@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -47,7 +48,13 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         api_client.set_token(token_almacenado)
 
     # ==================== ESTADO DE LA VISTA ====================
-    estado: dict = {"usuarios": [], "roles": [], "texto": "", "rol": "Todos", "activo": "Todos"}
+    estado: dict = {
+        "usuarios": [],
+        "roles": [],
+        "texto": "",
+        "rol": "Todos",
+        "activo": "Todos",
+    }
 
     try:
         estado["usuarios"] = await api_client.get_usuarios()
@@ -86,7 +93,9 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         ),
     )
 
-    def crear_filtro_dropdown(hint: str, width: int, opciones: list[str]) -> ft.Container:
+    def crear_filtro_dropdown(
+        hint: str, width: int, opciones: list[str]
+    ) -> ft.Container:
         return ft.Container(
             width=width,
             height=CONTROL_HEIGHT,
@@ -104,9 +113,13 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         )
 
     filtro_rol_container = crear_filtro_dropdown(
-        "Rol: Todos", 150, ["Todos", "Administrador", "Docente", "Padre / Tutor", "Alumno"]
+        "Rol: Todos",
+        150,
+        ["Todos", "Administrador", "Docente", "Padre / Tutor", "Alumno"],
     )
-    filtro_estado_container = crear_filtro_dropdown("Estado: Todos", 140, ["Todos", "Activo", "Inactivo"])
+    filtro_estado_container = crear_filtro_dropdown(
+        "Estado: Todos", 140, ["Todos", "Activo", "Inactivo"]
+    )
     filtro_rol_dropdown: ft.Dropdown = filtro_rol_container.content
     filtro_estado_dropdown: ft.Dropdown = filtro_estado_container.content
 
@@ -116,7 +129,9 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.PERSON_ADD_ALT_1_OUTLINED, size=16, color=BG_WHITE),
-                ft.Text("Nuevo Usuario", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nuevo Usuario", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -140,7 +155,9 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 2. TABLA DE USUARIOS Y ROLES ====================
     columnas_usuarios = [
@@ -196,7 +213,9 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
             try:
-                await api_client.update_usuario(usuario["id_usuario"], {"password": nueva})
+                await api_client.update_usuario(
+                    usuario["id_usuario"], {"password": nueva}
+                )
             except httpx.HTTPStatusError as err:
                 detalle = "No se pudo actualizar la contraseña."
                 try:
@@ -217,13 +236,21 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Restablecer contraseña — {usuario['username']}", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                f"Restablecer contraseña — {usuario['username']}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
             content=ft.Column(
                 spacing=12,
                 width=380,
                 tight=True,
                 controls=[
-                    ft.Text("La contraseña anterior dejará de funcionar.", size=13, color=MUTED),
+                    ft.Text(
+                        "La contraseña anterior dejará de funcionar.",
+                        size=13,
+                        color=MUTED,
+                    ),
                     password_field,
                     error_text,
                 ],
@@ -241,9 +268,13 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
 
         async def toggle_estado(e):
             try:
-                await api_client.update_usuario(item["id_usuario"], {"activo": not activo})
+                await api_client.update_usuario(
+                    item["id_usuario"], {"activo": not activo}
+                )
             except Exception as err:
-                mostrar_error(f"No se pudo cambiar el estado de '{item['username']}': {err}")
+                mostrar_error(
+                    f"No se pudo cambiar el estado de '{item['username']}': {err}"
+                )
                 return
             await recargar()
 
@@ -257,18 +288,30 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 controls=[
                     ft.Container(
                         width=200,
-                        content=ft.Text(item["username"], size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK),
+                        content=ft.Text(
+                            item["username"],
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
                     ),
                     ft.Container(width=140, content=rol_badge(rol_legible)),
                     ft.Container(
                         width=260,
-                        content=ft.Text(item.get("vinculacion", "-"), size=13, color=MUTED),
+                        content=ft.Text(
+                            item.get("vinculacion", "-"), size=13, color=MUTED
+                        ),
                     ),
                     ft.Container(
                         width=110,
-                        content=ft.Text(_fecha_corta(item.get("creado_en")), size=12, color=MUTED),
+                        content=ft.Text(
+                            _fecha_corta(item.get("creado_en")), size=12, color=MUTED
+                        ),
                     ),
-                    ft.Container(width=100, content=status_badge("Activo" if activo else "Bloqueado")),
+                    ft.Container(
+                        width=100,
+                        content=status_badge("Activo" if activo else "Bloqueado"),
+                    ),
                     ft.Container(
                         expand=True,
                         alignment=ft.Alignment(1, 0),
@@ -285,10 +328,16 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                                     on_click=lambda e, u=item: abrir_reset_password(u),
                                 ),
                                 ft.IconButton(
-                                    icon=ft.Icons.LOCK_OPEN_OUTLINED if not activo else ft.Icons.BLOCK_OUTLINED,
+                                    icon=ft.Icons.LOCK_OPEN_OUTLINED
+                                    if not activo
+                                    else ft.Icons.BLOCK_OUTLINED,
                                     icon_size=16,
-                                    icon_color="#10B981" if not activo else BADGE_RED_TXT,
-                                    tooltip="Reactivar Acceso" if not activo else "Bloquear Acceso",
+                                    icon_color="#10B981"
+                                    if not activo
+                                    else BADGE_RED_TXT,
+                                    tooltip="Reactivar Acceso"
+                                    if not activo
+                                    else "Bloquear Acceso",
                                     padding=0,
                                     on_click=toggle_estado,
                                 ),
@@ -309,7 +358,11 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 continue
             if estado["activo"] != "Todos" and activo_legible != estado["activo"]:
                 continue
-            if texto and texto not in f"{u.get('username', '')} {u.get('vinculacion', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{u.get('username', '')} {u.get('vinculacion', '')}".lower()
+            ):
                 continue
             resultado.append(u)
         return resultado
@@ -318,11 +371,16 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         visibles = usuarios_filtrados()
         table_holder.content = create_table_container(
             header=header_table,
-            rows=[usuario_row(u) for u in visibles] or [
+            rows=[usuario_row(u) for u in visibles]
+            or [
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay usuarios que coincidan con los filtros.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay usuarios que coincidan con los filtros.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
         )
@@ -376,7 +434,9 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
 
         ids_rol = {r.get("nombre"): r.get("id_rol") for r in estado["roles"]}
 
-        username_field = ft.TextField(label="Usuario *", hint_text="ej: jperez", width=380)
+        username_field = ft.TextField(
+            label="Usuario *", hint_text="ej: jperez", width=380
+        )
         password_field = ft.TextField(
             label="Contraseña *", password=True, can_reveal_password=True, width=380
         )
@@ -384,7 +444,10 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             label="Rol *",
             value="Alumno",
             width=380,
-            options=[ft.dropdown.Option(r) for r in ["Administrador", "Docente", "Padre / Tutor", "Alumno"]],
+            options=[
+                ft.dropdown.Option(r)
+                for r in ["Administrador", "Docente", "Padre / Tutor", "Alumno"]
+            ],
         )
         vinculo_field = ft.Dropdown(label="Vincular a", width=380, options=[])
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
@@ -443,7 +506,12 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
 
-            payload: dict = {"username": username, "password": password, "id_rol": id_rol, "activo": True}
+            payload: dict = {
+                "username": username,
+                "password": password,
+                "id_rol": id_rol,
+                "activo": True,
+            }
 
             vinculo = vinculo_field.value or ""
             if vinculo:
@@ -498,7 +566,9 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Usuario", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Usuario", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)

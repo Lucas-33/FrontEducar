@@ -1,10 +1,10 @@
 import flet as ft
+
 from frontend.app.components.constants import (
     BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
     MUTED,
-    ONLINE_GREEN,
     TEAL,
     TEAL_DARK,
     TEAL_LIGHT,
@@ -31,26 +31,62 @@ def portal_layout(
     if rol.lower() in ["padre", "familia", "tutor"]:
         items_menu = [
             ("Mis Hijos", "/portal/padre/dashboard", ft.Icons.FAMILY_RESTROOM_OUTLINED),
-            ("Inscripción Cursado", "/portal/padre/inscripcion", ft.Icons.APP_REGISTRATION_OUTLINED),
-            ("Deportes y Horarios", "/portal/padre/deportes", ft.Icons.FITNESS_CENTER_OUTLINED),
-            ("Comedor y Transporte", "/portal/padre/servicios", ft.Icons.RESTAURANT_OUTLINED),
-            ("Docentes de mis Hijos", "/portal/padre/docentes", ft.Icons.SCHOOL_OUTLINED),
+            (
+                "Inscripción Cursado",
+                "/portal/padre/inscripcion",
+                ft.Icons.APP_REGISTRATION_OUTLINED,
+            ),
+            (
+                "Deportes y Horarios",
+                "/portal/padre/deportes",
+                ft.Icons.FITNESS_CENTER_OUTLINED,
+            ),
+            (
+                "Comedor y Transporte",
+                "/portal/padre/servicios",
+                ft.Icons.RESTAURANT_OUTLINED,
+            ),
+            (
+                "Docentes de mis Hijos",
+                "/portal/padre/docentes",
+                ft.Icons.SCHOOL_OUTLINED,
+            ),
         ]
         portal_badge = "PORTAL FAMILIAS"
     elif rol.lower() in ["docente", "profesor"]:
         items_menu = [
             ("Mi Panel", "/portal/docente/dashboard", ft.Icons.DASHBOARD_OUTLINED),
-            ("Mis Cursos y Materias", "/portal/docente/materias", ft.Icons.MENU_BOOK_OUTLINED),
+            (
+                "Mis Cursos y Materias",
+                "/portal/docente/materias",
+                ft.Icons.MENU_BOOK_OUTLINED,
+            ),
             ("Nómina de Alumnos", "/portal/docente/alumnos", ft.Icons.PEOPLE_OUTLINE),
-            ("Deportes a Cargo", "/portal/docente/deportes", ft.Icons.FITNESS_CENTER_OUTLINED),
+            (
+                "Deportes a Cargo",
+                "/portal/docente/deportes",
+                ft.Icons.FITNESS_CENTER_OUTLINED,
+            ),
         ]
         portal_badge = "PORTAL DOCENTE"
     else:  # Alumno
         items_menu = [
             ("Mi Cursado", "/portal/alumno/dashboard", ft.Icons.SCHOOL_OUTLINED),
-            ("Materias y Profesores", "/portal/alumno/materias", ft.Icons.MENU_BOOK_OUTLINED),
-            ("Mis Deportes", "/portal/alumno/deportes", ft.Icons.FITNESS_CENTER_OUTLINED),
-            ("Comedor y Transporte", "/portal/alumno/servicios", ft.Icons.DIRECTIONS_BUS_OUTLINED),
+            (
+                "Materias y Profesores",
+                "/portal/alumno/materias",
+                ft.Icons.MENU_BOOK_OUTLINED,
+            ),
+            (
+                "Mis Deportes",
+                "/portal/alumno/deportes",
+                ft.Icons.FITNESS_CENTER_OUTLINED,
+            ),
+            (
+                "Comedor y Transporte",
+                "/portal/alumno/servicios",
+                ft.Icons.DIRECTIONS_BUS_OUTLINED,
+            ),
         ]
         portal_badge = "PORTAL ESTUDIANTE"
 
@@ -72,7 +108,9 @@ def portal_layout(
                         content=ft.Text(
                             texto,
                             size=14,
-                            weight=ft.FontWeight.W_600 if es_activo else ft.FontWeight.W_500,
+                            weight=ft.FontWeight.W_600
+                            if es_activo
+                            else ft.FontWeight.W_500,
                             color=TEAL_DARK if es_activo else TEXT_COLOR,
                         ),
                     ),
@@ -103,8 +141,15 @@ def portal_layout(
                 spacing=2,
                 alignment=ft.MainAxisAlignment.CENTER,
                 controls=[
-                    ft.Text("Educar para Transformar", size=14, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                    ft.Text(portal_badge, size=10, weight=ft.FontWeight.W_600, color=MUTED),
+                    ft.Text(
+                        "Educar para Transformar",
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEAL_DARK,
+                    ),
+                    ft.Text(
+                        portal_badge, size=10, weight=ft.FontWeight.W_600, color=MUTED
+                    ),
                 ],
             ),
         ],
@@ -137,7 +182,12 @@ def portal_layout(
                         spacing=10,
                         controls=[
                             ft.Icon(ft.Icons.LOGOUT, size=16, color="#EF4444"),
-                            ft.Text("Cerrar Sesión", size=13, weight=ft.FontWeight.W_600, color="#EF4444"),
+                            ft.Text(
+                                "Cerrar Sesión",
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color="#EF4444",
+                            ),
                         ],
                     ),
                 ),
@@ -166,7 +216,11 @@ def portal_layout(
                             bgcolor=TEAL_LIGHT,
                             border_radius=18,
                             alignment=ft.Alignment(0, 0),
-                            content=ft.Icon(ft.Icons.NOTIFICATIONS_NONE_OUTLINED, size=18, color=TEAL),
+                            content=ft.Icon(
+                                ft.Icons.NOTIFICATIONS_NONE_OUTLINED,
+                                size=18,
+                                color=TEAL,
+                            ),
                         ),
                         ft.Row(
                             spacing=10,
@@ -178,13 +232,23 @@ def portal_layout(
                                     bgcolor=TEAL,
                                     border_radius=18,
                                     alignment=ft.Alignment(0, 0),
-                                    content=ft.Text(usuario_nombre[:2].upper(), size=13, weight=ft.FontWeight.BOLD, color="white"),
+                                    content=ft.Text(
+                                        usuario_nombre[:2].upper(),
+                                        size=13,
+                                        weight=ft.FontWeight.BOLD,
+                                        color="white",
+                                    ),
                                 ),
                                 ft.Column(
                                     spacing=1,
                                     alignment=ft.MainAxisAlignment.CENTER,
                                     controls=[
-                                        ft.Text(usuario_nombre, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                                        ft.Text(
+                                            usuario_nombre,
+                                            size=13,
+                                            weight=ft.FontWeight.W_600,
+                                            color=TEXT_COLOR,
+                                        ),
                                         ft.Text(usuario_sub, size=11, color=MUTED),
                                     ],
                                 ),

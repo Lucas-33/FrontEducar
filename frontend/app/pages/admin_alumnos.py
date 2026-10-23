@@ -1,5 +1,6 @@
 import flet as ft
 import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -78,7 +79,9 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nuevo Alumno", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nuevo Alumno", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -99,8 +102,21 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     search_input,
-                    filtro_dropdown("Nivel: Todos", 140, ["Todos", "Nivel Inicial", "Nivel Primario", "Nivel Secundario"]),
-                    filtro_dropdown("Curso: Todos", 140, ["Todos", "Sala 5", "1er Grado", "4to Grado", "5to Año"]),
+                    filtro_dropdown(
+                        "Nivel: Todos",
+                        140,
+                        [
+                            "Todos",
+                            "Nivel Inicial",
+                            "Nivel Primario",
+                            "Nivel Secundario",
+                        ],
+                    ),
+                    filtro_dropdown(
+                        "Curso: Todos",
+                        140,
+                        ["Todos", "Sala 5", "1er Grado", "4to Grado", "5to Año"],
+                    ),
                 ],
             ),
             btn_nuevo_alumno,
@@ -162,13 +178,36 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=90, content=ft.Text(legajo, size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=110, content=ft.Text(dni, size=13, color=TEXT_COLOR)),
-                    ft.Container(width=130, content=ft.Text(apellido, size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=140, content=ft.Text(nombre, size=14, color=TEXT_COLOR)),
-                    ft.Container(width=120, content=ft.Text(curso, size=13, color=TEAL)),
-                    ft.Container(width=120, content=ft.Text(telefono, size=13, color=TEXT_COLOR)),
-                    ft.Container(width=210, content=ft.Text(correo, size=13, color=MUTED)),
+                    ft.Container(
+                        width=90,
+                        content=ft.Text(
+                            legajo, size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK
+                        ),
+                    ),
+                    ft.Container(
+                        width=110, content=ft.Text(dni, size=13, color=TEXT_COLOR)
+                    ),
+                    ft.Container(
+                        width=130,
+                        content=ft.Text(
+                            apellido,
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=140, content=ft.Text(nombre, size=14, color=TEXT_COLOR)
+                    ),
+                    ft.Container(
+                        width=120, content=ft.Text(curso, size=13, color=TEAL)
+                    ),
+                    ft.Container(
+                        width=120, content=ft.Text(telefono, size=13, color=TEXT_COLOR)
+                    ),
+                    ft.Container(
+                        width=210, content=ft.Text(correo, size=13, color=MUTED)
+                    ),
                     ft.Container(width=95, content=status_badge(estado_texto)),
                     ft.Container(
                         width=80,
@@ -218,13 +257,19 @@ async def get_admin_alumnos_view(page: ft.Page) -> ft.Row:
             ft.Container(
                 padding=24,
                 alignment=ft.Alignment(0, 0),
-                content=ft.Text("No se encontraron alumnos registrados en la base de datos.", size=13, color=MUTED),
+                content=ft.Text(
+                    "No se encontraron alumnos registrados en la base de datos.",
+                    size=13,
+                    color=MUTED,
+                ),
             )
         ]
         info_paginador = "Mostrando 0 registros"
     else:
         filas_tabla = [alumno_row(a) for a in alumnos_data]
-        info_paginador = f"Mostrando {len(alumnos_data)} alumnos registrados en la base de datos"
+        info_paginador = (
+            f"Mostrando {len(alumnos_data)} alumnos registrados en la base de datos"
+        )
 
     table_container = create_table_container(
         header=header_table,
