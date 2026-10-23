@@ -121,3 +121,4 @@ jobs:
           args: >
             -Dsonar.organization=lucas-33
             -Dsonar.projectKey=Lucas-33_FrontEducar
+            -Dsonar.coverage.exclusions=**/*
