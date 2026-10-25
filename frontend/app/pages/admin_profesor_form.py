@@ -10,20 +10,14 @@ from frontend.app.components.constants import (
     BORDER_COLOR,
     BORDER_RADIUS,
     CARD_RADIUS,
+    CONTROL_HEIGHT,
     MUTED,
     TEAL,
     TEAL_DARK,
     TEXT_COLOR,
 )
-from frontend.app.components.form_controls import dropdown_con_label, input_con_label
 
-# El backend (y la BD) espera los estados en mayúsculas
 ESTADO_API = {"Activo": "ACTIVO", "Licencia": "LICENCIA", "Inactivo": "INACTIVO"}
-
-
-def _valor(campo: ft.Column) -> str:
-    """Extrae el valor del control interno de input_con_label / dropdown_con_label."""
-    return (campo.controls[1].content.value or "").strip()
 
 
 async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
@@ -38,18 +32,126 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== CAMPOS DEL FORMULARIO ====================
-    campo_legajo = input_con_label("Legajo *", "Ej: 2005")
-    campo_dni = input_con_label("DNI *", "Ej: 32.400.912")
-    campo_nombres = input_con_label("Nombres *", "Ej: Guillermina")
-    campo_apellidos = input_con_label("Apellidos *", "Ej: Sánchez")
-    campo_especialidad = input_con_label(
-        "Especialidad Principal *", "Ej: Matemática Aplicada, Álgebra"
+    dni_field = ft.TextField(
+        hint_text="Ej: 32400912",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"^[0-9]*$"),
     )
-    campo_estado = dropdown_con_label(
-        "Estado de Contrato *", "Activo", ["Activo", "Licencia", "Inactivo"]
+
+    nombres_field = ft.TextField(
+        hint_text="Ej: Guillermina",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.NAME,
+        input_filter=ft.InputFilter(
+            allow=True, regex_string=r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'\-]*$"
+        ),
     )
-    campo_correo = input_con_label("Correo Laboral *", "ejemplo@educar.edu.ar")
-    campo_telefono = input_con_label("Teléfono Particular *", "3624-XXXXXX")
+
+    apellidos_field = ft.TextField(
+        hint_text="Ej: Sánchez",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.NAME,
+        input_filter=ft.InputFilter(
+            allow=True, regex_string=r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'\-]*$"
+        ),
+    )
+
+    especialidad_field = ft.TextField(
+        hint_text="Ej: Matemática Aplicada, Álgebra",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.TEXT,
+    )
+
+    correo_field = ft.TextField(
+        hint_text="ejemplo@educar.edu.ar",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.EMAIL,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"^[a-zA-Z0-9_.@\-]*$"),
+    )
+
+    telefono_field = ft.TextField(
+        hint_text="3624-XXXXXX",
+        hint_style=ft.TextStyle(size=14, color=MUTED),
+        text_size=14,
+        color=TEXT_COLOR,
+        bgcolor=BG_WHITE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 10, 12, 10),
+        height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.PHONE,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"^[0-9\-\+\s]*$"),
+    )
+
+    estado_dropdown = ft.Dropdown(
+        value="Activo",
+        text_size=13,
+        options=[
+            ft.dropdown.Option("Activo"),
+            ft.dropdown.Option("Licencia"),
+            ft.dropdown.Option("Inactivo"),
+        ],
+        bgcolor=TEAL_DARK,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        content_padding=ft.Padding(12, 0, 8, 12),
+        height=CONTROL_HEIGHT,
+    )
+
+    def envolver_campo(
+        label: str, control: ft.Control, expand: bool = True
+    ) -> ft.Column:
+        return ft.Column(
+            spacing=6,
+            expand=expand,
+            controls=[
+                ft.Text(label, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                control,
+            ],
+        )
 
     # ==================== 1. ENCABEZADO DE ACCIONES ====================
     btn_guardar = ft.Button(
@@ -68,33 +170,22 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
         feedback_text.visible = False
         page.update()
 
-        legajo = _valor(campo_legajo)
-        dni = _valor(campo_dni)
-        nombres = _valor(campo_nombres)
-        apellidos = _valor(campo_apellidos)
-        especialidad = _valor(campo_especialidad)
-        estado = (campo_estado.controls[1].content.value or "Activo").strip()
-        correo = _valor(campo_correo)
-        telefono = _valor(campo_telefono)
+        dni = (dni_field.value or "").strip()
+        nombres = (nombres_field.value or "").strip()
+        apellidos = (apellidos_field.value or "").strip()
+        especialidad = (especialidad_field.value or "").strip()
+        correo = (correo_field.value or "").strip()
+        telefono = (telefono_field.value or "").strip()
+        estado = (estado_dropdown.value or "Activo").strip()
 
-        if not all([legajo, dni, nombres, apellidos, especialidad, correo, telefono]):
-            feedback_text.value = "⚠️ Legajo, DNI, Nombres, Apellidos, Especialidad, Correo y Teléfono son obligatorios."
-            feedback_text.color = BADGE_RED_TXT
-            feedback_text.visible = True
-            page.update()
-            return
-
-        try:
-            legajo_int = int(legajo)
-        except ValueError:
-            feedback_text.value = "⚠️ El legajo debe ser un número entero."
+        if not all([dni, nombres, apellidos, especialidad, correo, telefono]):
+            feedback_text.value = "⚠️ DNI, Nombres, Apellidos, Especialidad, Correo y Teléfono son obligatorios."
             feedback_text.color = BADGE_RED_TXT
             feedback_text.visible = True
             page.update()
             return
 
         payload = {
-            "legajo": legajo_int,
             "dni": dni,
             "nombre": nombres,
             "apellido": apellidos,
@@ -222,19 +313,35 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                     controls=[
                         ft.Row(
                             spacing=16,
-                            controls=[campo_legajo, campo_dni],
+                            controls=[
+                                envolver_campo("DNI *", dni_field),
+                                envolver_campo("Nombres *", nombres_field),
+                            ],
                         ),
                         ft.Row(
                             spacing=16,
-                            controls=[campo_nombres, campo_apellidos],
+                            controls=[
+                                envolver_campo("Apellidos *", apellidos_field),
+                                envolver_campo(
+                                    "Especialidad Principal *", especialidad_field
+                                ),
+                            ],
                         ),
                         ft.Row(
                             spacing=16,
-                            controls=[campo_especialidad, campo_estado],
+                            controls=[
+                                envolver_campo("Correo Laboral *", correo_field),
+                                envolver_campo("Teléfono Particular *", telefono_field),
+                            ],
                         ),
                         ft.Row(
                             spacing=16,
-                            controls=[campo_correo, campo_telefono],
+                            controls=[
+                                envolver_campo("Estado de Contrato *", estado_dropdown),
+                                ft.Container(
+                                    expand=True
+                                ),  # Placeholder para mantener simetría
+                            ],
                         ),
                     ],
                 ),
@@ -278,11 +385,21 @@ async def get_admin_profesor_form_view(page: ft.Page) -> ft.Row:
                     bgcolor=BG_PAGE,
                     border_radius=BORDER_RADIUS,
                     padding=16,
-                    content=ft.Text(
-                        "Guarde el docente y luego asigne materias y cursos desde el módulo "
-                        '"Materias" (botón "Asignar Materia").',
-                        size=13,
-                        color=MUTED,
+                    content=ft.Column(
+                        spacing=8,
+                        controls=[
+                            ft.Text(
+                                "El legajo será asignado automáticamente por el sistema al guardar.",
+                                size=13,
+                                color=MUTED,
+                            ),
+                            ft.Text(
+                                "Guarde el docente y luego asigne materias y cursos desde el módulo "
+                                '"Materias" (botón "Asignar Materia").',
+                                size=13,
+                                color=MUTED,
+                            ),
+                        ],
                     ),
                 ),
             ],

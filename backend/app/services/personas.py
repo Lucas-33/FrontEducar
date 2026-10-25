@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from backend.app.models.personas import Alumno
+from backend.app.models.personas import Alumno, Profesor
 from backend.app.repositories import (
     alumno_repository,
     curso_repository,
@@ -88,11 +88,11 @@ class PersonasService:
         return profesor
 
     def create_profesor(self, db: Session, profesor_in: ProfesorCreate):
-        if profesor_repository.get_by_legajo(db, profesor_in.legajo):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un profesor con legajo '{profesor_in.legajo}'",
-            )
+        # 1. Autogeneración estricta y obligatoria del legajo
+        max_legajo = db.query(func.max(Profesor.legajo)).scalar()
+        profesor_in.legajo = (max_legajo or 999) + 1
+
+        # 2. Validaciones estándar
         if profesor_repository.get_by_dni(db, profesor_in.dni):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
