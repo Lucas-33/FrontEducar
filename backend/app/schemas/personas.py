@@ -18,7 +18,7 @@ class AlumnoBase(BaseModel):
 
 
 class AlumnoCreate(AlumnoBase):
-    pass
+    legajo: int | None = None  # Permite que llegue vacío desde el frontend
 
 
 class AlumnoUpdate(BaseModel):
@@ -49,7 +49,7 @@ class ProfesorBase(BaseModel):
 
 
 class ProfesorCreate(ProfesorBase):
-    pass
+    legajo: int | None = None  # Permite que llegue vacío desde el frontend
 
 
 class ProfesorUpdate(BaseModel):
