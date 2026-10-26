@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_WHITE,
@@ -88,7 +89,9 @@ def create_sidebar(
                         content=ft.Text(
                             texto,
                             size=14,
-                            weight=ft.FontWeight.W_600 if es_activo else ft.FontWeight.W_500,
+                            weight=ft.FontWeight.W_600
+                            if es_activo
+                            else ft.FontWeight.W_500,
                             color=TEAL_DARK if es_activo else TEXT_COLOR,
                         ),
                     ),
@@ -146,8 +149,18 @@ def create_sidebar(
                             spacing=1,
                             alignment=ft.MainAxisAlignment.CENTER,
                             controls=[
-                                ft.Text("Educar SGE", size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                                ft.Text("GESTIÓN", size=10, weight=ft.FontWeight.W_600, color=MUTED),
+                                ft.Text(
+                                    "Educar SGE",
+                                    size=15,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=TEAL_DARK,
+                                ),
+                                ft.Text(
+                                    "GESTIÓN",
+                                    size=10,
+                                    weight=ft.FontWeight.W_600,
+                                    color=MUTED,
+                                ),
                             ],
                         ),
                     ],
@@ -166,8 +179,12 @@ def create_sidebar(
         spacing=6,
         scroll=ft.ScrollMode.AUTO,
         expand=True,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER if collapsed else ft.CrossAxisAlignment.START,
-        controls=[item_sidebar(texto, ruta, icono) for texto, ruta, icono in items_menu],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        if collapsed
+        else ft.CrossAxisAlignment.START,
+        controls=[
+            item_sidebar(texto, ruta, icono) for texto, ruta, icono in items_menu
+        ],
     )
 
     if collapsed:
@@ -237,7 +254,9 @@ def create_sidebar(
                     spacing=8,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
-                        ft.Container(width=8, height=8, bgcolor=ONLINE_GREEN, border_radius=4),
+                        ft.Container(
+                            width=8, height=8, bgcolor=ONLINE_GREEN, border_radius=4
+                        ),
                         ft.Text("Servidor Online", size=12, color=MUTED),
                     ],
                 ),
@@ -253,7 +272,9 @@ def create_sidebar(
         padding=ft.Padding(12 if collapsed else 16, 20, 12 if collapsed else 16, 20),
         content=ft.Column(
             spacing=16,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER if collapsed else ft.CrossAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            if collapsed
+            else ft.CrossAxisAlignment.START,
             controls=[
                 brand_section,
                 ft.Divider(color=BORDER_COLOR, height=1, thickness=1),

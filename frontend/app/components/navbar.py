@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.components.constants import (
     BG_WHITE,
     BORDER_COLOR,
@@ -50,13 +51,20 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
                                 bgcolor=TEAL,
                                 border_radius=20,
                                 alignment=ft.Alignment(0, 0),
-                                content=ft.Icon(ft.Icons.SCHOOL, color="white", size=22),
+                                content=ft.Icon(
+                                    ft.Icons.SCHOOL, color="white", size=22
+                                ),
                             ),
                             ft.Column(
                                 spacing=0,
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 controls=[
-                                    ft.Text("Educar para Transformar", weight=ft.FontWeight.BOLD, size=18, color=TEAL_DARK),
+                                    ft.Text(
+                                        "Educar para Transformar",
+                                        weight=ft.FontWeight.BOLD,
+                                        size=18,
+                                        color=TEAL_DARK,
+                                    ),
                                     ft.Text("RESISTENCIA · K-12", size=11, color=MUTED),
                                 ],
                             ),
@@ -80,7 +88,9 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
                             bgcolor=TEAL_LIGHT,
                             color=TEAL_DARK,
                             elevation=0,
-                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+                            style=ft.ButtonStyle(
+                                shape=ft.RoundedRectangleBorder(radius=8)
+                            ),
                             on_click=lambda _: navegar("/portal"),
                         ),
                     ],

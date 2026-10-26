@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
@@ -40,14 +41,18 @@ def _badge_estado(activo: bool, con_registro: bool) -> ft.Container:
             padding=ft.Padding(8, 4, 8, 4),
             bgcolor=BADGE_GREEN_BG,
             border_radius=4,
-            content=ft.Text("Activo", size=12, weight=ft.FontWeight.W_600, color=BADGE_GREEN_TXT),
+            content=ft.Text(
+                "Activo", size=12, weight=ft.FontWeight.W_600, color=BADGE_GREEN_TXT
+            ),
         )
     if con_registro:
         return ft.Container(
             padding=ft.Padding(8, 4, 8, 4),
             bgcolor="#FEEBEB",
             border_radius=4,
-            content=ft.Text("Inactivo", size=12, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT),
+            content=ft.Text(
+                "Inactivo", size=12, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT
+            ),
         )
     return ft.Container(
         padding=ft.Padding(8, 4, 8, 4),
@@ -75,7 +80,9 @@ def _estado_vacio(titulo: str, mensaje: str) -> ft.Container:
                     bgcolor=TEAL_LIGHT,
                     border_radius=28,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Icon(ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK),
+                    content=ft.Icon(
+                        ft.Icons.PERSON_OFF_OUTLINED, size=26, color=TEAL_DARK
+                    ),
                 ),
                 ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
                 ft.Text(mensaje, size=14, color=MUTED, text_align=ft.TextAlign.CENTER),
@@ -205,28 +212,43 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
         None,
     )
     nivel = next(
-        (n for n in estado["niveles"] if curso and n.get("id_nivel") == curso.get("id_nivel")),
+        (
+            n
+            for n in estado["niveles"]
+            if curso and n.get("id_nivel") == curso.get("id_nivel")
+        ),
         None,
     )
 
     nombre_curso = curso.get("nombre") if curso else "Curso sin asignar"
     nombre_nivel = nivel.get("nombre") if nivel else "Sin nivel"
-    nombre_completo = f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    nombre_completo = (
+        f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip() or "Alumno"
+    )
     iniciales = (
-        f"{alumno.get('nombre', '')[:1]}{alumno.get('apellido', '')[:1]}".upper() or "AL"
+        f"{alumno.get('nombre', '')[:1]}{alumno.get('apellido', '')[:1]}".upper()
+        or "AL"
     )
     estado_alumno = (alumno.get("estado_alumno") or "-").strip().upper()
     matricula_regular = estado_alumno == "ACTIVO"
 
     asignaciones_curso = [
-        a for a in estado["asignaciones"] if curso and a.get("id_curso") == curso.get("id_curso")
+        a
+        for a in estado["asignaciones"]
+        if curso and a.get("id_curso") == curso.get("id_curso")
     ]
     materias_unicas = {a.get("id_materia") for a in asignaciones_curso}
 
     inscripciones_deporte = estado["inscripciones_deporte"]
     nombres_deportes = sorted({i.get("deporte", "-") for i in inscripciones_deporte})
-    transporte = estado["inscripciones_transporte"][0] if estado["inscripciones_transporte"] else None
-    comedor = estado["inscripciones_comedor"][0] if estado["inscripciones_comedor"] else None
+    transporte = (
+        estado["inscripciones_transporte"][0]
+        if estado["inscripciones_transporte"]
+        else None
+    )
+    comedor = (
+        estado["inscripciones_comedor"][0] if estado["inscripciones_comedor"] else None
+    )
     transporte_activo = bool(transporte) and _esta_activo(transporte.get("estado"))
     comedor_activo = bool(comedor) and _esta_activo(comedor.get("estado"))
     servicios_activos = int(transporte_activo) + int(comedor_activo)
@@ -250,7 +272,10 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                             border_radius=27,
                             alignment=ft.Alignment(0, 0),
                             content=ft.Text(
-                                iniciales, size=20, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                                iniciales,
+                                size=20,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
                             ),
                         ),
                         ft.Column(
@@ -276,7 +301,9 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                     border_radius=BORDER_RADIUS,
                     padding=ft.Padding(12, 6, 12, 6),
                     content=ft.Text(
-                        "MATRÍCULA REGULAR" if matricula_regular else f"MATRÍCULA {estado_alumno}",
+                        "MATRÍCULA REGULAR"
+                        if matricula_regular
+                        else f"MATRÍCULA {estado_alumno}",
                         size=11,
                         weight=ft.FontWeight.BOLD,
                         color=BG_WHITE,
@@ -302,7 +329,9 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            ft.Text(titulo, size=11, weight=ft.FontWeight.W_600, color=MUTED),
+                            ft.Text(
+                                titulo, size=11, weight=ft.FontWeight.W_600, color=MUTED
+                            ),
                             ft.Container(
                                 width=32,
                                 height=32,
@@ -316,7 +345,12 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(valor, size=24, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                valor,
+                                size=24,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(subtitulo, size=11, color=MUTED),
                         ],
                     ),
@@ -349,7 +383,9 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
             kpi_alumno(
                 "DEPORTES INSCRIPTOS",
                 str(len(inscripciones_deporte)),
-                ", ".join(nombres_deportes) if nombres_deportes else "Sin inscripciones",
+                ", ".join(nombres_deportes)
+                if nombres_deportes
+                else "Sin inscripciones",
                 ft.Icons.FITNESS_CENTER_OUTLINED,
                 BADGE_GREEN_BG,
             ),
@@ -378,7 +414,9 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                     ft.Row(
                         spacing=12,
                         controls=[
-                            ft.Container(width=4, height=36, border_radius=2, bgcolor=color_barra),
+                            ft.Container(
+                                width=4, height=36, border_radius=2, bgcolor=color_barra
+                            ),
                             ft.Column(
                                 spacing=2,
                                 controls=[
@@ -431,7 +469,9 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
                 ),
                 None,
             )
-            detalle = f"Inscripto el {_fecha_corta(inscripcion.get('fecha_inscripcion'))}"
+            detalle = (
+                f"Inscripto el {_fecha_corta(inscripcion.get('fecha_inscripcion'))}"
+            )
             if grupo and grupo.get("horario"):
                 detalle = f"{grupo['horario']} · {detalle}"
             items_resumen.append(
@@ -488,7 +528,9 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
     if transporte_activo:
         servicios_habilitados.append("Traslado")
     if servicios_habilitados:
-        texto_habilitacion = "Habilitado para: " + ", ".join(servicios_habilitados) + "."
+        texto_habilitacion = (
+            "Habilitado para: " + ", ".join(servicios_habilitados) + "."
+        )
     else:
         texto_habilitacion = "Sin servicios activos registrados (comedor o traslado)."
 

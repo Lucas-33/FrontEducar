@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BG_PAGE_ALT,
@@ -12,14 +13,26 @@ from frontend.app.components.constants import (
     ORANGE,
     TEAL,
     TEAL_DARK,
-    TEAL_LIGHT,
     TEXT_COLOR,
 )
 
 
 def _fecha_legible(iso: str | None) -> str:
     """Convierte una fecha ISO (2026-10-18) al formato '18 Oct, 2026'."""
-    meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    meses = [
+        "Ene",
+        "Feb",
+        "Mar",
+        "Abr",
+        "May",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dic",
+    ]
     if not iso:
         return ""
     partes = str(iso)[:10].split("-")
@@ -37,9 +50,27 @@ async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
 
     # 1. TESTIMONIOS APROBADOS DESDE LA API (con respaldo de ejemplo si no hay ninguno)
     testimonios_data = [
-        {"nombre": "Carolina Ferreyra", "relacion": "Madre Nivel Primario", "estrellas": 5, "fecha": "04 Oct, 2026", "opinion": "La infraestructura deportiva y el natatorio climatizado son únicos en Resistencia. Mis dos hijos van felices y la jornada extendida les permite aprovechar cada minuto."},
-        {"nombre": "Prof. Roberto Zampa", "relacion": "Docente Universitario", "estrellas": 5, "fecha": "28 Sep, 2026", "opinion": "El enfoque trilingüe y los laboratorios de ciencias marcan una diferencia notable en el nivel pedagógico con el que egresan los estudiantes secundarios."},
-        {"nombre": "Mariana Gómez", "relacion": "Madre Nivel Inicial", "estrellas": 5, "fecha": "15 Sep, 2026", "opinion": "Excelente servicio de comedor y gabinete psicopedagógico. La adaptación en sala de 4 años fue sumamente cálida y personalizada por parte de las maestras."},
+        {
+            "nombre": "Carolina Ferreyra",
+            "relacion": "Madre Nivel Primario",
+            "estrellas": 5,
+            "fecha": "04 Oct, 2026",
+            "opinion": "La infraestructura deportiva y el natatorio climatizado son únicos en Resistencia. Mis dos hijos van felices y la jornada extendida les permite aprovechar cada minuto.",
+        },
+        {
+            "nombre": "Prof. Roberto Zampa",
+            "relacion": "Docente Universitario",
+            "estrellas": 5,
+            "fecha": "28 Sep, 2026",
+            "opinion": "El enfoque trilingüe y los laboratorios de ciencias marcan una diferencia notable en el nivel pedagógico con el que egresan los estudiantes secundarios.",
+        },
+        {
+            "nombre": "Mariana Gómez",
+            "relacion": "Madre Nivel Inicial",
+            "estrellas": 5,
+            "fecha": "15 Sep, 2026",
+            "opinion": "Excelente servicio de comedor y gabinete psicopedagógico. La adaptación en sala de 4 años fue sumamente cálida y personalizada por parte de las maestras.",
+        },
     ]
 
     try:
@@ -72,16 +103,28 @@ async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            ft.Row([ft.Icon(ft.Icons.STAR, size=16, color=ORANGE) for _ in range(t["estrellas"])]),
+                            ft.Row(
+                                [
+                                    ft.Icon(ft.Icons.STAR, size=16, color=ORANGE)
+                                    for _ in range(t["estrellas"])
+                                ]
+                            ),
                             ft.Text(t["fecha"], size=12, color=MUTED),
                         ],
                     ),
-                    ft.Text(f'"{t["opinion"]}"', size=14, color=TEXT_COLOR, italic=True),
+                    ft.Text(
+                        f'"{t["opinion"]}"', size=14, color=TEXT_COLOR, italic=True
+                    ),
                     ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(t["nombre"], size=14, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                t["nombre"],
+                                size=14,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(t["relacion"], size=12, color=MUTED),
                         ],
                     ),
@@ -131,7 +174,9 @@ async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
 
     async def enviar_opinion(e):
         if not nombre_input.value or not opinion_input.value:
-            alerta_mensaje.value = "Por favor, complete su nombre y comentario antes de enviar."
+            alerta_mensaje.value = (
+                "Por favor, complete su nombre y comentario antes de enviar."
+            )
             alerta_mensaje.color = "#EF4444"
             alerta_mensaje.update()
             return
@@ -145,12 +190,16 @@ async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
         try:
             await api_client.crear_opinion(payload)
         except httpx.HTTPStatusError:
-            alerta_mensaje.value = "Revise los datos ingresados (nombre y comentario son obligatorios)."
+            alerta_mensaje.value = (
+                "Revise los datos ingresados (nombre y comentario son obligatorios)."
+            )
             alerta_mensaje.color = "#EF4444"
             alerta_mensaje.update()
             return
         except Exception:
-            alerta_mensaje.value = "No se pudo conectar con el servidor. Intente nuevamente."
+            alerta_mensaje.value = (
+                "No se pudo conectar con el servidor. Intente nuevamente."
+            )
             alerta_mensaje.color = "#EF4444"
             alerta_mensaje.update()
             return
@@ -169,15 +218,66 @@ async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
         content=ft.Column(
             spacing=20,
             controls=[
-                ft.Text("Dejar una Opinión Pública", size=22, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                ft.Text("Los visitantes pueden compartir su experiencia con el centro educativo sin necesidad de registrarse ni iniciar sesión.", size=13, color=MUTED),
+                ft.Text(
+                    "Dejar una Opinión Pública",
+                    size=22,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
+                ft.Text(
+                    "Los visitantes pueden compartir su experiencia con el centro educativo sin necesidad de registrarse ni iniciar sesión.",
+                    size=13,
+                    color=MUTED,
+                ),
                 ft.ResponsiveRow(
                     columns=12,
                     spacing=16,
                     controls=[
-                        ft.Container(col={"sm": 12, "md": 6}, content=ft.Column([ft.Text("Su Nombre Completo *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR), nombre_input], spacing=6)),
-                        ft.Container(col={"sm": 12, "md": 6}, content=ft.Column([ft.Text("Vínculo con la Escuela", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR), rol_dropdown], spacing=6)),
-                        ft.Container(col={"sm": 12}, content=ft.Column([ft.Text("Su Opinión o Comentario *", size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR), opinion_input], spacing=6)),
+                        ft.Container(
+                            col={"sm": 12, "md": 6},
+                            content=ft.Column(
+                                [
+                                    ft.Text(
+                                        "Su Nombre Completo *",
+                                        size=13,
+                                        weight=ft.FontWeight.W_600,
+                                        color=TEXT_COLOR,
+                                    ),
+                                    nombre_input,
+                                ],
+                                spacing=6,
+                            ),
+                        ),
+                        ft.Container(
+                            col={"sm": 12, "md": 6},
+                            content=ft.Column(
+                                [
+                                    ft.Text(
+                                        "Vínculo con la Escuela",
+                                        size=13,
+                                        weight=ft.FontWeight.W_600,
+                                        color=TEXT_COLOR,
+                                    ),
+                                    rol_dropdown,
+                                ],
+                                spacing=6,
+                            ),
+                        ),
+                        ft.Container(
+                            col={"sm": 12},
+                            content=ft.Column(
+                                [
+                                    ft.Text(
+                                        "Su Opinión o Comentario *",
+                                        size=13,
+                                        weight=ft.FontWeight.W_600,
+                                        color=TEXT_COLOR,
+                                    ),
+                                    opinion_input,
+                                ],
+                                spacing=6,
+                            ),
+                        ),
                     ],
                 ),
                 alerta_mensaje,
@@ -186,7 +286,9 @@ async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
                     bgcolor=TEAL,
                     color=BG_WHITE,
                     height=CONTROL_HEIGHT,
-                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                    ),
                     on_click=enviar_opinion,
                 ),
             ],
@@ -204,9 +306,26 @@ async def get_opiniones_view(page: ft.Page) -> list[ft.Control]:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=8,
                     controls=[
-                        ft.Text("COMUNIDAD EDUCATIVA", size=13, weight=ft.FontWeight.BOLD, color=ORANGE, text_align=ft.TextAlign.CENTER),
-                        ft.Text("Opiniones y Testimonios", size=36, weight=ft.FontWeight.BOLD, color=TEAL_DARK, text_align=ft.TextAlign.CENTER),
-                        ft.Text("Conozca la voz de las familias, docentes y vecinos que forman parte de Educar para Transformar.", size=15, color=MUTED, text_align=ft.TextAlign.CENTER),
+                        ft.Text(
+                            "COMUNIDAD EDUCATIVA",
+                            size=13,
+                            weight=ft.FontWeight.BOLD,
+                            color=ORANGE,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.Text(
+                            "Opiniones y Testimonios",
+                            size=36,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEAL_DARK,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.Text(
+                            "Conozca la voz de las familias, docentes y vecinos que forman parte de Educar para Transformar.",
+                            size=15,
+                            color=MUTED,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
                     ],
                 ),
                 ft.ResponsiveRow(

@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
@@ -106,7 +107,9 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
         asignaciones = []
         hubo_error = True
     ids_cursos = {
-        a.get("id_curso") for a in asignaciones if a.get("legajo_profesor") == legajo_docente
+        a.get("id_curso")
+        for a in asignaciones
+        if a.get("legajo_profesor") == legajo_docente
     }
 
     try:
@@ -123,7 +126,10 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
         hubo_error = True
     estado["cursos"] = [c for c in cursos if c.get("id_curso") in ids_cursos]
 
-    nombre_curso = {c.get("id_curso"): c.get("nombre") or f"Curso {c.get('id_curso')}" for c in estado["cursos"]}
+    nombre_curso = {
+        c.get("id_curso"): c.get("nombre") or f"Curso {c.get('id_curso')}"
+        for c in estado["cursos"]
+    }
     for id_curso in ids_cursos:
         nombre_curso.setdefault(id_curso, f"Curso {id_curso}")
 
@@ -176,7 +182,9 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
 
     opciones_cursos = ["Todos"] + sorted(nombre_curso.values())
     filtro_curso_container = filtro_dropdown("Curso: Todos", 200, opciones_cursos)
-    filtro_estado_container = filtro_dropdown("Estado: Todos", 160, ["Todos", "Activo", "Inactivo"])
+    filtro_estado_container = filtro_dropdown(
+        "Estado: Todos", 160, ["Todos", "Activo", "Inactivo"]
+    )
     filtro_curso_dropdown: ft.Dropdown = filtro_curso_container.content
     filtro_estado_dropdown: ft.Dropdown = filtro_estado_container.content
 
@@ -186,7 +194,9 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.SYNC, size=16, color=BG_WHITE),
-                ft.Text("Actualizar", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Actualizar", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -204,14 +214,20 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
             ft.Row(
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[search_input, filtro_curso_container, filtro_estado_container],
+                controls=[
+                    search_input,
+                    filtro_curso_container,
+                    filtro_estado_container,
+                ],
             ),
             btn_actualizar,
         ],
     )
 
     aviso_error = ft.Text(
-        "⚠️ Algunos datos de la nómina no se pudieron cargar desde el backend." if hubo_error else "",
+        "⚠️ Algunos datos de la nómina no se pudieron cargar desde el backend."
+        if hubo_error
+        else "",
         size=13,
         weight=ft.FontWeight.W_600,
         color=BADGE_RED_TXT,
@@ -268,12 +284,17 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
                     ),
                     ft.Container(
                         width=190,
-                        content=ft.Text(item.get("nombre") or "-", size=14, color=TEXT_COLOR),
+                        content=ft.Text(
+                            item.get("nombre") or "-", size=14, color=TEXT_COLOR
+                        ),
                     ),
                     ft.Container(
                         width=180,
                         content=ft.Text(
-                            nombre_curso.get(item.get("id_curso"), f"Curso {item.get('id_curso', '-')}"),
+                            nombre_curso.get(
+                                item.get("id_curso"),
+                                f"Curso {item.get('id_curso', '-')}",
+                            ),
                             size=13,
                             color=MUTED,
                         ),
@@ -304,7 +325,9 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
         if estado["alumnos"]:
             mensaje_vacio = "No hay alumnos que coincidan con los filtros."
         else:
-            mensaje_vacio = "No hay alumnos registrados en los cursos asignados a su legajo."
+            mensaje_vacio = (
+                "No hay alumnos registrados en los cursos asignados a su legajo."
+            )
         table_holder.content = create_table_container(
             header=header_table,
             rows=[alumno_row(a) for a in visibles]
@@ -331,12 +354,18 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
         try:
             asignaciones = await api_client.get_asignaciones()
             ids_cursos_actuales = {
-                a.get("id_curso") for a in asignaciones if a.get("legajo_profesor") == legajo_docente
+                a.get("id_curso")
+                for a in asignaciones
+                if a.get("legajo_profesor") == legajo_docente
             }
             alumnos = await api_client.get_alumnos(solo_activos=False)
-            estado["alumnos"] = [a for a in alumnos if a.get("id_curso") in ids_cursos_actuales]
+            estado["alumnos"] = [
+                a for a in alumnos if a.get("id_curso") in ids_cursos_actuales
+            ]
             cursos = await api_client.get_cursos()
-            estado["cursos"] = [c for c in cursos if c.get("id_curso") in ids_cursos_actuales]
+            estado["cursos"] = [
+                c for c in cursos if c.get("id_curso") in ids_cursos_actuales
+            ]
             nombre_curso.clear()
             nombre_curso.update(
                 {
@@ -376,7 +405,9 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
     info_texto = ft.Text("", size=13, weight=ft.FontWeight.W_500, color=TEAL_DARK)
 
     def actualizar_info():
-        activos_actuales = len([a for a in estado["alumnos"] if estado_legible(a) == "Activo"])
+        activos_actuales = len(
+            [a for a in estado["alumnos"] if estado_legible(a) == "Activo"]
+        )
         info_texto.value = (
             f"Legajo #{legajo_docente}: {_plural(len(estado['alumnos']), 'alumno', 'alumnos')} en "
             f"{_plural(len(estado['cursos']), 'curso', 'cursos')} asignados · "

@@ -1,4 +1,5 @@
 import flet as ft
+
 from frontend.app.components.constants import (
     BG_PAGE_ALT,
     BG_WHITE,
@@ -8,7 +9,6 @@ from frontend.app.components.constants import (
     TEAL,
     TEAL_DARK,
     TEAL_LIGHT,
-    TEXT_COLOR,
 )
 
 
@@ -20,14 +20,34 @@ def get_bienestar_estudiantil_view(page: ft.Page) -> list[ft.Control]:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=8,
             controls=[
-                ft.Text(tag.upper(), size=13, weight=ft.FontWeight.BOLD, color=ORANGE, text_align=ft.TextAlign.CENTER),
-                ft.Text(titulo, size=34, weight=ft.FontWeight.BOLD, color=TEAL_DARK, text_align=ft.TextAlign.CENTER),
-                ft.Text(descripcion, size=15, color=MUTED, text_align=ft.TextAlign.CENTER, max_lines=2),
+                ft.Text(
+                    tag.upper(),
+                    size=13,
+                    weight=ft.FontWeight.BOLD,
+                    color=ORANGE,
+                    text_align=ft.TextAlign.CENTER,
+                ),
+                ft.Text(
+                    titulo,
+                    size=34,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                    text_align=ft.TextAlign.CENTER,
+                ),
+                ft.Text(
+                    descripcion,
+                    size=15,
+                    color=MUTED,
+                    text_align=ft.TextAlign.CENTER,
+                    max_lines=2,
+                ),
             ],
         )
 
     # 1. SERVICIOS DE APOYO Y CUIDADO INTEGRAL
-    def tarjeta_servicio(icono: ft.IconData, titulo: str, detalle: str, destacado: str) -> ft.Container:
+    def tarjeta_servicio(
+        icono: ft.IconData, titulo: str, detalle: str, destacado: str
+    ) -> ft.Container:
         return ft.Container(
             col={"sm": 12, "md": 4},
             bgcolor=BG_WHITE,
@@ -45,13 +65,17 @@ def get_bienestar_estudiantil_view(page: ft.Page) -> list[ft.Control]:
                         alignment=ft.Alignment(0, 0),
                         content=ft.Icon(icono, size=24, color=TEAL_DARK),
                     ),
-                    ft.Text(titulo, size=20, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        titulo, size=20, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                    ),
                     ft.Text(detalle, size=14, color=MUTED, height=1.4),
                     ft.Container(
                         bgcolor=TEAL_LIGHT,
                         border_radius=6,
                         padding=ft.Padding(8, 4, 8, 4),
-                        content=ft.Text(destacado, size=12, weight=ft.FontWeight.W_600, color=TEAL),
+                        content=ft.Text(
+                            destacado, size=12, weight=ft.FontWeight.W_600, color=TEAL
+                        ),
                     ),
                 ],
             ),
@@ -99,14 +123,38 @@ def get_bienestar_estudiantil_view(page: ft.Page) -> list[ft.Control]:
 
     # 2. INSTALACIONES Y DEPORTES DESTACADOS
     deportes_items = [
-        ("Natación Climatizada", "Pileta semiolímpica cubierta para entrenamiento formativo y recreativo."),
-        ("Atletismo de Pista", "Pista profesional al aire libre para velocidad, fondo y salto."),
-        ("Fútbol Campo", "Canchas de césped sintético y natural reglamentarias con iluminación LED."),
-        ("Artes Marciales", "Dojo con tatami profesional para la práctica de Taekwondo y defensa personal."),
-        ("Vóleibol Formativo", "Canchas cubiertas en el polideportivo para entrenamiento escolar y competitivo."),
-        ("Danza Contemporánea", "Salón con espejos y piso flotante para expresión corporal y rítmica."),
-        ("Básquetbol", "Gimnasio techado con piso de parquet homologado y tableros profesionales."),
-        ("Ajedrez Estratégico", "Taller de pensamiento lógico en espacios acondicionados de biblioteca."),
+        (
+            "Natación Climatizada",
+            "Pileta semiolímpica cubierta para entrenamiento formativo y recreativo.",
+        ),
+        (
+            "Atletismo de Pista",
+            "Pista profesional al aire libre para velocidad, fondo y salto.",
+        ),
+        (
+            "Fútbol Campo",
+            "Canchas de césped sintético y natural reglamentarias con iluminación LED.",
+        ),
+        (
+            "Artes Marciales",
+            "Dojo con tatami profesional para la práctica de Taekwondo y defensa personal.",
+        ),
+        (
+            "Vóleibol Formativo",
+            "Canchas cubiertas en el polideportivo para entrenamiento escolar y competitivo.",
+        ),
+        (
+            "Danza Contemporánea",
+            "Salón con espejos y piso flotante para expresión corporal y rítmica.",
+        ),
+        (
+            "Básquetbol",
+            "Gimnasio techado con piso de parquet homologado y tableros profesionales.",
+        ),
+        (
+            "Ajedrez Estratégico",
+            "Taller de pensamiento lógico en espacios acondicionados de biblioteca.",
+        ),
     ]
 
     def item_deporte_card(titulo: str, desc: str) -> ft.Container:
@@ -123,7 +171,12 @@ def get_bienestar_estudiantil_view(page: ft.Page) -> list[ft.Control]:
                         spacing=8,
                         controls=[
                             ft.Icon(ft.Icons.CHECK_CIRCLE, size=16, color=ORANGE),
-                            ft.Text(titulo, size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                titulo,
+                                size=15,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                         ],
                     ),
                     ft.Text(desc, size=13, color=MUTED),
@@ -166,8 +219,18 @@ def get_bienestar_estudiantil_view(page: ft.Page) -> list[ft.Control]:
                     content=ft.Column(
                         spacing=20,
                         controls=[
-                            ft.Text("ESPACIOS DE CIENCIA Y TECNOLOGÍA", size=13, weight=ft.FontWeight.BOLD, color=ORANGE),
-                            ft.Text("Laboratorios Modernos de Informática, Física y Química", size=32, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                            ft.Text(
+                                "ESPACIOS DE CIENCIA Y TECNOLOGÍA",
+                                size=13,
+                                weight=ft.FontWeight.BOLD,
+                                color=ORANGE,
+                            ),
+                            ft.Text(
+                                "Laboratorios Modernos de Informática, Física y Química",
+                                size=32,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
                             ft.Text(
                                 "Nuestras instalaciones ubicadas a las afueras de Resistencia cuentan con equipamiento de nivel universitario para fomentar el pensamiento científico desde el nivel primario.",
                                 size=15,
@@ -180,7 +243,9 @@ def get_bienestar_estudiantil_view(page: ft.Page) -> list[ft.Control]:
                                         "SOLICITAR VISITA GUIADA",
                                         bgcolor=TEAL,
                                         color=BG_WHITE,
-                                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+                                        style=ft.ButtonStyle(
+                                            shape=ft.RoundedRectangleBorder(radius=8)
+                                        ),
                                         on_click=lambda _: page.go("/contacto"),
                                     ),
                                 ],

@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_GREEN_BG,
@@ -34,7 +35,9 @@ def _texto_seguro(valor) -> str:
     return texto or "-"
 
 
-def _estado_vacio(mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE) -> ft.Container:
+def _estado_vacio(
+    mensaje: str, icono: ft.IconData = ft.Icons.INFO_OUTLINE
+) -> ft.Container:
     """Tarjeta de estado vacío o error, manteniendo el layout y sin datos ficticios."""
     return ft.Container(
         bgcolor=BG_WHITE,
@@ -102,7 +105,14 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
         estado["hijos"] = []
 
     if not estado["hijos"]:
-        return layout([_estado_vacio("No hay alumnos vinculados a esta cuenta.", ft.Icons.FAMILY_RESTROOM_OUTLINED)])
+        return layout(
+            [
+                _estado_vacio(
+                    "No hay alumnos vinculados a esta cuenta.",
+                    ft.Icons.FAMILY_RESTROOM_OUTLINED,
+                )
+            ]
+        )
 
     cargadores = (
         ("recorridos", api_client.get_recorridos),
@@ -115,7 +125,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
         except Exception:
             estado[clave] = []
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
     comedor_holder = ft.Container()
     transporte_holder = ft.Container()
 
@@ -154,7 +166,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
             content=ft.Text(texto, size=12, weight=ft.FontWeight.W_600, color=color),
         )
 
-    def fila_hijo(hijo: dict, detalle: list[ft.Control], acciones: list[ft.Control]) -> ft.Container:
+    def fila_hijo(
+        hijo: dict, detalle: list[ft.Control], acciones: list[ft.Control]
+    ) -> ft.Container:
         return ft.Container(
             padding=ft.Padding(16, 12, 16, 12),
             border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
@@ -172,7 +186,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
                                 bgcolor=TEAL_LIGHT,
                                 border_radius=19,
                                 alignment=ft.Alignment(0, 0),
-                                content=ft.Icon(ft.Icons.PERSON, size=18, color=TEAL_DARK),
+                                content=ft.Icon(
+                                    ft.Icons.PERSON, size=18, color=TEAL_DARK
+                                ),
                             ),
                             ft.Column(
                                 spacing=3,
@@ -203,7 +219,11 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
             detalle: list[ft.Control] = [badge_servicio(estado_actual)]
             if inscripcion:
                 detalle.append(
-                    ft.Text(f"Alta: {_texto_seguro(inscripcion.get('fecha_alta'))}", size=12, color=MUTED)
+                    ft.Text(
+                        f"Alta: {_texto_seguro(inscripcion.get('fecha_alta'))}",
+                        size=12,
+                        color=MUTED,
+                    )
                 )
 
             if estado_actual and estado_actual.strip().upper() == "ACTIVO":
@@ -250,7 +270,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
                                     bgcolor=TEAL_LIGHT,
                                     border_radius=20,
                                     alignment=ft.Alignment(0, 0),
-                                    content=ft.Icon(ft.Icons.RESTAURANT, size=20, color=TEAL_DARK),
+                                    content=ft.Icon(
+                                        ft.Icons.RESTAURANT, size=20, color=TEAL_DARK
+                                    ),
                                 ),
                                 ft.Column(
                                     spacing=4,
@@ -288,10 +310,18 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
             detalle: list[ft.Control] = [badge_servicio(estado_actual)]
             if inscripcion:
                 detalle.append(
-                    ft.Text(f"Recorrido: {_texto_seguro(inscripcion.get('recorrido'))}", size=12, color=MUTED)
+                    ft.Text(
+                        f"Recorrido: {_texto_seguro(inscripcion.get('recorrido'))}",
+                        size=12,
+                        color=MUTED,
+                    )
                 )
                 detalle.append(
-                    ft.Text(f"Alta: {_texto_seguro(inscripcion.get('fecha_alta'))}", size=12, color=MUTED)
+                    ft.Text(
+                        f"Alta: {_texto_seguro(inscripcion.get('fecha_alta'))}",
+                        size=12,
+                        color=MUTED,
+                    )
                 )
 
             if estado_actual and estado_actual.strip().upper() == "ACTIVO":
@@ -338,7 +368,11 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
                                     bgcolor=TEAL_LIGHT,
                                     border_radius=20,
                                     alignment=ft.Alignment(0, 0),
-                                    content=ft.Icon(ft.Icons.DIRECTIONS_BUS, size=20, color=TEAL_DARK),
+                                    content=ft.Icon(
+                                        ft.Icons.DIRECTIONS_BUS,
+                                        size=20,
+                                        color=TEAL_DARK,
+                                    ),
                                 ),
                                 ft.Column(
                                     spacing=4,
@@ -351,7 +385,12 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
                                             color=TEAL_DARK,
                                         ),
                                         ft.Text(
-                                            "Recorridos disponibles: " + (" · ".join(descripciones) if descripciones else "sin recorridos cargados."),
+                                            "Recorridos disponibles: "
+                                            + (
+                                                " · ".join(descripciones)
+                                                if descripciones
+                                                else "sin recorridos cargados."
+                                            ),
                                             size=13,
                                             color=MUTED,
                                         ),
@@ -372,7 +411,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
 
         async def guardar(e):
             try:
-                await api_client.inscribir_comedor({"legajo_alumno": int(hijo.get("legajo"))})
+                await api_client.inscribir_comedor(
+                    {"legajo_alumno": int(hijo.get("legajo"))}
+                )
             except httpx.HTTPStatusError as err:
                 detalle = "No se pudo inscribir al comedor."
                 try:
@@ -393,7 +434,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Inscribir al Comedor Escolar", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Inscribir al Comedor Escolar", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=12,
                 width=380,
@@ -409,7 +452,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Confirmar Alta", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Confirmar Alta", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -440,7 +485,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Baja del Comedor Escolar", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Baja del Comedor Escolar", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=12,
                 width=380,
@@ -451,13 +498,22 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
                         size=13,
                         color=MUTED,
                     ),
-                    ft.Text("El registro queda inactivo y conserva el historial del alumno.", size=12, color=MUTED),
+                    ft.Text(
+                        "El registro queda inactivo y conserva el historial del alumno.",
+                        size=12,
+                        color=MUTED,
+                    ),
                     error_text,
                 ],
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Confirmar Baja", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Confirmar Baja",
+                    bgcolor=BADGE_RED_TXT,
+                    color=BG_WHITE,
+                    on_click=guardar,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -471,7 +527,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
             label="Recorrido *",
             width=380,
             options=[
-                ft.dropdown.Option(key=str(r.get("id_recorrido")), text=r.get("descripcion", "-"))
+                ft.dropdown.Option(
+                    key=str(r.get("id_recorrido")), text=r.get("descripcion", "-")
+                )
                 for r in estado["recorridos"]
             ],
         )
@@ -510,7 +568,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Inscribir al Transporte Escolar", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Inscribir al Transporte Escolar", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=12,
                 width=380,
@@ -527,7 +587,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Confirmar Alta", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Confirmar Alta", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -558,7 +620,9 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Baja del Transporte Escolar", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Baja del Transporte Escolar", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=12,
                 width=380,
@@ -569,13 +633,22 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
                         size=13,
                         color=MUTED,
                     ),
-                    ft.Text("El registro queda inactivo y conserva el historial del alumno.", size=12, color=MUTED),
+                    ft.Text(
+                        "El registro queda inactivo y conserva el historial del alumno.",
+                        size=12,
+                        color=MUTED,
+                    ),
                     error_text,
                 ],
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Confirmar Baja", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Confirmar Baja",
+                    bgcolor=BADGE_RED_TXT,
+                    color=BG_WHITE,
+                    on_click=guardar,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -584,8 +657,12 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
     async def recargar():
         try:
             estado["recorridos"] = await api_client.get_recorridos()
-            estado["inscripciones_transporte"] = await api_client.get_inscripciones_transporte()
-            estado["inscripciones_comedor"] = await api_client.get_inscripciones_comedor()
+            estado[
+                "inscripciones_transporte"
+            ] = await api_client.get_inscripciones_transporte()
+            estado[
+                "inscripciones_comedor"
+            ] = await api_client.get_inscripciones_comedor()
         except Exception as err:
             mostrar_error(f"No se pudo refrescar el estado de los servicios: {err}")
         render()

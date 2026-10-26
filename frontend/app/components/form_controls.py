@@ -1,18 +1,19 @@
 import flet as ft
+
 from frontend.app.components.constants import (
+    BADGE_GREEN_BG,
+    BADGE_GREEN_TXT,
+    BADGE_RED_BG,
+    BADGE_RED_TXT,
+    BADGE_YELLOW_BG,
+    BADGE_YELLOW_TXT,
     BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
-    TEXT_COLOR,
-    MUTED,
-    CONTROL_HEIGHT,
     BORDER_RADIUS,
-    BADGE_GREEN_BG,
-    BADGE_GREEN_TXT,
-    BADGE_YELLOW_BG,
-    BADGE_YELLOW_TXT,
-    BADGE_RED_BG,
-    BADGE_RED_TXT,
+    CONTROL_HEIGHT,
+    MUTED,
+    TEXT_COLOR,
 )
 
 
@@ -46,7 +47,12 @@ def input_con_label(
         width=width,
         expand=expand,
         controls=[
-            ft.Text(label, size=13, weight=ft.FontWeight.W_600, color=MUTED if read_only else TEXT_COLOR),
+            ft.Text(
+                label,
+                size=13,
+                weight=ft.FontWeight.W_600,
+                color=MUTED if read_only else TEXT_COLOR,
+            ),
             ft.Container(
                 height=CONTROL_HEIGHT,
                 bgcolor=BG_PAGE if read_only else BG_WHITE,

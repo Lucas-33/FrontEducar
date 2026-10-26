@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -56,10 +57,19 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
 
     def matricula_del_nivel(id_nivel: int) -> int:
         ids_cursos = {c["id_curso"] for c in cursos_del_nivel(id_nivel)}
-        return len([a for a in estado["alumnos"] if a.get("id_curso") in ids_cursos and a.get("estado_alumno") == "ACTIVO"])
+        return len(
+            [
+                a
+                for a in estado["alumnos"]
+                if a.get("id_curso") in ids_cursos
+                and a.get("estado_alumno") == "ACTIVO"
+            ]
+        )
 
     # ==================== 1. TARJETAS DE NIVELES (KPIS RESUMEN) ====================
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     def nivel_kpi_card(nivel: dict) -> ft.Container:
         nombre = nivel.get("nombre", "")
@@ -94,8 +104,18 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
                     ft.Column(
                         spacing=2,
                         controls=[
-                            ft.Text(nombre, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                            ft.Text(f"Código interno: {nivel['id_nivel']}", size=12, color=ORANGE, weight=ft.FontWeight.W_600),
+                            ft.Text(
+                                nombre,
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEAL_DARK,
+                            ),
+                            ft.Text(
+                                f"Código interno: {nivel['id_nivel']}",
+                                size=12,
+                                color=ORANGE,
+                                weight=ft.FontWeight.W_600,
+                            ),
                         ],
                     ),
                     ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
@@ -103,14 +123,24 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
                             ft.Text("Cursos Activos:", size=12, color=MUTED),
-                            ft.Text(str(cursos_count), size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+                            ft.Text(
+                                str(cursos_count),
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEXT_COLOR,
+                            ),
                         ],
                     ),
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
                             ft.Text("Matrícula Activa:", size=12, color=MUTED),
-                            ft.Text(str(matricula), size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+                            ft.Text(
+                                str(matricula),
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEXT_COLOR,
+                            ),
                         ],
                     ),
                 ],
@@ -182,10 +212,40 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=110, content=ft.Text(f"NIV-{item['id_nivel']}", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=240, content=ft.Text(item["nombre"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=160, content=ft.Text(str(len(cursos_del_nivel(item["id_nivel"]))), size=13, color=TEXT_COLOR)),
-                    ft.Container(width=160, content=ft.Text(str(matricula_del_nivel(item["id_nivel"])), size=13, color=TEXT_COLOR)),
+                    ft.Container(
+                        width=110,
+                        content=ft.Text(
+                            f"NIV-{item['id_nivel']}",
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=240,
+                        content=ft.Text(
+                            item["nombre"],
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(
+                            str(len(cursos_del_nivel(item["id_nivel"]))),
+                            size=13,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(
+                            str(matricula_del_nivel(item["id_nivel"])),
+                            size=13,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
                     ft.Container(width=100, content=status_badge("Activo")),
                     fila_acciones(
                         lambda e, n=item: abrir_editar_nivel(n),
@@ -204,7 +264,9 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay niveles educativos cargados.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay niveles educativos cargados.", size=13, color=MUTED
+                    ),
                 )
             ],
         )
@@ -230,7 +292,9 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nuevo Nivel", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nuevo Nivel", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -242,7 +306,9 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
     )
 
     def abrir_nuevo_nivel(e):
-        nombre_field = ft.TextField(label="Nombre del nivel *", hint_text="Ej: Terciario", width=380)
+        nombre_field = ft.TextField(
+            label="Nombre del nivel *", hint_text="Ej: Terciario", width=380
+        )
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
 
         async def guardar(e):
@@ -275,10 +341,14 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
         dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text("Nuevo Nivel Educativo", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[nombre_field, error_text]),
+            content=ft.Column(
+                spacing=14, width=380, tight=True, controls=[nombre_field, error_text]
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Nivel", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Nivel", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -323,11 +393,22 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Editar Nivel NIV-{nivel['id_nivel']}", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[nombre_field, error_text]),
+            title=ft.Text(
+                f"Editar Nivel NIV-{nivel['id_nivel']}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
+            content=ft.Column(
+                spacing=14, width=380, tight=True, controls=[nombre_field, error_text]
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Guardar Cambios", bgcolor=TEAL, color=BG_WHITE, on_click=guardar_edicion),
+                ft.Button(
+                    "Guardar Cambios",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=guardar_edicion,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -358,7 +439,9 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Eliminar Nivel Educativo", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Eliminar Nivel Educativo", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,
@@ -375,7 +458,9 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar),
+                ft.Button(
+                    "Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -394,7 +479,12 @@ async def get_admin_niveles_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Text("Detalle Pedagógico y Servicios por Nivel", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        "Detalle Pedagógico y Servicios por Nivel",
+                        size=18,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEAL_DARK,
+                    ),
                     btn_nuevo_nivel,
                 ],
             ),

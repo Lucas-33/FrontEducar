@@ -1,5 +1,8 @@
+from datetime import datetime
+
 import flet as ft
 import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -11,7 +14,6 @@ from frontend.app.components.constants import (
     CARD_RADIUS,
     CONTROL_HEIGHT,
     MUTED,
-    ORANGE,
     TEAL,
     TEAL_DARK,
     TEAL_LIGHT,
@@ -36,19 +38,6 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         cursos_opciones = []
 
     # ==================== 2. CAMPOS DEL FORMULARIO ====================
-    legajo_field = ft.TextField(
-        hint_text="Autogenerado o manual (ej: 10255)",
-        hint_style=ft.TextStyle(size=14, color=MUTED),
-        text_size=14,
-        color=TEXT_COLOR,
-        bgcolor=BG_PAGE,
-        border_color=BORDER_COLOR,
-        focused_border_color=TEAL,
-        border_radius=BORDER_RADIUS,
-        content_padding=ft.Padding(12, 10, 12, 10),
-        height=CONTROL_HEIGHT,
-    )
-
     dni_field = ft.TextField(
         hint_text="Ej: 46124990",
         hint_style=ft.TextStyle(size=14, color=MUTED),
@@ -60,6 +49,8 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         content_padding=ft.Padding(12, 10, 12, 10),
         height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"^[0-9]*$"),
     )
 
     nombres_field = ft.TextField(
@@ -73,6 +64,10 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         content_padding=ft.Padding(12, 10, 12, 10),
         height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.NAME,
+        input_filter=ft.InputFilter(
+            allow=True, regex_string=r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'\-]*$"
+        ),
     )
 
     apellidos_field = ft.TextField(
@@ -86,7 +81,27 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         content_padding=ft.Padding(12, 10, 12, 10),
         height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.NAME,
+        input_filter=ft.InputFilter(
+            allow=True, regex_string=r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'\-]*$"
+        ),
     )
+
+    def format_fecha(e):
+        valor_actual = e.control.value or ""
+        numeros = "".join(filter(str.isdigit, valor_actual))
+
+        formateado = ""
+        if len(numeros) > 0:
+            formateado += numeros[:4]
+        if len(numeros) >= 5:
+            formateado += "-" + numeros[4:6]
+        if len(numeros) >= 7:
+            formateado += "-" + numeros[6:8]
+
+        if e.control.value != formateado:
+            e.control.value = formateado
+            e.control.update()
 
     fecha_nac_field = ft.TextField(
         hint_text="AAAA-MM-DD (ej: 2012-05-18)",
@@ -99,6 +114,8 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         content_padding=ft.Padding(12, 10, 12, 10),
         height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        on_change=format_fecha,
     )
 
     domicilio_field = ft.TextField(
@@ -112,6 +129,7 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         content_padding=ft.Padding(12, 10, 12, 10),
         height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.STREET_ADDRESS,
     )
 
     telefono_field = ft.TextField(
@@ -125,6 +143,8 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         content_padding=ft.Padding(12, 10, 12, 10),
         height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.PHONE,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"^[0-9\-\+\s]*$"),
     )
 
     email_field = ft.TextField(
@@ -138,6 +158,8 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         border_radius=BORDER_RADIUS,
         content_padding=ft.Padding(12, 10, 12, 10),
         height=CONTROL_HEIGHT,
+        keyboard_type=ft.KeyboardType.EMAIL,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"^[a-zA-Z0-9_.@\-]*$"),
     )
 
     curso_dropdown = ft.Dropdown(
@@ -145,7 +167,7 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         hint_style=ft.TextStyle(size=13, color=MUTED),
         text_size=13,
         options=cursos_opciones,
-        bgcolor=BG_WHITE,
+        bgcolor=TEAL_DARK,
         border_color=BORDER_COLOR,
         focused_border_color=TEAL,
         border_radius=BORDER_RADIUS,
@@ -155,7 +177,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
 
     feedback_text = ft.Text("", size=13, weight=ft.FontWeight.W_600, visible=False)
 
-    def envolver_campo(label: str, control: ft.Control, expand: bool = True) -> ft.Column:
+    def envolver_campo(
+        label: str, control: ft.Control, expand: bool = True
+    ) -> ft.Column:
         return ft.Column(
             spacing=6,
             expand=expand,
@@ -167,7 +191,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
 
     # ==================== 3. LÓGICA DE GUARDADO ====================
     btn_guardar = ft.Button(
-        content=ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+        content=ft.Text(
+            "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+        ),
         bgcolor=TEAL,
         height=37,
         style=ft.ButtonStyle(
@@ -183,12 +209,41 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         dni = (dni_field.value or "").strip()
         nombres = (nombres_field.value or "").strip()
         apellidos = (apellidos_field.value or "").strip()
-        legajo = (legajo_field.value or "").strip()
         fecha_nac = (fecha_nac_field.value or "").strip()
+        domicilio = (domicilio_field.value or "").strip()
         id_curso = curso_dropdown.value
 
-        if not dni or not nombres or not apellidos:
-            feedback_text.value = "⚠️ DNI, Nombres y Apellidos son campos obligatorios."
+        if not all([dni, nombres, apellidos, fecha_nac, domicilio, id_curso]):
+            feedback_text.value = (
+                "⚠️ DNI, Nombres, Apellidos, Fecha, Domicilio y Curso son obligatorios."
+            )
+            feedback_text.color = BADGE_RED_TXT
+            feedback_text.visible = True
+            page.update()
+            return
+
+        if len(fecha_nac) != 10:
+            feedback_text.value = (
+                "⚠️ La fecha debe estar completa con el formato AAAA-MM-DD."
+            )
+            feedback_text.color = BADGE_RED_TXT
+            feedback_text.visible = True
+            page.update()
+            return
+
+        try:
+            datetime.strptime(fecha_nac, "%Y-%m-%d") # noqa: DTZ007
+        except ValueError:
+            feedback_text.value = "⚠️ La fecha ingresada no existe en el calendario."
+            feedback_text.color = BADGE_RED_TXT
+            feedback_text.visible = True
+            page.update()
+            return
+
+        try:
+            id_curso_int = int(id_curso)
+        except ValueError:
+            feedback_text.value = "⚠️ El curso seleccionado es inválido."
             feedback_text.color = BADGE_RED_TXT
             feedback_text.visible = True
             page.update()
@@ -198,28 +253,17 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
             "dni": dni,
             "nombre": nombres,
             "apellido": apellidos,
-            "domicilio": (domicilio_field.value or "").strip() or None,
+            "fecha_nacimiento": fecha_nac,
+            "domicilio": domicilio,
             "telefono": (telefono_field.value or "").strip() or None,
             "correo_electronico": (email_field.value or "").strip() or None,
+            "id_curso": id_curso_int,
         }
 
-        if legajo:
-            try:
-                payload["legajo"] = int(legajo)
-            except ValueError:
-                payload["legajo"] = legajo
-
-        if fecha_nac:
-            payload["fecha_nacimiento"] = fecha_nac
-
-        if id_curso:
-            try:
-                payload["id_curso"] = int(id_curso)
-            except ValueError:
-                payload["id_curso"] = id_curso
-
         btn_guardar.disabled = True
-        btn_guardar.content = ft.Text("Guardando...", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+        btn_guardar.content = ft.Text(
+            "Guardando...", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+        )
         page.update()
 
         try:
@@ -227,7 +271,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
             page.go("/admin/alumnos")
         except httpx.HTTPStatusError as err:
             btn_guardar.disabled = False
-            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            btn_guardar.content = ft.Text(
+                "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+            )
             detalle = "Error al crear el alumno."
             try:
                 data_err = err.response.json()
@@ -240,7 +286,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
             page.update()
         except httpx.RequestError:
             btn_guardar.disabled = False
-            btn_guardar.content = ft.Text("Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE)
+            btn_guardar.content = ft.Text(
+                "Guardar Ficha", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+            )
             feedback_text.value = "⚠️ Error de conexión con el backend."
             feedback_text.color = BADGE_RED_TXT
             feedback_text.visible = True
@@ -282,7 +330,9 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                 controls=[
                     feedback_text,
                     ft.Button(
-                        content=ft.Text("Cancelar", size=14, weight=ft.FontWeight.W_600, color=MUTED),
+                        content=ft.Text(
+                            "Cancelar", size=14, weight=ft.FontWeight.W_600, color=MUTED
+                        ),
                         bgcolor=BG_WHITE,
                         height=37,
                         style=ft.ButtonStyle(
@@ -307,15 +357,22 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=20,
             controls=[
-                ft.Text("Información Personal", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Información Personal",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Column(
                     spacing=16,
                     controls=[
                         ft.Row(
                             spacing=16,
                             controls=[
-                                envolver_campo("Legajo", legajo_field),
                                 envolver_campo("DNI *", dni_field),
+                                envolver_campo(
+                                    "Fecha de Nacimiento *", fecha_nac_field
+                                ),
                             ],
                         ),
                         ft.Row(
@@ -328,14 +385,13 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                         ft.Row(
                             spacing=16,
                             controls=[
-                                envolver_campo("Fecha de Nacimiento", fecha_nac_field),
-                                envolver_campo("Domicilio Real", domicilio_field),
+                                envolver_campo("Domicilio Real *", domicilio_field),
+                                envolver_campo("Teléfono de Contacto", telefono_field),
                             ],
                         ),
                         ft.Row(
                             spacing=16,
                             controls=[
-                                envolver_campo("Teléfono de Contacto", telefono_field),
                                 envolver_campo("Correo Electrónico Tutor", email_field),
                             ],
                         ),
@@ -353,7 +409,12 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=20,
             controls=[
-                ft.Text("Información Académica", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Información Académica",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Row(
                     spacing=16,
                     controls=[
@@ -380,7 +441,12 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=16,
             controls=[
-                ft.Text("Pautas de Matriculación", size=17, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                ft.Text(
+                    "Pautas de Matriculación",
+                    size=17,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
                 ft.Text(
                     "1. El DNI debe ingresarse sin puntos ni caracteres especiales.\n\n"
                     "2. La fecha de nacimiento sigue el formato estándar AAAA-MM-DD.\n\n"
@@ -396,7 +462,11 @@ async def get_admin_alumno_form_view(page: ft.Page) -> ft.Row:
                         spacing=10,
                         controls=[
                             ft.Icon(ft.Icons.INFO_OUTLINE, size=18, color=TEAL),
-                            ft.Text("Los legajos vacíos se autogeneran según la secuencia institucional.", size=12, color=TEAL_DARK),
+                            ft.Text(
+                                "El legajo será asignado automáticamente por el sistema al guardar la ficha.",
+                                size=12,
+                                color=TEAL_DARK,
+                            ),
                         ],
                     ),
                 ),

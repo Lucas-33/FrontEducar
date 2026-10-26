@@ -1,9 +1,9 @@
 import flet as ft
 import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
-    BG_PAGE_ALT as BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
     MUTED,
@@ -11,6 +11,9 @@ from frontend.app.components.constants import (
     TEAL,
     TEAL_DARK,
     TEXT_COLOR,
+)
+from frontend.app.components.constants import (
+    BG_PAGE_ALT as BG_PAGE,
 )
 
 
@@ -168,7 +171,9 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
         except httpx.RequestError:
             btn_submit.disabled = False
             btn_submit.text = "INGRESAR A LA PLATAFORMA"
-            error_banner.value = "No se pudo conectar con el servidor backend en http://127.0.0.1:8000."
+            error_banner.value = (
+                "No se pudo conectar con el servidor backend en http://127.0.0.1:8000."
+            )
             error_banner.visible = True
             page.update()
 

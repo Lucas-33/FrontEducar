@@ -16,7 +16,9 @@ def _crear_solicitud(client, postulante="Test Alumno Solicitud"):
     )
 
 
-def test_solicitud_de_inscripcion_flujo_completo(client, cabeceras_admin, cabeceras_profesor):
+def test_solicitud_de_inscripcion_flujo_completo(
+    client, cabeceras_admin, cabeceras_profesor
+):
     crear = _crear_solicitud(client)
     assert crear.status_code == 201
     id_solicitud = crear.json()["id_solicitud"]
@@ -35,7 +37,12 @@ def test_solicitud_de_inscripcion_flujo_completo(client, cabeceras_admin, cabece
     assert aprobar.json()["estado"] == "Aprobado"
 
     # El docente no puede ver ni moderar solicitudes
-    assert client.get("/api/v1/comunidad/solicitudes", headers=cabeceras_profesor).status_code == 403
+    assert (
+        client.get(
+            "/api/v1/comunidad/solicitudes", headers=cabeceras_profesor
+        ).status_code
+        == 403
+    )
     assert (
         client.put(
             f"/api/v1/comunidad/solicitudes/{id_solicitud}/estado",
@@ -80,7 +87,9 @@ def test_mensaje_de_contacto_y_marcar_leido(client, cabeceras_admin):
     assert marcar.json()["leido"] is True
 
 
-def test_opiniones_requieren_aprobacion_para_publicarse(client, cabeceras_admin, cabeceras_profesor):
+def test_opiniones_requieren_aprobacion_para_publicarse(
+    client, cabeceras_admin, cabeceras_profesor
+):
     crear = client.post(
         "/api/v1/comunidad/opiniones",
         json={
@@ -130,7 +139,9 @@ def test_opiniones_requieren_aprobacion_para_publicarse(client, cabeceras_admin,
     assert all(o["id_opinion"] != id_opinion for o in publicas.json())
 
 
-def test_postulacion_laboral_publica_y_visible_para_admin(client, cabeceras_admin, cabeceras_profesor):
+def test_postulacion_laboral_publica_y_visible_para_admin(
+    client, cabeceras_admin, cabeceras_profesor
+):
     crear = client.post(
         "/api/v1/comunidad/postulaciones",
         json={
@@ -149,7 +160,12 @@ def test_postulacion_laboral_publica_y_visible_para_admin(client, cabeceras_admi
     assert listar.status_code == 200
     assert any(p["id_postulacion"] == id_postulacion for p in listar.json())
 
-    assert client.get("/api/v1/comunidad/postulaciones", headers=cabeceras_profesor).status_code == 403
+    assert (
+        client.get(
+            "/api/v1/comunidad/postulaciones", headers=cabeceras_profesor
+        ).status_code
+        == 403
+    )
 
 
 def test_postulacion_espontanea_usa_puesto_por_defecto(client):

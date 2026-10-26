@@ -1,4 +1,5 @@
 import os
+
 import bcrypt
 from sqlalchemy import create_engine, text
 
@@ -35,7 +36,10 @@ if not SessionLocal and not engine:
     db_url = None
     try:
         from backend.app.core.config import settings
-        db_url = getattr(settings, "DATABASE_URL", None) or getattr(settings, "SQLALCHEMY_DATABASE_URI", None)
+
+        db_url = getattr(settings, "DATABASE_URL", None) or getattr(
+            settings, "SQLALCHEMY_DATABASE_URI", None
+        )
     except Exception:
         pass
 
@@ -47,7 +51,7 @@ if not SessionLocal and not engine:
                     break
 
     if db_url:
-        print(f"--> Conexión creada desde variable de entorno.")
+        print("--> Conexión creada desde variable de entorno.")
         engine = create_engine(str(db_url))
 
 # 4. Ejecutar la actualización en PostgreSQL
@@ -62,16 +66,18 @@ else:
 
 try:
     db.execute(
-        text("UPDATE usuario SET password_hash = :hash, activo = TRUE WHERE username = 'admin_gral'"),
+        text(
+            "UPDATE usuario SET password_hash = :hash, activo = TRUE WHERE username = 'admin_gral'"
+        ),
         {"hash": hash_real},
     )
     if hasattr(db, "commit"):
         db.commit()
     print("✅ Base de datos actualizada con éxito.")
-    
+
     # Verificación en caliente
     valido = bcrypt.checkpw(pwd_plana.encode("utf-8"), hash_real.encode("utf-8"))
     if valido:
-        print(f"✅ VERIFICACIÓN MATEMÁTICA EXITOSA: 'admin_gral' + 'password123'")
+        print("✅ VERIFICACIÓN MATEMÁTICA EXITOSA: 'admin_gral' + 'password123'")
 finally:
     db.close()

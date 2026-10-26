@@ -7,6 +7,7 @@ ORANGE = "#D97736"
 TEXT_SECONDARY = "#5C6B69"
 BG_WHITE = "#FFFFFF"
 
+
 def home_view(page: ft.Page) -> list[ft.Control]:
     """Retorna los bloques centrales de la página de Inicio."""
 
@@ -61,8 +62,12 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                                         "INICIAR INSCRIPCIÓN",
                                         bgcolor=ORANGE,
                                         color=BG_WHITE,
-                                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-                                        on_click=lambda _: page.run_task(page.push_route, "/inscripcion"),
+                                        style=ft.ButtonStyle(
+                                            shape=ft.RoundedRectangleBorder(radius=8)
+                                        ),
+                                        on_click=lambda _: page.run_task(
+                                            page.push_route, "/inscripcion"
+                                        ),
                                     ),
                                     ft.Button(
                                         "CONOCER PROYECTO EDUCATIVO",
@@ -72,7 +77,9 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                                             side=ft.BorderSide(1.5, TEAL_DARK),
                                             shape=ft.RoundedRectangleBorder(radius=8),
                                         ),
-                                        on_click=lambda _: page.run_task(page.push_route, "/quienes-somos"),
+                                        on_click=lambda _: page.run_task(
+                                            page.push_route, "/quienes-somos"
+                                        ),
                                     ),
                                 ],
                             ),
@@ -112,7 +119,9 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                         alignment=ft.Alignment(0, 0),
                         content=ft.Icon(icono, color=TEAL, size=24),
                     ),
-                    ft.Text(titulo, size=24, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                    ft.Text(
+                        titulo, size=24, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                    ),
                     ft.Text(edad, size=14, weight=ft.FontWeight.BOLD, color=ORANGE),
                     ft.Text(descripcion, size=15, color=TEXT_SECONDARY),
                 ],
@@ -153,7 +162,16 @@ def home_view(page: ft.Page) -> list[ft.Control]:
     )
 
     # ==================== DEPORTES E INFRAESTRUCTURA ====================
-    deportes_items = ["Natación", "Fútbol", "Atletismo", "Artes Marciales", "Vóley", "Danza", "Básquet", "Ajedrez"]
+    deportes_items = [
+        "Natación",
+        "Fútbol",
+        "Atletismo",
+        "Artes Marciales",
+        "Vóley",
+        "Danza",
+        "Básquet",
+        "Ajedrez",
+    ]
 
     def item_instalacion(icono, titulo, descripcion):
         return ft.Row(
@@ -171,7 +189,9 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                 ft.Column(
                     spacing=4,
                     controls=[
-                        ft.Text(titulo, size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                        ft.Text(
+                            titulo, size=16, weight=ft.FontWeight.BOLD, color=TEAL_DARK
+                        ),
                         ft.Text(descripcion, size=13, color=TEXT_SECONDARY),
                     ],
                 ),
@@ -184,7 +204,9 @@ def home_view(page: ft.Page) -> list[ft.Control]:
         content=ft.Column(
             spacing=56,
             controls=[
-                header_seccion("Estilo de vida saludable", "Deportes e Infraestructura"),
+                header_seccion(
+                    "Estilo de vida saludable", "Deportes e Infraestructura"
+                ),
                 ft.ResponsiveRow(
                     columns=12,
                     controls=[
@@ -196,7 +218,12 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                             content=ft.Column(
                                 spacing=24,
                                 controls=[
-                                    ft.Text("Formación Deportiva", size=24, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                    ft.Text(
+                                        "Formación Deportiva",
+                                        size=24,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEAL_DARK,
+                                    ),
                                     ft.Text(
                                         "Fomentamos la disciplina, el compañerismo y la superación a través de un programa de deportes integrados de primer nivel:",
                                         size=15,
@@ -208,10 +235,17 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                                         run_spacing=10,
                                         controls=[
                                             ft.Container(
-                                                padding=ft.Padding.symmetric(horizontal=16, vertical=8),
+                                                padding=ft.Padding.symmetric(
+                                                    horizontal=16, vertical=8
+                                                ),
                                                 bgcolor=TEAL_LIGHT,
                                                 border_radius=20,
-                                                content=ft.Text(tag, size=13, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                                content=ft.Text(
+                                                    tag,
+                                                    size=13,
+                                                    weight=ft.FontWeight.BOLD,
+                                                    color=TEAL_DARK,
+                                                ),
                                             )
                                             for tag in deportes_items
                                         ],
@@ -227,7 +261,12 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                             content=ft.Column(
                                 spacing=20,
                                 controls=[
-                                    ft.Text("Instalaciones Destacadas", size=24, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                    ft.Text(
+                                        "Instalaciones Destacadas",
+                                        size=24,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEAL_DARK,
+                                    ),
                                     item_instalacion(
                                         ft.Icons.POOL,
                                         "Natatorio Olímpico",
@@ -269,8 +308,18 @@ def home_view(page: ft.Page) -> list[ft.Control]:
                         content=ft.Column(
                             spacing=10,
                             controls=[
-                                ft.Text(fecha, size=12, weight=ft.FontWeight.BOLD, color=ORANGE),
-                                ft.Text(titulo, size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                ft.Text(
+                                    fecha,
+                                    size=12,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ORANGE,
+                                ),
+                                ft.Text(
+                                    titulo,
+                                    size=18,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=TEAL_DARK,
+                                ),
                                 ft.Text(extracto, size=14, color=TEXT_SECONDARY),
                             ],
                         ),

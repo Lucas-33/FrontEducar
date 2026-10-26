@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -27,7 +28,13 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
     if token_almacenado and not api_client.token:
         api_client.set_token(token_almacenado)
 
-    estado: dict = {"cursos": [], "niveles": [], "alumnos": [], "texto": "", "nivel": "Todos"}
+    estado: dict = {
+        "cursos": [],
+        "niveles": [],
+        "alumnos": [],
+        "texto": "",
+        "nivel": "Todos",
+    }
 
     try:
         estado["cursos"] = await api_client.get_cursos()
@@ -95,7 +102,9 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nuevo Curso", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nuevo Curso", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -119,7 +128,9 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 2. TABLA DE CURSOS ====================
     columnas_cursos = [
@@ -186,11 +197,47 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Container(width=100, content=ft.Text(str(item["id_curso"]), size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK)),
-                    ft.Container(width=220, content=ft.Text(item["nombre"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR)),
-                    ft.Container(width=200, content=ft.Text(nombre_nivel.get(item["id_nivel"], f"Nivel {item['id_nivel']}"), size=14, color=MUTED)),
-                    ft.Container(width=170, content=ft.Text(str(activos), size=14, weight=ft.FontWeight.W_500, color=TEXT_COLOR)),
-                    ft.Container(width=160, content=ft.Text(str(len(alumnos_curso)), size=14, color=MUTED)),
+                    ft.Container(
+                        width=100,
+                        content=ft.Text(
+                            str(item["id_curso"]),
+                            size=13,
+                            weight=ft.FontWeight.W_600,
+                            color=TEAL_DARK,
+                        ),
+                    ),
+                    ft.Container(
+                        width=220,
+                        content=ft.Text(
+                            item["nombre"],
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=200,
+                        content=ft.Text(
+                            nombre_nivel.get(
+                                item["id_nivel"], f"Nivel {item['id_nivel']}"
+                            ),
+                            size=14,
+                            color=MUTED,
+                        ),
+                    ),
+                    ft.Container(
+                        width=170,
+                        content=ft.Text(
+                            str(activos),
+                            size=14,
+                            weight=ft.FontWeight.W_500,
+                            color=TEXT_COLOR,
+                        ),
+                    ),
+                    ft.Container(
+                        width=160,
+                        content=ft.Text(str(len(alumnos_curso)), size=14, color=MUTED),
+                    ),
                     fila_acciones(
                         lambda e, c=item: abrir_editar_curso(c),
                         lambda e, c=item: confirmar_eliminar_curso(c),
@@ -206,7 +253,11 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
             nivel = nombre_nivel.get(c["id_nivel"], "")
             if estado["nivel"] != "Todos" and nivel != estado["nivel"]:
                 continue
-            if texto and texto not in f"{c.get('nombre', '')} {c.get('id_curso', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{c.get('nombre', '')} {c.get('id_curso', '')}".lower()
+            ):
                 continue
             resultado.append(c)
         return resultado
@@ -220,7 +271,11 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
                 ft.Container(
                     padding=20,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Text("No hay cursos que coincidan con los filtros.", size=13, color=MUTED),
+                    content=ft.Text(
+                        "No hay cursos que coincidan con los filtros.",
+                        size=13,
+                        color=MUTED,
+                    ),
                 )
             ],
         )
@@ -259,11 +314,16 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
             mostrar_error("No hay niveles educativos cargados. Cree un nivel primero.")
             return
 
-        nombre_field = ft.TextField(label="Nombre del curso *", hint_text="Ej: 2° Año B", width=380)
+        nombre_field = ft.TextField(
+            label="Nombre del curso *", hint_text="Ej: 2° Año B", width=380
+        )
         nivel_field = ft.Dropdown(
             label="Nivel educativo *",
             width=380,
-            options=[ft.dropdown.Option(key=str(n["id_nivel"]), text=n["nombre"]) for n in estado["niveles"]],
+            options=[
+                ft.dropdown.Option(key=str(n["id_nivel"]), text=n["nombre"])
+                for n in estado["niveles"]
+            ],
         )
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
 
@@ -275,7 +335,9 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
             try:
-                await api_client.create_curso({"nombre": nombre, "id_nivel": int(nivel_field.value)})
+                await api_client.create_curso(
+                    {"nombre": nombre, "id_nivel": int(nivel_field.value)}
+                )
             except httpx.HTTPStatusError as err:
                 detalle = "Error al crear el curso."
                 try:
@@ -297,10 +359,17 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
         dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text("Nuevo Curso", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[nombre_field, nivel_field, error_text]),
+            content=ft.Column(
+                spacing=14,
+                width=380,
+                tight=True,
+                controls=[nombre_field, nivel_field, error_text],
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Curso", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Curso", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -317,7 +386,10 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
         nivel_field = ft.Dropdown(
             label="Nivel educativo *",
             width=380,
-            options=[ft.dropdown.Option(key=str(n["id_nivel"]), text=n["nombre"]) for n in estado["niveles"]],
+            options=[
+                ft.dropdown.Option(key=str(n["id_nivel"]), text=n["nombre"])
+                for n in estado["niveles"]
+            ],
             value=str(curso.get("id_nivel")),
         )
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
@@ -354,11 +426,23 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Editar Curso #{curso['id_curso']}", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[nombre_field, nivel_field, error_text]),
+            title=ft.Text(
+                f"Editar Curso #{curso['id_curso']}", size=18, weight=ft.FontWeight.BOLD
+            ),
+            content=ft.Column(
+                spacing=14,
+                width=380,
+                tight=True,
+                controls=[nombre_field, nivel_field, error_text],
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Guardar Cambios", bgcolor=TEAL, color=BG_WHITE, on_click=guardar_edicion),
+                ft.Button(
+                    "Guardar Cambios",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=guardar_edicion,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -406,7 +490,9 @@ async def get_admin_cursos_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar),
+                ft.Button(
+                    "Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar
+                ),
             ],
         )
         page.show_dialog(dlg)

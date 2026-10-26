@@ -11,6 +11,7 @@ MUTED = "#5C6B69"
 BORDER_COLOR = "#EAE6E1"
 BG_WHITE = "#FFFFFF"
 
+
 def get_noticias_view(page: ft.Page) -> list[ft.Control]:
     """Retorna únicamente los bloques centrales de la página Noticias."""
 
@@ -24,8 +25,18 @@ def get_noticias_view(page: ft.Page) -> list[ft.Control]:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=8,
                     controls=[
-                        ft.Text("ACTUALIDAD", size=14, weight=ft.FontWeight.BOLD, color=ORANGE),
-                        ft.Text("Portal de Novedades", size=36, weight=ft.FontWeight.BOLD, color=GREEN),
+                        ft.Text(
+                            "ACTUALIDAD",
+                            size=14,
+                            weight=ft.FontWeight.BOLD,
+                            color=ORANGE,
+                        ),
+                        ft.Text(
+                            "Portal de Novedades",
+                            size=36,
+                            weight=ft.FontWeight.BOLD,
+                            color=GREEN,
+                        ),
                     ],
                 ),
                 ft.Container(
@@ -55,8 +66,17 @@ def get_noticias_view(page: ft.Page) -> list[ft.Control]:
                                         ft.Row(
                                             spacing=8,
                                             controls=[
-                                                ft.Text("DESTACADO", size=12, weight=ft.FontWeight.BOLD, color=ORANGE),
-                                                ft.Text("·  20 Oct, 2024", size=12, color=MUTED),
+                                                ft.Text(
+                                                    "DESTACADO",
+                                                    size=12,
+                                                    weight=ft.FontWeight.BOLD,
+                                                    color=ORANGE,
+                                                ),
+                                                ft.Text(
+                                                    "·  20 Oct, 2024",
+                                                    size=12,
+                                                    color=MUTED,
+                                                ),
                                             ],
                                         ),
                                         ft.Text(
@@ -77,7 +97,9 @@ def get_noticias_view(page: ft.Page) -> list[ft.Control]:
                                             bgcolor=TEAL,
                                             color="white",
                                             style=ft.ButtonStyle(
-                                                shape=ft.RoundedRectangleBorder(radius=8),
+                                                shape=ft.RoundedRectangleBorder(
+                                                    radius=8
+                                                ),
                                             ),
                                             # on_click=lambda _: page.run_task(page.push_route, "/noticias/convenios")
                                         ),
@@ -157,11 +179,24 @@ def get_noticias_view(page: ft.Page) -> list[ft.Control]:
                                 ft.Row(
                                     spacing=6,
                                     controls=[
-                                        ft.Text(item["cat_label"].upper(), size=11, weight=ft.FontWeight.BOLD, color=ORANGE),
-                                        ft.Text(f"· {item['fecha']}", size=11, color=MUTED),
+                                        ft.Text(
+                                            item["cat_label"].upper(),
+                                            size=11,
+                                            weight=ft.FontWeight.BOLD,
+                                            color=ORANGE,
+                                        ),
+                                        ft.Text(
+                                            f"· {item['fecha']}", size=11, color=MUTED
+                                        ),
                                     ],
                                 ),
-                                ft.Text(item["titulo"], size=18, weight=ft.FontWeight.BOLD, color=GREEN, height=1.35),
+                                ft.Text(
+                                    item["titulo"],
+                                    size=18,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=GREEN,
+                                    height=1.35,
+                                ),
                             ],
                         ),
                     ),

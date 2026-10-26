@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -43,16 +42,17 @@ def _contexto_acceso(db: Session, current_user: Usuario):
 
 # ==================== CALIFICACIONES ====================
 
+
 @router.get(
     "/calificaciones",
-    response_model=List[CalificacionDetalleResponse],
+    response_model=list[CalificacionDetalleResponse],
     summary="Listar calificaciones (alumno/tutor ven solo las propias)",
 )
 def listar_calificaciones(
-    legajo_alumno: Optional[int] = Query(None),
-    id_materia: Optional[int] = Query(None),
-    id_curso: Optional[int] = Query(None),
-    periodo: Optional[str] = Query(None),
+    legajo_alumno: int | None = Query(None),
+    id_materia: int | None = Query(None),
+    id_curso: int | None = Query(None),
+    periodo: str | None = Query(None),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -60,7 +60,11 @@ def listar_calificaciones(
 
     if rol == "STUDENT":
         return evaluacion_service.get_calificaciones_detalle(
-            db, legajo_alumno=permitidos[0], id_materia=id_materia, id_curso=id_curso, periodo=periodo
+            db,
+            legajo_alumno=permitidos[0],
+            id_materia=id_materia,
+            id_curso=id_curso,
+            periodo=periodo,
         )
 
     if rol == "PARENT":
@@ -71,14 +75,26 @@ def listar_calificaciones(
                     detail="Solo puede consultar las calificaciones de sus hijos",
                 )
             return evaluacion_service.get_calificaciones_detalle(
-                db, legajo_alumno=legajo_alumno, id_materia=id_materia, id_curso=id_curso, periodo=periodo
+                db,
+                legajo_alumno=legajo_alumno,
+                id_materia=id_materia,
+                id_curso=id_curso,
+                periodo=periodo,
             )
         return evaluacion_service.get_calificaciones_detalle(
-            db, legajos_permitidos=permitidos, id_materia=id_materia, id_curso=id_curso, periodo=periodo
+            db,
+            legajos_permitidos=permitidos,
+            id_materia=id_materia,
+            id_curso=id_curso,
+            periodo=periodo,
         )
 
     return evaluacion_service.get_calificaciones_detalle(
-        db, legajo_alumno=legajo_alumno, id_materia=id_materia, id_curso=id_curso, periodo=periodo
+        db,
+        legajo_alumno=legajo_alumno,
+        id_materia=id_materia,
+        id_curso=id_curso,
+        periodo=periodo,
     )
 
 
@@ -127,15 +143,16 @@ def eliminar_calificacion(
 
 # ==================== ASISTENCIA ====================
 
+
 @router.get(
     "/asistencia",
-    response_model=List[AsistenciaDetalleResponse],
+    response_model=list[AsistenciaDetalleResponse],
     summary="Listar asistencias (alumno/tutor ven solo las propias)",
 )
 def listar_asistencia(
-    id_curso: Optional[int] = Query(None),
-    fecha: Optional[date] = Query(None),
-    legajo_alumno: Optional[int] = Query(None),
+    id_curso: int | None = Query(None),
+    fecha: date | None = Query(None),
+    legajo_alumno: int | None = Query(None),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -175,7 +192,7 @@ def resumen_asistencia(
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    rol, permitidos = _contexto_acceso(db, current_user)
+    _rol, permitidos = _contexto_acceso(db, current_user)
     if permitidos is not None and legajo_alumno not in permitidos:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -186,7 +203,7 @@ def resumen_asistencia(
 
 @router.post(
     "/asistencia/lote",
-    response_model=List[AsistenciaDetalleResponse],
+    response_model=list[AsistenciaDetalleResponse],
     summary="Cargar asistencia de un curso completo (ADMIN/DOCENTE)",
 )
 def registrar_asistencia_lote(

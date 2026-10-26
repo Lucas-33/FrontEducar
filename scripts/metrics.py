@@ -1,6 +1,7 @@
 """Metricas de productividad (Lead Time, frecuencia de despliegue, CI).
 Uso:  GITHUB_TOKEN=xxxx python metrics.py usuario/repositorio
 """
+
 import os
 import statistics as st
 import sys
@@ -10,13 +11,16 @@ import requests
 
 REPO = sys.argv[1]
 API = f"https://api.github.com/repos/{REPO}"
-HDR = {"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
-       "Accept": "application/vnd.github+json"}
+HDR = {
+    "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+    "Accept": "application/vnd.github+json",
+}
 
 
 def get(path, **params):
-    r = requests.get(API + path, headers=HDR, timeout=30,
-                     params={"per_page": 100, **params})
+    r = requests.get(
+        API + path, headers=HDR, timeout=30, params={"per_page": 100, **params}
+    )
     r.raise_for_status()
     return r.json()
 
@@ -39,8 +43,11 @@ lead_time = [horas(p["created_at"], p["merged_at"]) for p in prs]
 
 espera_revision = []
 for p in prs:
-    envios = [r["submitted_at"] for r in get(f"/pulls/{p['number']}/reviews")
-              if r.get("submitted_at")]
+    envios = [
+        r["submitted_at"]
+        for r in get(f"/pulls/{p['number']}/reviews")
+        if r.get("submitted_at")
+    ]
     if envios:
         espera_revision.append(horas(p["created_at"], min(envios)))
 
@@ -53,8 +60,9 @@ else:
     frecuencia = "s/d"
 
 # --- Ejecuciones del pipeline en main --------------------------------------
-runs = [r for r in get("/actions/runs", branch="main")["workflow_runs"]
-        if r["conclusion"]]
+runs = [
+    r for r in get("/actions/runs", branch="main")["workflow_runs"] if r["conclusion"]
+]
 duracion_ci = [horas(r["run_started_at"], r["updated_at"]) * 60 for r in runs]
 fallidas = sum(r["conclusion"] == "failure" for r in runs)
 tasa_fallos = round(100 * fallidas / len(runs), 1) if runs else "s/d"

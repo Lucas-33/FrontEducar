@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -68,7 +69,9 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD, size=16, color=BG_WHITE),
-                ft.Text("Nuevo Horario", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Nuevo Horario", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -92,7 +95,9 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 2. TABLA DE HORARIOS ====================
     columnas_horarios = [
@@ -161,7 +166,9 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
                                     icon_color=BADGE_RED_TXT,
                                     tooltip="Eliminar horario",
                                     padding=0,
-                                    on_click=lambda e, h=item: confirmar_eliminar_horario(h),
+                                    on_click=lambda e, h=item: (
+                                        confirmar_eliminar_horario(h)
+                                    ),
                                 ),
                             ],
                         ),
@@ -174,7 +181,9 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
         texto = (estado["texto"] or "").strip().lower()
         resultado = []
         for h in estado["horarios"]:
-            etiqueta = f"{h.get('descripcion', '')} hor-{h.get('id_horario', '')}".lower()
+            etiqueta = (
+                f"{h.get('descripcion', '')} hor-{h.get('id_horario', '')}".lower()
+            )
             if texto and texto not in etiqueta:
                 continue
             resultado.append(h)
@@ -261,10 +270,17 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
         dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text("Nuevo Horario", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[descripcion_field, error_text]),
+            content=ft.Column(
+                spacing=14,
+                width=380,
+                tight=True,
+                controls=[descripcion_field, error_text],
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Horario", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Horario", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -288,7 +304,9 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
             try:
-                await api_client.update_horario(horario["id_horario"], {"descripcion": descripcion})
+                await api_client.update_horario(
+                    horario["id_horario"], {"descripcion": descripcion}
+                )
             except httpx.HTTPStatusError as err:
                 detalle = "Error al actualizar el horario."
                 try:
@@ -309,11 +327,25 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Editar Horario HOR-{horario['id_horario']}", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[descripcion_field, error_text]),
+            title=ft.Text(
+                f"Editar Horario HOR-{horario['id_horario']}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
+            content=ft.Column(
+                spacing=14,
+                width=380,
+                tight=True,
+                controls=[descripcion_field, error_text],
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Guardar Cambios", bgcolor=TEAL, color=BG_WHITE, on_click=guardar_edicion),
+                ft.Button(
+                    "Guardar Cambios",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=guardar_edicion,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -361,7 +393,9 @@ async def get_admin_horarios_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar),
+                ft.Button(
+                    "Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar
+                ),
             ],
         )
         page.show_dialog(dlg)

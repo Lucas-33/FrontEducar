@@ -1,4 +1,5 @@
 """Tests de calificaciones y asistencia (módulo de evaluación)."""
+
 from backend.tests.conftest import LEGAJO_ALUMNO_1, LEGAJO_ALUMNO_2, LEGAJO_PROFESOR
 
 
@@ -14,7 +15,9 @@ def _crear_calificacion(client, cabeceras, **overrides):
         "observacion": "Creada por test automatizado",
     }
     payload.update(overrides)
-    return client.post("/api/v1/academico/calificaciones", json=payload, headers=cabeceras)
+    return client.post(
+        "/api/v1/academico/calificaciones", json=payload, headers=cabeceras
+    )
 
 
 def test_docente_crea_calificacion_y_se_autoasigna(client, cabeceras_profesor):
@@ -25,7 +28,9 @@ def test_docente_crea_calificacion_y_se_autoasigna(client, cabeceras_profesor):
     assert cuerpo["legajo_profesor"] == LEGAJO_PROFESOR
 
 
-def test_alumno_solo_ve_sus_propias_calificaciones(client, cabeceras_profesor, cabeceras_alumno):
+def test_alumno_solo_ve_sus_propias_calificaciones(
+    client, cabeceras_profesor, cabeceras_alumno
+):
     propia = _crear_calificacion(client, cabeceras_profesor, fecha="2026-10-03")
     ajena = _crear_calificacion(
         client,
@@ -44,7 +49,9 @@ def test_alumno_solo_ve_sus_propias_calificaciones(client, cabeceras_profesor, c
     assert all(c["legajo_alumno"] == LEGAJO_ALUMNO_1 for c in listado.json())
 
 
-def test_padre_accede_solo_a_las_calificaciones_de_sus_hijos(client, cabeceras_profesor, cabeceras_padre):
+def test_padre_accede_solo_a_las_calificaciones_de_sus_hijos(
+    client, cabeceras_profesor, cabeceras_padre
+):
     _crear_calificacion(client, cabeceras_profesor, fecha="2026-10-05")
 
     propias = client.get(
@@ -61,8 +68,12 @@ def test_padre_accede_solo_a_las_calificaciones_de_sus_hijos(client, cabeceras_p
     assert ajenas.status_code == 403
 
 
-def test_actualizar_y_eliminar_calificacion(client, cabeceras_profesor, cabeceras_alumno, cabeceras_admin):
-    creada = _crear_calificacion(client, cabeceras_profesor, fecha="2026-10-06", nota=6.0)
+def test_actualizar_y_eliminar_calificacion(
+    client, cabeceras_profesor, cabeceras_alumno, cabeceras_admin
+):
+    creada = _crear_calificacion(
+        client, cabeceras_profesor, fecha="2026-10-06", nota=6.0
+    )
     assert creada.status_code == 201
     id_calificacion = creada.json()["id_calificacion"]
 
@@ -74,7 +85,9 @@ def test_actualizar_y_eliminar_calificacion(client, cabeceras_profesor, cabecera
     assert actualizada.status_code == 200
     assert actualizada.json()["nota"] == 9.25
 
-    visibles = client.get("/api/v1/academico/calificaciones", headers=cabeceras_alumno).json()
+    visibles = client.get(
+        "/api/v1/academico/calificaciones", headers=cabeceras_alumno
+    ).json()
     coincidencia = [c for c in visibles if c["id_calificacion"] == id_calificacion]
     assert coincidencia and coincidencia[0]["nota"] == 9.25
 
@@ -84,7 +97,9 @@ def test_actualizar_y_eliminar_calificacion(client, cabeceras_profesor, cabecera
     )
     assert eliminada.status_code == 200
 
-    visibles = client.get("/api/v1/academico/calificaciones", headers=cabeceras_alumno).json()
+    visibles = client.get(
+        "/api/v1/academico/calificaciones", headers=cabeceras_alumno
+    ).json()
     assert all(c["id_calificacion"] != id_calificacion for c in visibles)
 
 
@@ -94,7 +109,9 @@ def test_alumno_no_puede_registrar_calificaciones(client, cabeceras_alumno):
 
 
 def test_nota_fuera_de_rango_devuelve_422(client, cabeceras_profesor):
-    respuesta = _crear_calificacion(client, cabeceras_profesor, fecha="2026-10-08", nota=12)
+    respuesta = _crear_calificacion(
+        client, cabeceras_profesor, fecha="2026-10-08", nota=12
+    )
     assert respuesta.status_code == 422
 
 
@@ -128,7 +145,11 @@ def test_asistencia_lote_es_upsert_y_aislamiento_por_rol(
             "id_curso": 1,
             "fecha": fecha,
             "registros": [
-                {"legajo_alumno": LEGAJO_ALUMNO_1, "estado": "TARDE", "observacion": "Llegó tarde"},
+                {
+                    "legajo_alumno": LEGAJO_ALUMNO_1,
+                    "estado": "TARDE",
+                    "observacion": "Llegó tarde",
+                },
             ],
         },
         headers=cabeceras_profesor,

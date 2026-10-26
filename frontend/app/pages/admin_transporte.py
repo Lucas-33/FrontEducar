@@ -1,5 +1,6 @@
-import httpx
 import flet as ft
+import httpx
+
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
 from frontend.app.components.constants import (
@@ -46,7 +47,12 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
         api_client.set_token(token_almacenado)
 
     # ==================== 1. ESTADO DE LA VISTA ====================
-    estado: dict = {"recorridos": [], "inscripciones": [], "texto": "", "recorrido": "Todos"}
+    estado: dict = {
+        "recorridos": [],
+        "inscripciones": [],
+        "texto": "",
+        "recorrido": "Todos",
+    }
 
     try:
         estado["recorridos"] = await api_client.get_recorridos()
@@ -95,9 +101,19 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                                         bgcolor=TEAL_LIGHT,
                                         border_radius=14,
                                         alignment=ft.Alignment(0, 0),
-                                        content=ft.Text(str(num), size=12, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                        content=ft.Text(
+                                            str(num),
+                                            size=12,
+                                            weight=ft.FontWeight.BOLD,
+                                            color=TEAL_DARK,
+                                        ),
                                     ),
-                                    ft.Text(f"Recorrido {num}", size=15, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                    ft.Text(
+                                        f"Recorrido {num}",
+                                        size=15,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEAL_DARK,
+                                    ),
                                 ],
                             ),
                             ft.Container(
@@ -105,7 +121,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                                 bgcolor=TEAL_LIGHT,
                                 border_radius=4,
                                 content=ft.Text(
-                                    f"{activos} activos" if activos != 1 else "1 activo",
+                                    f"{activos} activos"
+                                    if activos != 1
+                                    else "1 activo",
                                     size=12,
                                     weight=ft.FontWeight.W_600,
                                     color=TEAL,
@@ -113,7 +131,12 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                             ),
                         ],
                     ),
-                    ft.Text(descripcion, size=13, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                    ft.Text(
+                        descripcion,
+                        size=13,
+                        weight=ft.FontWeight.W_600,
+                        color=TEXT_COLOR,
+                    ),
                     ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -123,14 +146,21 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                             ft.Row(
                                 spacing=2,
                                 controls=[
-                                    ft.Text(str(activos), size=11, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
+                                    ft.Text(
+                                        str(activos),
+                                        size=11,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEAL_DARK,
+                                    ),
                                     ft.IconButton(
                                         icon=ft.Icons.EDIT_OUTLINED,
                                         icon_size=15,
                                         icon_color=TEAL,
                                         tooltip="Editar recorrido",
                                         padding=0,
-                                        on_click=lambda e, r=recorrido: abrir_editar_recorrido(r),
+                                        on_click=lambda e, r=recorrido: (
+                                            abrir_editar_recorrido(r)
+                                        ),
                                     ),
                                     ft.IconButton(
                                         icon=ft.Icons.DELETE_OUTLINE,
@@ -138,7 +168,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                                         icon_color=BADGE_RED_TXT,
                                         tooltip="Eliminar recorrido",
                                         padding=0,
-                                        on_click=lambda e, r=recorrido: confirmar_eliminar_recorrido(r),
+                                        on_click=lambda e, r=recorrido: (
+                                            confirmar_eliminar_recorrido(r)
+                                        ),
                                     ),
                                 ],
                             ),
@@ -212,7 +244,10 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
             border=ft.InputBorder.NONE,
             content_padding=ft.Padding(12, 0, 8, 12),
             options=[ft.dropdown.Option("Todos")]
-            + [ft.dropdown.Option(r.get("descripcion", "-")) for r in estado["recorridos"]],
+            + [
+                ft.dropdown.Option(r.get("descripcion", "-"))
+                for r in estado["recorridos"]
+            ],
         ),
     )
     filtro_recorrido_dropdown: ft.Dropdown = filtro_recorrido_container.content
@@ -223,7 +258,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.ADD_ROAD, size=16, color=TEAL),
-                ft.Text("Nuevo Recorrido", size=14, weight=ft.FontWeight.W_600, color=TEAL),
+                ft.Text(
+                    "Nuevo Recorrido", size=14, weight=ft.FontWeight.W_600, color=TEAL
+                ),
             ],
         ),
         bgcolor=BG_WHITE,
@@ -241,7 +278,12 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
                 ft.Icon(ft.Icons.PERSON_ADD, size=16, color=BG_WHITE),
-                ft.Text("Inscribir Alumno", size=14, weight=ft.FontWeight.W_600, color=BG_WHITE),
+                ft.Text(
+                    "Inscribir Alumno",
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=BG_WHITE,
+                ),
             ],
         ),
         bgcolor=TEAL,
@@ -269,7 +311,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
         ],
     )
 
-    aviso_error = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False)
+    aviso_error = ft.Text(
+        "", size=13, weight=ft.FontWeight.W_600, color=BADGE_RED_TXT, visible=False
+    )
 
     # ==================== 4. TABLA DE PASAJEROS ====================
     columnas_transporte = [
@@ -340,13 +384,23 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                     ),
                     ft.Container(
                         width=240,
-                        content=ft.Text(item.get("recorrido", "-"), size=13, weight=ft.FontWeight.W_500, color=TEAL),
+                        content=ft.Text(
+                            item.get("recorrido", "-"),
+                            size=13,
+                            weight=ft.FontWeight.W_500,
+                            color=TEAL,
+                        ),
                     ),
                     ft.Container(
                         width=130,
-                        content=ft.Text(_fecha_corta(item.get("fecha_alta")), size=13, color=MUTED),
+                        content=ft.Text(
+                            _fecha_corta(item.get("fecha_alta")), size=13, color=MUTED
+                        ),
                     ),
-                    ft.Container(width=110, content=status_badge("Activo" if activo else "Inactivo")),
+                    ft.Container(
+                        width=110,
+                        content=status_badge("Activo" if activo else "Inactivo"),
+                    ),
                     ft.Container(
                         expand=True,
                         alignment=ft.Alignment(1, 0),
@@ -357,8 +411,12 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE_OUTLINE,
                                     icon_size=16,
-                                    icon_color=BADGE_RED_TXT if activo else BORDER_COLOR,
-                                    tooltip="Baja del Servicio" if activo else "Inscripción ya dada de baja",
+                                    icon_color=BADGE_RED_TXT
+                                    if activo
+                                    else BORDER_COLOR,
+                                    tooltip="Baja del Servicio"
+                                    if activo
+                                    else "Inscripción ya dada de baja",
                                     padding=0,
                                     disabled=not activo,
                                     on_click=dar_de_baja if activo else None,
@@ -374,9 +432,16 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
         texto = (estado["texto"] or "").lower()
         resultado = []
         for i in estado["inscripciones"]:
-            if estado["recorrido"] != "Todos" and i.get("recorrido") != estado["recorrido"]:
+            if (
+                estado["recorrido"] != "Todos"
+                and i.get("recorrido") != estado["recorrido"]
+            ):
                 continue
-            if texto and texto not in f"{i.get('alumno', '')} {i.get('legajo_alumno', '')} {i.get('recorrido', '')}".lower():
+            if (
+                texto
+                and texto
+                not in f"{i.get('alumno', '')} {i.get('legajo_alumno', '')} {i.get('recorrido', '')}".lower()
+            ):
                 continue
             resultado.append(i)
         return resultado
@@ -502,7 +567,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Crear Recorrido", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+                ft.Button(
+                    "Crear Recorrido", bgcolor=TEAL, color=BG_WHITE, on_click=guardar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -524,7 +591,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
             try:
-                await api_client.update_recorrido(recorrido["id_recorrido"], {"descripcion": descripcion})
+                await api_client.update_recorrido(
+                    recorrido["id_recorrido"], {"descripcion": descripcion}
+                )
             except httpx.HTTPStatusError as err:
                 detalle = "Error al actualizar el recorrido."
                 try:
@@ -545,11 +614,25 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Editar Recorrido #{recorrido['id_recorrido']}", size=18, weight=ft.FontWeight.BOLD),
-            content=ft.Column(spacing=14, width=380, tight=True, controls=[descripcion_field, error_text]),
+            title=ft.Text(
+                f"Editar Recorrido #{recorrido['id_recorrido']}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
+            content=ft.Column(
+                spacing=14,
+                width=380,
+                tight=True,
+                controls=[descripcion_field, error_text],
+            ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Guardar Cambios", bgcolor=TEAL, color=BG_WHITE, on_click=guardar_edicion),
+                ft.Button(
+                    "Guardar Cambios",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=guardar_edicion,
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -597,7 +680,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                ft.Button("Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar),
+                ft.Button(
+                    "Eliminar", bgcolor=BADGE_RED_TXT, color=BG_WHITE, on_click=eliminar
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -624,7 +709,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
             label="Recorrido *",
             width=380,
             options=[
-                ft.dropdown.Option(key=str(r["id_recorrido"]), text=r.get("descripcion", "-"))
+                ft.dropdown.Option(
+                    key=str(r["id_recorrido"]), text=r.get("descripcion", "-")
+                )
                 for r in estado["recorridos"]
             ],
         )
@@ -634,7 +721,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
             error_text.value = "⚠️ No hay alumnos activos disponibles para inscribir."
             error_text.visible = True
         elif not estado["recorridos"]:
-            error_text.value = "⚠️ No hay recorridos cargados. Cree un recorrido primero."
+            error_text.value = (
+                "⚠️ No hay recorridos cargados. Cree un recorrido primero."
+            )
             error_text.visible = True
 
         async def guardar(e):
@@ -670,7 +759,9 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Inscribir Alumno al Transporte", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Text(
+                "Inscribir Alumno al Transporte", size=18, weight=ft.FontWeight.BOLD
+            ),
             content=ft.Column(
                 spacing=14,
                 width=380,

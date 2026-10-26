@@ -3,7 +3,6 @@
 Centraliza la validación del token JWT y el control de acceso por rol,
 para que todos los endpoints exijan sesión válida (y rol cuando corresponda).
 """
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -17,7 +16,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> Usuario:
     """Devuelve el usuario dueño del token Bearer o lanza 401/403."""

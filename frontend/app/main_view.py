@@ -4,29 +4,13 @@ import flet as ft
 from frontend.app.components.footer import create_footer
 from frontend.app.components.navbar import create_navbar
 
-# Páginas públicas
-from frontend.app.pages.bienestar_estudiantil import get_bienestar_estudiantil_view
-from frontend.app.pages.contacto import get_contacto_view
-from frontend.app.pages.empleo import get_empleo_view
-from frontend.app.pages.home import home_view
-from frontend.app.pages.inscripciones import get_inscripcion_view
-from frontend.app.pages.login import get_login_view
-from frontend.app.pages.niveles import get_niveles_view
-from frontend.app.pages.noticias import get_noticias_view
-from frontend.app.pages.opiniones import get_opiniones_view
-from frontend.app.pages.quienes_somos import get_quienes_somos_view
-
-# Portal Familias / Padres
-from frontend.app.pages.padre_dashboard import get_padre_dashboard_view
-from frontend.app.pages.padre_deportes import get_padre_deportes_view
-from frontend.app.pages.padre_docentes import get_padre_docentes_view
-from frontend.app.pages.padre_servicios import get_padre_servicios_view
-from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
-
 # Páginas administrativas
 from frontend.app.pages.admin_alumno_form import get_admin_alumno_form_view
 from frontend.app.pages.admin_alumnos import get_admin_alumnos_view
 from frontend.app.pages.admin_comedor import get_admin_comedor_view
+
+# Páginas nuevas (seguridad, comunidad y notas)
+from frontend.app.pages.admin_comunidad import get_admin_comunidad_view
 from frontend.app.pages.admin_cursos import get_admin_cursos_view
 from frontend.app.pages.admin_dashboard import get_admin_dashboard_view
 from frontend.app.pages.admin_deportes import get_admin_deportes_view
@@ -36,22 +20,6 @@ from frontend.app.pages.admin_materias import get_admin_materias_view
 from frontend.app.pages.admin_niveles import get_admin_niveles_view
 from frontend.app.pages.admin_profesor_form import get_admin_profesor_form_view
 from frontend.app.pages.admin_profesores import get_admin_profesores_view
-from frontend.app.pages.admin_reportes import get_admin_reportes_view
-from frontend.app.pages.admin_transporte import get_admin_transporte_view
-from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
-
-
-# Portal Docentes
-from frontend.app.pages.docente_alumnos import get_docente_alumnos_view
-from frontend.app.pages.docente_dashboard import get_docente_dashboard_view
-from frontend.app.pages.docente_deportes import get_docente_deportes_view
-from frontend.app.pages.docente_materias import get_docente_materias_view 
-
-# Portal Alumno / Estudiante
-from frontend.app.pages.alumno_dashboard import get_alumno_dashboard_view
-from frontend.app.pages.alumno_deportes import get_alumno_deportes_view
-from frontend.app.pages.alumno_materias import get_alumno_materias_view
-from frontend.app.pages.alumno_servicios import get_alumno_servicios_view
 
 # Reportes
 from frontend.app.pages.admin_reporte_alumnos_docentes import (
@@ -66,12 +34,43 @@ from frontend.app.pages.admin_reporte_deportes_avanzado import (
 from frontend.app.pages.admin_reporte_transporte_pasajeros import (
     get_admin_reporte_transporte_pasajeros_view,
 )
+from frontend.app.pages.admin_reportes import get_admin_reportes_view
+from frontend.app.pages.admin_transporte import get_admin_transporte_view
+from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
 
-# Páginas nuevas (seguridad, comunidad y notas)
-from frontend.app.pages.admin_comunidad import get_admin_comunidad_view
-from frontend.app.pages.docente_notas import get_docente_notas_view
-from frontend.app.pages.padre_notas import get_padre_notas_view
+# Portal Alumno / Estudiante
+from frontend.app.pages.alumno_dashboard import get_alumno_dashboard_view
+from frontend.app.pages.alumno_deportes import get_alumno_deportes_view
+from frontend.app.pages.alumno_materias import get_alumno_materias_view
 from frontend.app.pages.alumno_notas import get_alumno_notas_view
+from frontend.app.pages.alumno_servicios import get_alumno_servicios_view
+
+# Páginas públicas
+from frontend.app.pages.bienestar_estudiantil import get_bienestar_estudiantil_view
+from frontend.app.pages.contacto import get_contacto_view
+
+# Portal Docentes
+from frontend.app.pages.docente_alumnos import get_docente_alumnos_view
+from frontend.app.pages.docente_dashboard import get_docente_dashboard_view
+from frontend.app.pages.docente_deportes import get_docente_deportes_view
+from frontend.app.pages.docente_materias import get_docente_materias_view
+from frontend.app.pages.docente_notas import get_docente_notas_view
+from frontend.app.pages.empleo import get_empleo_view
+from frontend.app.pages.home import home_view
+from frontend.app.pages.inscripciones import get_inscripcion_view
+from frontend.app.pages.login import get_login_view
+from frontend.app.pages.niveles import get_niveles_view
+from frontend.app.pages.noticias import get_noticias_view
+from frontend.app.pages.opiniones import get_opiniones_view
+
+# Portal Familias / Padres
+from frontend.app.pages.padre_dashboard import get_padre_dashboard_view
+from frontend.app.pages.padre_deportes import get_padre_deportes_view
+from frontend.app.pages.padre_docentes import get_padre_docentes_view
+from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
+from frontend.app.pages.padre_notas import get_padre_notas_view
+from frontend.app.pages.padre_servicios import get_padre_servicios_view
+from frontend.app.pages.quienes_somos import get_quienes_somos_view
 
 # Mapa de rol normalizado -> sección de rutas que le corresponde
 SECCION_POR_ROL = {
@@ -140,12 +139,16 @@ async def main(page: ft.Page):
             return
         elif ruta == "/admin/profesores":
             vista_profesores = await get_admin_profesores_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_profesores]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_profesores])
+            )
             page.update()
             return
         elif ruta == "/admin/profesores/nuevo":
             vista_profesor_form = await get_admin_profesor_form_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_profesor_form]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_profesor_form])
+            )
             page.update()
             return
         elif ruta == "/admin/reportes":
@@ -160,7 +163,9 @@ async def main(page: ft.Page):
             return
         elif ruta == "/admin/transporte":
             vista_transporte = await get_admin_transporte_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_transporte]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_transporte])
+            )
             page.update()
             return
         elif ruta == "/admin/comedor":
@@ -190,12 +195,16 @@ async def main(page: ft.Page):
             return
         elif ruta == "/admin/inscripciones":
             vista_inscripciones = await get_admin_inscripciones_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_inscripciones]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_inscripciones])
+            )
             page.update()
             return
         elif ruta == "/admin/comunidad":
             vista_comunidad = await get_admin_comunidad_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_comunidad]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_comunidad])
+            )
             page.update()
             return
         elif ruta == "/admin/usuarios":
@@ -205,110 +214,150 @@ async def main(page: ft.Page):
             return
         elif ruta == "/admin/reporte-alumnos-docentes":
             vista_reporte_ad = await get_admin_reporte_alumnos_docentes_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_reporte_ad]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_reporte_ad])
+            )
             page.update()
             return
         elif ruta == "/admin/reporte-cursos-materias":
             vista_reporte_cm = await get_admin_reporte_cursos_materias_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_reporte_cm]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_reporte_cm])
+            )
             page.update()
             return
         elif ruta == "/admin/reporte-deportes-avanzado":
             vista_reporte_dep = await get_admin_reporte_deportes_avanzado_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_reporte_dep]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_reporte_dep])
+            )
             page.update()
             return
         elif ruta == "/admin/reporte-transporte-pasajeros":
-            vista_reporte_trans = await get_admin_reporte_transporte_pasajeros_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_reporte_trans]))
+            vista_reporte_trans = await get_admin_reporte_transporte_pasajeros_view(
+                page
+            )
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_reporte_trans])
+            )
             page.update()
             return
         # ==================== 3. RUTAS DEL PORTAL FAMILIAS ====================
         if ruta == "/portal/padre/dashboard":
             vista_padre_dash = await get_padre_dashboard_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_padre_dash]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_dash])
+            )
             page.update()
             return
         elif ruta == "/portal/padre/inscripcion":
             vista_padre_insc = await get_padre_inscripcion_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_padre_insc]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_insc])
+            )
             page.update()
             return
         elif ruta == "/portal/padre/deportes":
             vista_padre_dep = await get_padre_deportes_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_padre_dep]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_dep])
+            )
             page.update()
             return
         elif ruta == "/portal/padre/servicios":
             vista_padre_serv = await get_padre_servicios_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_padre_serv]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_serv])
+            )
             page.update()
             return
         elif ruta == "/portal/padre/docentes":
             vista_padre_doc = await get_padre_docentes_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_padre_doc]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_doc])
+            )
             page.update()
             return
         elif ruta == "/portal/padre/notas":
             vista_padre_notas = await get_padre_notas_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_padre_notas]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_notas])
+            )
             page.update()
             return
         # ==================== 4. RUTAS DEL PORTAL DOCENTE ====================
         if ruta == "/portal/docente/dashboard":
             vista_docente_dash = await get_docente_dashboard_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_docente_dash]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_docente_dash])
+            )
             page.update()
             return
         elif ruta == "/portal/docente/materias":
             vista_docente_mat = await get_docente_materias_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_docente_mat]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_docente_mat])
+            )
             page.update()
             return
         elif ruta == "/portal/docente/alumnos":
             vista_docente_alu = await get_docente_alumnos_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_docente_alu]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_docente_alu])
+            )
             page.update()
             return
         elif ruta == "/portal/docente/deportes":
             vista_docente_dep = await get_docente_deportes_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_docente_dep]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_docente_dep])
+            )
             page.update()
             return
         elif ruta == "/portal/docente/notas":
             vista_docente_notas = await get_docente_notas_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_docente_notas]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_docente_notas])
+            )
             page.update()
             return
         # ==================== 5. RUTAS DEL PORTAL ESTUDIANTE ====================
         if ruta == "/portal/alumno/dashboard":
             vista_alumno_dash = await get_alumno_dashboard_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_alumno_dash]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_alumno_dash])
+            )
             page.update()
             return
         elif ruta == "/portal/alumno/materias":
             vista_alumno_mat = await get_alumno_materias_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_alumno_mat]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_alumno_mat])
+            )
             page.update()
             return
         elif ruta == "/portal/alumno/deportes":
             vista_alumno_dep = await get_alumno_deportes_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_alumno_dep]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_alumno_dep])
+            )
             page.update()
             return
         elif ruta == "/portal/alumno/servicios":
             vista_alumno_serv = await get_alumno_servicios_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_alumno_serv]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_alumno_serv])
+            )
             page.update()
             return
         elif ruta == "/portal/alumno/notas":
             vista_alumno_notas = await get_alumno_notas_view(page)
-            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_alumno_notas]))
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_alumno_notas])
+            )
             page.update()
             return
 
-            
-            
         # ==================== 6. RUTAS PÚBLICAS INSTITUCIONALES ====================
         if ruta == "/quienes-somos":
             contenido_central = get_quienes_somos_view(page)

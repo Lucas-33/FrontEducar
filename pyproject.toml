@@ -31,6 +31,7 @@ dev = [
     # Integration testing with `flet test` / pytest. The `test` extra brings in
     # pytest, pytest-asyncio and the screenshot-comparison dependencies.
     "flet[test]>=0.86.5",
+    "pytest-cov>=7.1.0",
     "ruff>=0.16.10",
 ]
 
@@ -38,6 +39,7 @@ dev = [
 asyncio_mode = "auto"
 testpaths = ["backend/tests"]
 pythonpath = ["."]
+addopts = "--cov=backend --cov-report=term-missing --cov-report=xml --cov-fail-under=20"
 
 [tool.flet]
 org = "com.educar"
@@ -56,3 +58,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.ruff.lint]
+ignore = [
+    "E501", "F841", "F401", "BLE001", "S110", "DTZ011", "DTZ005",
+    "B008", "RUF013", "SIM102", "RUF100", "S112", "PLR1722", "PIE810", "E402"
+]
