@@ -35,7 +35,7 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
     """Vista del programa deportivo (disciplinas, grupos e inscripciones) conectada a la API."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     # ==================== ESTADO DE LA VISTA ====================
@@ -522,8 +522,8 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_nivel_dropdown.on_change = on_filtrar_nivel
-    filtro_deporte_dropdown.on_change = on_filtrar_deporte
+    filtro_nivel_dropdown.on_select = on_filtrar_nivel
+    filtro_deporte_dropdown.on_select = on_filtrar_deporte
 
     # ==================== 4. DIÁLOGO DE ALUMNOS INSCRIPTOS ====================
     def abrir_inscriptos(grupo: dict):

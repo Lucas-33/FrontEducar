@@ -63,7 +63,7 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
     """Inscripción deportiva real: grupos disponibles por nivel del alumno e inscripciones vigentes."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     try:
@@ -573,7 +573,7 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
         estado["legajo"] = int(alumno_dropdown.value) if alumno_dropdown.value else None
         render()
 
-    alumno_dropdown.on_change = on_cambiar_alumno
+    alumno_dropdown.on_select = on_cambiar_alumno
 
     render()
 

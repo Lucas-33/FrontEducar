@@ -42,7 +42,7 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
     """Vista de Inscripción y Control del Servicio de Comedor conectada a la API."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     # ==================== 1. ESTADO DE LA VISTA ====================
@@ -351,7 +351,7 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_estado_dropdown.on_change = on_filtrar_estado
+    filtro_estado_dropdown.on_select = on_filtrar_estado
 
     # ==================== 5. DIÁLOGO INSCRIBIR ALUMNO ====================
     async def abrir_inscribir_alumno(e):

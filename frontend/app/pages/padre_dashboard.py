@@ -69,7 +69,7 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Row:
     """Panel principal del padre/tutor con selector interactivo y datos reales de sus hijos."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     try:
