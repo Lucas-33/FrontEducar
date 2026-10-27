@@ -249,6 +249,42 @@ class SeguridadService:
                 detail=f"El rol con ID {nuevo_rol} no existe",
             )
 
+        # Los vínculos (alumno/docente/tutor) se gestionan en bloque: si se envía
+        # alguno, se limpian los demás para que una cuenta tenga un único vínculo.
+        campos_vinculo = {"legajo_alumno", "legajo_profesor", "id_padre"}
+        if campos_vinculo & data.keys():
+            vinculos = {campo: data.pop(campo, None) for campo in list(campos_vinculo)}
+
+            if vinculos.get("legajo_alumno") is not None and not (
+                alumno_repository.get_by_legajo(db, vinculos["legajo_alumno"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=(
+                        f"El alumno con legajo #{vinculos['legajo_alumno']} no existe"
+                    ),
+                )
+            if vinculos.get("legajo_profesor") is not None and not (
+                profesor_repository.get_by_legajo(db, vinculos["legajo_profesor"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=(
+                        "El docente con legajo "
+                        f"#{vinculos['legajo_profesor']} no existe"
+                    ),
+                )
+            if vinculos.get("id_padre") is not None and not (
+                padre_repository.get(db, vinculos["id_padre"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"El tutor con ID {vinculos['id_padre']} no existe",
+                )
+
+            for campo in campos_vinculo:
+                setattr(user, campo, vinculos.get(campo))
+
         for field, value in data.items():
             if value is not None:
                 setattr(user, field, value)

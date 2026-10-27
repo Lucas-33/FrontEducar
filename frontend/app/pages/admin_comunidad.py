@@ -69,7 +69,7 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
     """Bandeja de entrada de la comunidad: mensajes de contacto y moderación de opiniones."""
 
     token = getattr(page, "auth_token", None)
-    if token and not api_client.token:
+    if token and api_client.token != token:
         api_client.set_token(token)
 
     mensajes: list[dict] = []

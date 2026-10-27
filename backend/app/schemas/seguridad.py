@@ -36,6 +36,9 @@ class UsuarioUpdate(BaseModel):
     password: str | None = None
     id_rol: int | None = None
     activo: bool | None = None
+    legajo_alumno: int | None = None
+    legajo_profesor: int | None = None
+    id_padre: int | None = None
 
 
 class UsuarioResponse(UsuarioBase):

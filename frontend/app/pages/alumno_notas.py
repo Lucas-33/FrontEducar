@@ -101,7 +101,7 @@ async def get_alumno_notas_view(page: ft.Page) -> ft.Row:
     """Calificaciones y presentismo del alumno autenticado."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     try:

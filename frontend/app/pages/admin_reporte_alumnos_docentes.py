@@ -31,7 +31,7 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
     """Reporte consolidado de alumnos por curso/nivel y docentes por especialidad, con datos reales."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     estado: dict = {
