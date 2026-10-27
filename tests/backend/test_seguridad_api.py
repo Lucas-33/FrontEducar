@@ -1,6 +1,6 @@
 """Tests de autenticación, autorización por rol y cambio de contraseña."""
 
-from backend.tests.conftest import PASSWORD_PRUEBA
+from tests.backend.conftest import PASSWORD_PRUEBA
 
 
 def test_login_correcto_y_perfil(client):
