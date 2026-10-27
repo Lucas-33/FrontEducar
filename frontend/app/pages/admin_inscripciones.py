@@ -112,7 +112,7 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
         )
 
     async def exportar_listado(e):
-        page.launch_url(api_client.reporte_url("solicitudes"))
+        await page.launch_url(api_client.reporte_url("solicitudes"))
 
     filters_bar = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
