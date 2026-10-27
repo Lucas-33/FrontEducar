@@ -413,7 +413,7 @@ async def get_padre_docentes_view(page: ft.Page) -> ft.Row:
         await recargar()
 
     search_field.on_change = on_buscar
-    alumno_dropdown.on_change = on_cambiar_alumno
+    alumno_dropdown.on_select = on_cambiar_alumno
     btn_refrescar.on_click = on_refrescar
 
     render()

@@ -510,7 +510,7 @@ async def get_admin_transporte_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_recorrido_dropdown.on_change = on_filtrar_recorrido
+    filtro_recorrido_dropdown.on_select = on_filtrar_recorrido
 
     # ==================== 5. DIÁLOGO NUEVO RECORRIDO ====================
     def abrir_nuevo_recorrido(e):

@@ -40,6 +40,262 @@ def _fecha_corta(iso: str | None) -> str:
     return f"{iso[8:10]}/{iso[5:7]}/{iso[0:4]}"
 
 
+def _crear_selector_alumnos_tutor(alumnos: list[dict]):
+    """Crea una lista buscable con selección múltiple de alumnos.
+
+    Devuelve el panel, el set de legajos seleccionados y dos helpers:
+    ``establecer(legajos)`` para precargar la selección y ``render()`` para
+    refrescar la lista cuando cambia el buscador.
+    """
+    seleccionados: set[int] = set()
+
+    busqueda_field = ft.TextField(
+        hint_text="Buscar por legajo, DNI, nombre o apellido...",
+        hint_style=ft.TextStyle(size=12, color=MUTED),
+        text_size=12,
+        color=TEXT_COLOR,
+        height=40,
+        content_padding=ft.Padding(10, 0, 10, 0),
+        prefix_icon=ft.Icons.SEARCH,
+        border=ft.InputBorder.OUTLINE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=BORDER_RADIUS,
+        bgcolor=BG_WHITE,
+    )
+
+    lista_view = ft.ListView(spacing=0, padding=0, height=190)
+    contador_text = ft.Text("0 alumnos seleccionados", size=11, color=MUTED)
+
+    def actualizar_contador():
+        cantidad = len(seleccionados)
+        contador_text.value = (
+            f"{cantidad} alumno{'s' if cantidad != 1 else ''} seleccionado"
+            f"{'s' if cantidad != 1 else ''}"
+        )
+        try:
+            contador_text.update()
+        except Exception:
+            pass
+
+    def alternar(e, legajo: int):
+        if e.control.value:
+            seleccionados.add(legajo)
+        else:
+            seleccionados.discard(legajo)
+        actualizar_contador()
+
+    def render():
+        texto = (busqueda_field.value or "").strip().lower()
+        filtrados = alumnos
+        if texto:
+            filtrados = [
+                alumno
+                for alumno in alumnos
+                if texto
+                in (
+                    f"{alumno.get('legajo', '')} {alumno.get('dni', '')} "
+                    f"{alumno.get('apellido', '')} {alumno.get('nombre', '')}"
+                ).lower()
+            ]
+
+        filas: list[ft.Control] = []
+        for alumno in filtrados:
+            try:
+                legajo = int(alumno.get("legajo"))
+            except (TypeError, ValueError):
+                continue
+            filas.append(
+                ft.Checkbox(
+                    label=(
+                        f"#{legajo} · {alumno.get('apellido', '')}, "
+                        f"{alumno.get('nombre', '')} · DNI {alumno.get('dni', '')}"
+                    ),
+                    value=legajo in seleccionados,
+                    label_style=ft.TextStyle(size=12, color=TEXT_COLOR),
+                    on_change=lambda e, leg=legajo: alternar(e, leg),
+                )
+            )
+
+        if not filas:
+            filas.append(
+                ft.Container(
+                    padding=ft.Padding(8, 12, 8, 12),
+                    content=ft.Text(
+                        "No se encontraron alumnos con ese criterio.",
+                        size=12,
+                        color=MUTED,
+                    ),
+                )
+            )
+
+        lista_view.controls = filas
+        try:
+            lista_view.update()
+        except Exception:
+            pass
+        actualizar_contador()
+
+    def establecer(legajos):
+        seleccionados.clear()
+        for legajo in legajos or []:
+            try:
+                seleccionados.add(int(legajo))
+            except (TypeError, ValueError):
+                continue
+        busqueda_field.value = ""
+        try:
+            busqueda_field.update()
+        except Exception:
+            pass
+        render()
+
+    busqueda_field.on_change = lambda e: render()
+
+    panel = ft.Container(
+        visible=False,
+        content=ft.Column(
+            spacing=6,
+            controls=[
+                ft.Text(
+                    "Alumnos a cargo",
+                    size=13,
+                    weight=ft.FontWeight.W_600,
+                    color=TEXT_COLOR,
+                ),
+                ft.Text(
+                    "Seleccione uno o más alumnos a cargo del tutor.",
+                    size=11,
+                    color=MUTED,
+                ),
+                busqueda_field,
+                ft.Container(
+                    height=190,
+                    bgcolor=BG_WHITE,
+                    border=ft.Border.all(1, BORDER_COLOR),
+                    border_radius=BORDER_RADIUS,
+                    padding=ft.Padding(8, 4, 8, 4),
+                    content=lista_view,
+                ),
+                contador_text,
+            ],
+        ),
+    )
+
+    render()
+    return panel, seleccionados, establecer, render
+
+
+def _crear_panel_datos_tutor() -> tuple[ft.Container, dict[str, ft.TextField]]:
+    """Crea los campos para dar de alta al tutor junto con su usuario."""
+
+    def campo(
+        label: str,
+        hint: str,
+        *,
+        keyboard_type: ft.KeyboardType | None = None,
+        regex: str | None = None,
+    ) -> ft.TextField:
+        extras: dict = {}
+        if keyboard_type is not None:
+            extras["keyboard_type"] = keyboard_type
+        if regex is not None:
+            extras["input_filter"] = ft.InputFilter(allow=True, regex_string=regex)
+        return ft.TextField(
+            label=label,
+            hint_text=hint,
+            hint_style=ft.TextStyle(size=12, color=MUTED),
+            text_size=13,
+            color=TEXT_COLOR,
+            height=46,
+            content_padding=ft.Padding(10, 8, 10, 8),
+            border=ft.InputBorder.OUTLINE,
+            border_color=BORDER_COLOR,
+            focused_border_color=TEAL,
+            border_radius=BORDER_RADIUS,
+            bgcolor=BG_WHITE,
+            expand=True,
+            **extras,
+        )
+
+    campos = {
+        "dni": campo(
+            "DNI *",
+            "Ej: 30111222",
+            keyboard_type=ft.KeyboardType.NUMBER,
+            regex=r"^[0-9]*$",
+        ),
+        "nombre": campo("Nombre *", "Ej: Laura", keyboard_type=ft.KeyboardType.NAME),
+        "apellido": campo(
+            "Apellido *", "Ej: Gómez", keyboard_type=ft.KeyboardType.NAME
+        ),
+        "telefono": campo(
+            "Teléfono",
+            "Ej: 3624000000",
+            keyboard_type=ft.KeyboardType.PHONE,
+            regex=r"^[0-9\-\+\s]*$",
+        ),
+        "correo_electronico": campo(
+            "Correo", "tutor@correo.com", keyboard_type=ft.KeyboardType.EMAIL
+        ),
+    }
+
+    panel = ft.Container(
+        visible=False,
+        content=ft.Column(
+            spacing=8,
+            controls=[
+                ft.Text(
+                    "Datos del tutor",
+                    size=13,
+                    weight=ft.FontWeight.W_600,
+                    color=TEXT_COLOR,
+                ),
+                ft.Text(
+                    "Se dará de alta el tutor y se creará su usuario de acceso.",
+                    size=11,
+                    color=MUTED,
+                ),
+                ft.Row(spacing=10, controls=[campos["dni"], campos["nombre"]]),
+                ft.Row(spacing=10, controls=[campos["apellido"], campos["telefono"]]),
+                ft.Row(spacing=10, controls=[campos["correo_electronico"]]),
+            ],
+        ),
+    )
+    return panel, campos
+
+
+def _leer_datos_tutor(campos: dict[str, ft.TextField]) -> dict:
+    """Valida y devuelve los datos del tutor cargados en el formulario."""
+    dni = (campos["dni"].value or "").strip()
+    nombre = (campos["nombre"].value or "").strip()
+    apellido = (campos["apellido"].value or "").strip()
+    if not all([dni, nombre, apellido]):
+        raise ValueError("DNI, nombre y apellido del tutor son obligatorios.")
+    return {
+        "dni": dni,
+        "nombre": nombre,
+        "apellido": apellido,
+        "telefono": (campos["telefono"].value or "").strip() or None,
+        "correo_electronico": (campos["correo_electronico"].value or "").strip()
+        or None,
+    }
+
+
+def _precargar_datos_tutor(campos: dict[str, ft.TextField], tutor: dict | None) -> None:
+    """Completa o limpia los campos del tutor."""
+    datos = tutor or {}
+    valores = {
+        "dni": datos.get("dni", ""),
+        "nombre": datos.get("nombre", ""),
+        "apellido": datos.get("apellido", ""),
+        "telefono": datos.get("telefono") or "",
+        "correo_electronico": datos.get("correo_electronico") or "",
+    }
+    for clave, valor in valores.items():
+        campos[clave].value = str(valor)
+
+
 async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
     """Vista de Usuarios, Control de Acceso RBAC conectada a la API."""
 
@@ -280,7 +536,7 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
     async def abrir_editar_usuario(usuario: dict):
         """Permite ver/editar el usuario de acceso, el rol y su vínculo."""
         try:
-            alumnos = await api_client.get_alumnos(solo_activos=False)
+            alumnos = await api_client.get_todos_los_alumnos(solo_activos=False)
         except Exception:
             alumnos = []
         try:
@@ -288,7 +544,7 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         except Exception:
             profesores = []
         try:
-            padres = await api_client.get_padres()
+            padres = await api_client.get_todos_los_padres()
         except Exception:
             padres = []
 
@@ -297,30 +553,44 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             usuario.get("rol", ""), usuario.get("rol", "Alumno")
         )
 
+        padre_actual = next(
+            (p for p in padres if p.get("id_padre") == usuario.get("id_padre")),
+            None,
+        )
+        es_tutor_actual = rol_actual == "Padre / Tutor"
+
         vinculo_actual = ""
         if usuario.get("legajo_alumno"):
             vinculo_actual = f"alumno:{usuario['legajo_alumno']}"
         elif usuario.get("legajo_profesor"):
             vinculo_actual = f"profesor:{usuario['legajo_profesor']}"
-        elif usuario.get("id_padre"):
-            vinculo_actual = f"padre:{usuario['id_padre']}"
 
         username_field = ft.TextField(
             label="Usuario / correo de acceso *",
             value=usuario.get("username", ""),
-            width=380,
+            width=520,
         )
         rol_field = ft.Dropdown(
             label="Rol *",
             value=rol_actual,
-            width=380,
+            width=520,
             options=[
                 ft.dropdown.Option(r)
                 for r in ["Administrador", "Docente", "Padre / Tutor", "Alumno"]
             ],
         )
-        vinculo_field = ft.Dropdown(label="Vincular a", width=380, options=[])
+        vinculo_field = ft.Dropdown(label="Vincular a", width=520, options=[])
+        vinculo_field.visible = not es_tutor_actual
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
+
+        panel_tutor, campos_tutor = _crear_panel_datos_tutor()
+        panel_tutor.visible = es_tutor_actual
+        _precargar_datos_tutor(campos_tutor, padre_actual)
+
+        panel_alumnos, alumnos_seleccionados, establecer_alumnos, _ = (
+            _crear_selector_alumnos_tutor(alumnos)
+        )
+        panel_alumnos.visible = es_tutor_actual
 
         def opciones_vinculo(rol_legible: str) -> list[ft.dropdown.Option]:
             sin_vinculo = ft.dropdown.Option(key="", text="Sin vínculo")
@@ -331,14 +601,6 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                         text=f"{p['apellido']}, {p['nombre']} (#{p['legajo']})",
                     )
                     for p in profesores
-                ]
-            if rol_legible == "Padre / Tutor":
-                return [sin_vinculo] + [
-                    ft.dropdown.Option(
-                        key=f"padre:{p['id_padre']}",
-                        text=f"{p['apellido']}, {p['nombre']} (DNI {p['dni']})",
-                    )
-                    for p in padres
                 ]
             if rol_legible == "Alumno":
                 return [sin_vinculo] + [
@@ -351,14 +613,34 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             return [sin_vinculo]
 
         def on_rol_change(e):
+            es_tutor = rol_field.value == "Padre / Tutor"
             vinculo_field.options = opciones_vinculo(rol_field.value or "")
             vinculo_field.value = ""
-            vinculo_field.update()
+            vinculo_field.visible = not es_tutor
+            panel_tutor.visible = es_tutor
+            panel_alumnos.visible = es_tutor
+            _precargar_datos_tutor(campos_tutor, padre_actual if es_tutor else None)
+            establecer_alumnos([])
+            try:
+                page.update()
+            except Exception:
+                pass
 
-        rol_field.on_change = on_rol_change
+        rol_field.on_select = on_rol_change
         vinculo_field.options = opciones_vinculo(rol_field.value or "")
         claves = {opc.key for opc in vinculo_field.options}
         vinculo_field.value = vinculo_actual if vinculo_actual in claves else ""
+
+        vinculados_iniciales = usuario.get("alumnos_vinculados") or []
+        if not vinculados_iniciales and usuario.get("id_padre"):
+            try:
+                hijos = await api_client.get_hijos(usuario["id_padre"])
+                vinculados_iniciales = [
+                    hijo.get("legajo") for hijo in hijos if hijo.get("legajo")
+                ]
+            except Exception:
+                vinculados_iniciales = []
+        establecer_alumnos(vinculados_iniciales)
 
         async def guardar(e):
             username = (username_field.value or "").strip()
@@ -377,22 +659,32 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 error_text.update()
                 return
 
-            payload: dict = {
-                "username": username,
-                "id_rol": id_rol,
-                "legajo_alumno": None,
-                "legajo_profesor": None,
-                "id_padre": None,
-            }
-            vinculo = vinculo_field.value or ""
-            if vinculo:
-                tipo, ident = vinculo.split(":", 1)
-                if tipo == "alumno":
-                    payload["legajo_alumno"] = int(ident)
-                elif tipo == "profesor":
-                    payload["legajo_profesor"] = int(ident)
-                elif tipo == "padre":
-                    payload["id_padre"] = int(ident)
+            payload: dict = {"username": username, "id_rol": id_rol}
+
+            if rol_legible == "Padre / Tutor":
+                try:
+                    payload["tutor"] = _leer_datos_tutor(campos_tutor)
+                except ValueError as exc:
+                    error_text.value = f"⚠️ {exc}"
+                    error_text.visible = True
+                    error_text.update()
+                    return
+                payload["legajos_alumnos"] = sorted(alumnos_seleccionados)
+            else:
+                payload.update(
+                    {
+                        "legajo_alumno": None,
+                        "legajo_profesor": None,
+                        "id_padre": None,
+                    }
+                )
+                vinculo = vinculo_field.value or ""
+                if vinculo:
+                    tipo, ident = vinculo.split(":", 1)
+                    if tipo == "alumno":
+                        payload["legajo_alumno"] = int(ident)
+                    elif tipo == "profesor":
+                        payload["legajo_profesor"] = int(ident)
 
             # El token en memoria puede haberse perdido si el backend se reinició.
             token = getattr(page, "auth_token", None)
@@ -419,10 +711,18 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
 
             page.pop_dialog()
             await recargar()
+            detalle_vinculo = ""
+            if rol_legible == "Padre / Tutor" and alumnos_seleccionados:
+                cantidad = len(alumnos_seleccionados)
+                detalle_vinculo = (
+                    f" {cantidad} alumno{'s' if cantidad != 1 else ''} vinculado"
+                    f"{'s' if cantidad != 1 else ''}."
+                )
             page.show_dialog(
                 ft.SnackBar(
                     ft.Text(
-                        f"Usuario '{username}' actualizado correctamente.",
+                        f"Usuario '{username}' actualizado correctamente."
+                        f"{detalle_vinculo}",
                         color="white",
                     ),
                     bgcolor=TEAL,
@@ -438,18 +738,21 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             ),
             content=ft.Column(
                 spacing=14,
-                width=380,
+                width=520,
                 tight=True,
                 controls=[
                     ft.Text(
-                        "Cambie el correo/usuario de acceso, el rol o el vínculo "
-                        "con alumno, docente o tutor.",
+                        "Cambie el usuario de acceso, el rol o los datos del tutor. "
+                        "Si el rol es Padre / Tutor complete sus datos y seleccione "
+                        "uno o más alumnos a cargo.",
                         size=13,
                         color=MUTED,
                     ),
                     username_field,
                     rol_field,
                     vinculo_field,
+                    panel_tutor,
+                    panel_alumnos,
                     error_text,
                 ],
             ),
@@ -696,43 +999,44 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_rol_dropdown.on_change = on_filtrar_rol
-    filtro_estado_dropdown.on_change = on_filtrar_estado
+    filtro_rol_dropdown.on_select = on_filtrar_rol
+    filtro_estado_dropdown.on_select = on_filtrar_estado
 
     # ==================== 3. DIÁLOGO NUEVO USUARIO ====================
     async def abrir_nuevo_usuario(e):
         try:
-            alumnos = await api_client.get_alumnos(solo_activos=True)
+            alumnos = await api_client.get_todos_los_alumnos(solo_activos=False)
         except Exception:
             alumnos = []
         try:
             profesores = await api_client.get_profesores(solo_activos=True)
         except Exception:
             profesores = []
-        try:
-            padres = await api_client.get_padres()
-        except Exception:
-            padres = []
 
         ids_rol = {r.get("nombre"): r.get("id_rol") for r in estado["roles"]}
 
         username_field = ft.TextField(
-            label="Usuario *", hint_text="ej: jperez", width=380
+            label="Usuario *", hint_text="ej: jperez", width=520
         )
         password_field = ft.TextField(
-            label="Contraseña *", password=True, can_reveal_password=True, width=380
+            label="Contraseña *", password=True, can_reveal_password=True, width=520
         )
         rol_field = ft.Dropdown(
             label="Rol *",
             value="Alumno",
-            width=380,
+            width=520,
             options=[
                 ft.dropdown.Option(r)
                 for r in ["Administrador", "Docente", "Padre / Tutor", "Alumno"]
             ],
         )
-        vinculo_field = ft.Dropdown(label="Vincular a", width=380, options=[])
+        vinculo_field = ft.Dropdown(label="Vincular a", width=520, options=[])
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
+
+        panel_tutor, campos_tutor = _crear_panel_datos_tutor()
+        panel_alumnos, alumnos_seleccionados, establecer_alumnos, _ = (
+            _crear_selector_alumnos_tutor(alumnos)
+        )
 
         def opciones_vinculo(rol_legible: str) -> list[ft.dropdown.Option]:
             sin_vinculo = ft.dropdown.Option(key="", text="Sin vínculo")
@@ -743,14 +1047,6 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                         text=f"{p['apellido']}, {p['nombre']} (#{p['legajo']})",
                     )
                     for p in profesores
-                ]
-            if rol_legible == "Padre / Tutor":
-                return [sin_vinculo] + [
-                    ft.dropdown.Option(
-                        key=f"padre:{p['id_padre']}",
-                        text=f"{p['apellido']}, {p['nombre']} (DNI {p['dni']})",
-                    )
-                    for p in padres
                 ]
             if rol_legible == "Alumno":
                 return [sin_vinculo] + [
@@ -763,11 +1059,20 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             return [sin_vinculo]
 
         def on_rol_change(e):
+            es_tutor = rol_field.value == "Padre / Tutor"
             vinculo_field.options = opciones_vinculo(rol_field.value or "")
             vinculo_field.value = ""
-            vinculo_field.update()
+            vinculo_field.visible = not es_tutor
+            panel_tutor.visible = es_tutor
+            panel_alumnos.visible = es_tutor
+            _precargar_datos_tutor(campos_tutor, None)
+            establecer_alumnos([])
+            try:
+                page.update()
+            except Exception:
+                pass
 
-        rol_field.on_change = on_rol_change
+        rol_field.on_select = on_rol_change
         vinculo_field.options = opciones_vinculo(rol_field.value or "")
 
         async def guardar(e):
@@ -795,15 +1100,30 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 "activo": True,
             }
 
-            vinculo = vinculo_field.value or ""
-            if vinculo:
-                tipo, ident = vinculo.split(":", 1)
-                if tipo == "alumno":
-                    payload["legajo_alumno"] = int(ident)
-                elif tipo == "profesor":
-                    payload["legajo_profesor"] = int(ident)
-                elif tipo == "padre":
-                    payload["id_padre"] = int(ident)
+            if rol_legible == "Padre / Tutor":
+                if not alumnos_seleccionados:
+                    error_text.value = (
+                        "⚠️ Seleccione al menos un alumno a cargo del tutor."
+                    )
+                    error_text.visible = True
+                    error_text.update()
+                    return
+                try:
+                    payload["tutor"] = _leer_datos_tutor(campos_tutor)
+                except ValueError as exc:
+                    error_text.value = f"⚠️ {exc}"
+                    error_text.visible = True
+                    error_text.update()
+                    return
+                payload["legajos_alumnos"] = sorted(alumnos_seleccionados)
+            else:
+                vinculo = vinculo_field.value or ""
+                if vinculo:
+                    tipo, ident = vinculo.split(":", 1)
+                    if tipo == "alumno":
+                        payload["legajo_alumno"] = int(ident)
+                    elif tipo == "profesor":
+                        payload["legajo_profesor"] = int(ident)
 
             try:
                 await api_client.create_usuario(payload)
@@ -825,17 +1145,35 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
 
             page.pop_dialog()
             await recargar()
+            detalle_vinculo = ""
+            if rol_legible == "Padre / Tutor" and alumnos_seleccionados:
+                cantidad = len(alumnos_seleccionados)
+                detalle_vinculo = (
+                    f" {cantidad} alumno{'s' if cantidad != 1 else ''} vinculado"
+                    f"{'s' if cantidad != 1 else ''}."
+                )
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(
+                        f"Usuario '{username}' creado correctamente.{detalle_vinculo}",
+                        color="white",
+                    ),
+                    bgcolor=TEAL,
+                )
+            )
 
         dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text("Nuevo Usuario", size=18, weight=ft.FontWeight.BOLD),
             content=ft.Column(
                 spacing=14,
-                width=380,
+                width=520,
                 tight=True,
                 controls=[
                     ft.Text(
-                        "Cree la cuenta y vincúlela a un alumno, docente o tutor si corresponde.",
+                        "Cree la cuenta de acceso. Si el rol es Padre / Tutor, "
+                        "complete los datos del tutor y seleccione uno o más "
+                        "alumnos a cargo: se crearán el tutor y el usuario juntos.",
                         size=13,
                         color=MUTED,
                     ),
@@ -843,6 +1181,8 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                     password_field,
                     rol_field,
                     vinculo_field,
+                    panel_tutor,
+                    panel_alumnos,
                     error_text,
                 ],
             ),

@@ -618,7 +618,7 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         estado["asignacion"] = asignaciones[int(indice)] if indice is not None else None
         page.run_task(recargar_calificaciones)
 
-    asignacion_dropdown.on_change = on_cambiar_asignacion
+    asignacion_dropdown.on_select = on_cambiar_asignacion
 
     btn_nueva_nota = ft.Button(
         content=ft.Row(
@@ -1013,7 +1013,7 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         page.update()
         page.run_task(recargar_registros)
 
-    curso_dropdown.on_change = on_cambiar_curso
+    curso_dropdown.on_select = on_cambiar_curso
 
     seccion_asistencia = ft.Column(
         spacing=16,

@@ -689,9 +689,9 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_deporte.on_change = on_filtrar_deporte
-    filtro_nivel.on_change = on_filtrar_nivel
-    filtro_horario.on_change = on_filtrar_horario
+    filtro_deporte.on_select = on_filtrar_deporte
+    filtro_nivel.on_select = on_filtrar_nivel
+    filtro_horario.on_select = on_filtrar_horario
 
     render()
 

@@ -520,7 +520,7 @@ async def get_admin_profesores_view(page: ft.Page) -> ft.Row:
         estado.update({"texto": search_field.value or ""}),
         render(),
     )
-    filtro_estado_dropdown.on_change = lambda e: (
+    filtro_estado_dropdown.on_select = lambda e: (
         estado.update({"filtro_estado": filtro_estado_dropdown.value or "Todos"}),
         render(),
     )

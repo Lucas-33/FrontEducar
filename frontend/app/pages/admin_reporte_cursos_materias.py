@@ -637,9 +637,9 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_materia.on_change = on_filtrar_materia
-    filtro_nivel.on_change = on_filtrar_nivel
-    filtro_curso.on_change = on_filtrar_curso
+    filtro_materia.on_select = on_filtrar_materia
+    filtro_nivel.on_select = on_filtrar_nivel
+    filtro_curso.on_select = on_filtrar_curso
 
     render()
 

@@ -573,7 +573,7 @@ async def get_padre_deportes_view(page: ft.Page) -> ft.Row:
         estado["legajo"] = int(alumno_dropdown.value) if alumno_dropdown.value else None
         render()
 
-    alumno_dropdown.on_change = on_cambiar_alumno
+    alumno_dropdown.on_select = on_cambiar_alumno
 
     render()
 

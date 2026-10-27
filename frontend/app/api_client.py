@@ -126,14 +126,42 @@ class APIClient:
         return await self._put(f"/auth/usuarios/{id_usuario}", data)
 
     # ==================== ALUMNOS ====================
-    async def get_alumnos(self, solo_activos: bool = True) -> list[dict[str, Any]]:
+    async def get_alumnos(
+        self,
+        solo_activos: bool = True,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
         client = self._get_client()
         url = f"{self.base_url}/personas/alumnos"
-        params = {"solo_activos": str(solo_activos).lower(), "limit": 100}
+        params = {
+            "solo_activos": str(solo_activos).lower(),
+            "skip": skip,
+            "limit": limit,
+        }
 
         response = await client.get(url, params=params, headers=self._get_headers())
         response.raise_for_status()
         return response.json()
+
+    async def get_todos_los_alumnos(
+        self, solo_activos: bool = False
+    ) -> list[dict[str, Any]]:
+        """Recorre todas las páginas del listado para no perder alumnos."""
+        alumnos: list[dict[str, Any]] = []
+        tamano_pagina = 100
+        skip = 0
+        while True:
+            pagina = await self.get_alumnos(
+                solo_activos=solo_activos,
+                skip=skip,
+                limit=tamano_pagina,
+            )
+            alumnos.extend(pagina)
+            if len(pagina) < tamano_pagina:
+                break
+            skip += tamano_pagina
+        return alumnos
 
     async def get_alumno(self, legajo: int) -> dict[str, Any]:
         return await self._get(f"/personas/alumnos/{legajo}")
@@ -169,8 +197,23 @@ class APIClient:
         return await self._delete(f"/personas/profesores/{legajo}")
 
     # ==================== PADRES / TUTORES ====================
-    async def get_padres(self) -> list[dict[str, Any]]:
-        return await self._get("/personas/padres")
+    async def get_padres(self, skip: int = 0, limit: int = 100) -> list[dict[str, Any]]:
+        return await self._get(
+            "/personas/padres", params={"skip": skip, "limit": limit}
+        )
+
+    async def get_todos_los_padres(self) -> list[dict[str, Any]]:
+        """Recorre todas las páginas del listado de tutores."""
+        padres: list[dict[str, Any]] = []
+        tamano_pagina = 100
+        skip = 0
+        while True:
+            pagina = await self.get_padres(skip=skip, limit=tamano_pagina)
+            padres.extend(pagina)
+            if len(pagina) < tamano_pagina:
+                break
+            skip += tamano_pagina
+        return padres
 
     async def get_hijos(self, id_padre: int) -> list[dict[str, Any]]:
         return await self._get(f"/personas/padres/{id_padre}/alumnos")
