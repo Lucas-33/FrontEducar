@@ -1,6 +1,10 @@
 """Tests de autenticación, autorización por rol y cambio de contraseña."""
 
-from backend.tests.conftest import PASSWORD_PRUEBA
+from backend.tests.conftest import (
+    LEGAJO_ALUMNO_1,
+    LEGAJO_ALUMNO_2,
+    PASSWORD_PRUEBA,
+)
 
 
 def test_login_correcto_y_perfil(client):
@@ -127,3 +131,96 @@ def test_cambio_de_password(client, cabeceras_admin):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert rechazo.status_code in (400, 401)
+
+
+def test_alumno_y_tutor_solo_ven_sus_propias_fichas(
+    client, cabeceras_alumno, cabeceras_padre
+):
+    propia = client.get(
+        f"/api/v1/personas/alumnos/{LEGAJO_ALUMNO_1}",
+        headers=cabeceras_alumno,
+    )
+    assert propia.status_code == 200
+    assert propia.json()["legajo"] == LEGAJO_ALUMNO_1
+
+    ajena = client.get(
+        f"/api/v1/personas/alumnos/{LEGAJO_ALUMNO_2}",
+        headers=cabeceras_alumno,
+    )
+    assert ajena.status_code == 403
+
+    hijo = client.get(
+        f"/api/v1/personas/alumnos/{LEGAJO_ALUMNO_1}",
+        headers=cabeceras_padre,
+    )
+    assert hijo.status_code == 200
+
+    ajeno = client.get(
+        f"/api/v1/personas/alumnos/{LEGAJO_ALUMNO_2}",
+        headers=cabeceras_padre,
+    )
+    assert ajeno.status_code == 403
+
+
+def test_admin_edita_usuario_correo_y_vinculo(client, cabeceras_admin):
+    crear = client.post(
+        "/api/v1/auth/usuarios",
+        json={
+            "username": "edit_test",
+            "password": PASSWORD_PRUEBA,
+            "id_rol": 4,
+            "activo": True,
+        },
+        headers=cabeceras_admin,
+    )
+    assert crear.status_code == 201
+    id_usuario = crear.json()["id_usuario"]
+
+    actualizar = client.put(
+        f"/api/v1/auth/usuarios/{id_usuario}",
+        json={
+            "username": "edit_test_nuevo",
+            "id_rol": 4,
+            "legajo_alumno": LEGAJO_ALUMNO_2,
+            "legajo_profesor": None,
+            "id_padre": None,
+        },
+        headers=cabeceras_admin,
+    )
+    assert actualizar.status_code == 200
+    cuerpo = actualizar.json()
+    assert cuerpo["username"] == "edit_test_nuevo"
+    assert cuerpo["legajo_alumno"] == LEGAJO_ALUMNO_2
+    assert cuerpo["legajo_profesor"] is None
+    assert cuerpo["id_padre"] is None
+
+    # El nuevo usuario de acceso ya es el que autentica.
+    assert (
+        client.post(
+            "/api/v1/auth/login",
+            json={"username": "edit_test", "password": PASSWORD_PRUEBA},
+        ).status_code
+        == 401
+    )
+    assert (
+        client.post(
+            "/api/v1/auth/login",
+            json={"username": "edit_test_nuevo", "password": PASSWORD_PRUEBA},
+        ).status_code
+        == 200
+    )
+
+    desvincular = client.put(
+        f"/api/v1/auth/usuarios/{id_usuario}",
+        json={"legajo_alumno": None},
+        headers=cabeceras_admin,
+    )
+    assert desvincular.status_code == 200
+    assert desvincular.json()["legajo_alumno"] is None
+
+    inexistente = client.put(
+        f"/api/v1/auth/usuarios/{id_usuario}",
+        json={"legajo_alumno": 999999},
+        headers=cabeceras_admin,
+    )
+    assert inexistente.status_code == 404

@@ -20,79 +20,6 @@ from frontend.app.components.constants import (
 def get_login_view(page: ft.Page) -> list[ft.Control]:
     """Retorna la vista completa de inicio de sesión conectada a la API."""
 
-    # Estado del rol seleccionado (por defecto Familias)
-    rol_seleccionado = {"valor": "Familias"}
-    roles = ["Alumnos", "Familias", "Docentes", "Admin"]
-    botones_roles: dict[str, ft.Container] = {}
-
-    def seleccionar_rol(e):
-        nuevo_rol = e.control.data
-        rol_seleccionado["valor"] = nuevo_rol
-
-        for rol, container in botones_roles.items():
-            activo = rol == nuevo_rol
-            container.bgcolor = BG_WHITE if activo else "transparent"
-            container.shadow = (
-                ft.BoxShadow(
-                    spread_radius=0,
-                    blur_radius=4,
-                    color=ft.Colors.with_opacity(0.06, "#000000"),
-                    offset=ft.Offset(0, 1),
-                )
-                if activo
-                else None
-            )
-            container.content.color = TEAL_DARK if activo else MUTED
-            container.content.weight = (
-                ft.FontWeight.W_600 if activo else ft.FontWeight.W_500
-            )
-
-        selector_roles.update()
-
-    # Selector de roles segmentado
-    tabs_controls = []
-    for rol in roles:
-        activo = rol == rol_seleccionado["valor"]
-        btn_rol = ft.Container(
-            data=rol,
-            expand=True,
-            height=32,
-            bgcolor=BG_WHITE if activo else "transparent",
-            border_radius=6,
-            alignment=ft.Alignment(0, 0),
-            shadow=(
-                ft.BoxShadow(
-                    spread_radius=0,
-                    blur_radius=4,
-                    color=ft.Colors.with_opacity(0.06, "#000000"),
-                    offset=ft.Offset(0, 1),
-                )
-                if activo
-                else None
-            ),
-            on_click=seleccionar_rol,
-            content=ft.Text(
-                rol,
-                size=13,
-                weight=ft.FontWeight.W_600 if activo else ft.FontWeight.W_500,
-                color=TEAL_DARK if activo else MUTED,
-            ),
-        )
-        botones_roles[rol] = btn_rol
-        tabs_controls.append(btn_rol)
-
-    selector_roles = ft.Container(
-        width=384,
-        height=40,
-        bgcolor=BG_PAGE,
-        border_radius=8,
-        padding=4,
-        content=ft.Row(
-            spacing=4,
-            controls=tabs_controls,
-        ),
-    )
-
     error_banner = ft.Text(
         "",
         size=13,
@@ -102,7 +29,8 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
         visible=False,
     )
 
-    def redirigir_por_rol(rol: str):
+    def redirigir_por_rol(rol: str) -> str | None:
+        """Devuelve el panel que corresponde al rol informado por la API."""
         rol_upper = (rol or "").strip().upper()
         rutas_por_rol = {
             "ADMIN": "/admin/dashboard",
@@ -113,7 +41,7 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
             "STUDENT": "/portal/alumno/dashboard",
             "ALUMNO": "/portal/alumno/dashboard",
         }
-        return rutas_por_rol.get(rol_upper, "/admin/dashboard")
+        return rutas_por_rol.get(rol_upper)
 
     btn_submit = ft.Button(
         "INGRESAR A LA PLATAFORMA",
@@ -156,6 +84,20 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                 page.auth_user = user
 
             ruta_destino = redirigir_por_rol(rol)
+            if not ruta_destino:
+                api_client.clear_token()
+                page.auth_token = None
+                page.auth_rol = None
+                btn_submit.disabled = False
+                btn_submit.text = "INGRESAR A LA PLATAFORMA"
+                error_banner.value = (
+                    "No se pudo determinar el rol de su usuario. "
+                    "Contacte al administrador."
+                )
+                error_banner.visible = True
+                page.update()
+                return
+
             page.go(ruta_destino)
 
         except httpx.HTTPStatusError as err:
@@ -243,9 +185,14 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                             color=MUTED,
                             text_align=ft.TextAlign.CENTER,
                         ),
+                        ft.Text(
+                            "El portal se asigna automáticamente según su rol",
+                            size=12,
+                            color=MUTED,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
                     ],
                 ),
-                selector_roles,
                 error_banner,
                 ft.Column(
                     spacing=18,

@@ -16,6 +16,11 @@ from frontend.app.components.constants import (
 def abrir_cambio_password(page: ft.Page):
     """Abre el diálogo modal de cambio de contraseña del usuario autenticado."""
 
+    # El token en memoria puede haberse perdido si el backend se reinició.
+    token = getattr(page, "auth_token", None)
+    if token and api_client.token != token:
+        api_client.set_token(token)
+
     actual = ft.TextField(
         label="Contraseña actual",
         password=True,
@@ -39,19 +44,33 @@ def abrir_cambio_password(page: ft.Page):
     )
     mensaje = ft.Text("", size=12, color="#EF4444")
 
+    btn_guardar = ft.Button("Guardar", bgcolor=TEAL, color="white")
+
     async def guardar(e):
         mensaje.value = ""
-        if not actual.value or not nueva.value or not repetir.value:
+        password_actual = (actual.value or "").strip()
+        password_nueva = (nueva.value or "").strip()
+        password_repetida = (repetir.value or "").strip()
+
+        if not password_actual or not password_nueva or not password_repetida:
             mensaje.value = "Complete todos los campos para continuar."
             page.update()
             return
-        if nueva.value != repetir.value:
+        if len(password_nueva) < 6:
+            mensaje.value = "La nueva contraseña debe tener al menos 6 caracteres."
+            page.update()
+            return
+        if password_nueva != password_repetida:
             mensaje.value = "Las contraseñas nuevas no coinciden."
             page.update()
             return
 
+        btn_guardar.disabled = True
+        btn_guardar.text = "Guardando..."
+        page.update()
+
         try:
-            await api_client.cambiar_password(actual.value, nueva.value)
+            await api_client.cambiar_password(password_actual, password_nueva)
         except httpx.HTTPStatusError as error:
             detalle = "No se pudo cambiar la contraseña."
             try:
@@ -59,19 +78,30 @@ def abrir_cambio_password(page: ft.Page):
             except Exception:
                 pass
             mensaje.value = detalle
+            btn_guardar.disabled = False
+            btn_guardar.text = "Guardar"
             page.update()
             return
         except Exception:
             mensaje.value = "No se pudo conectar con el servidor."
+            btn_guardar.disabled = False
+            btn_guardar.text = "Guardar"
             page.update()
             return
 
         page.pop_dialog()
-        aviso = ft.SnackBar(
-            ft.Text("Contraseña actualizada correctamente.", color="white"),
-            bgcolor=TEAL,
+        page.show_dialog(
+            ft.SnackBar(
+                ft.Text(
+                    "Contraseña actualizada correctamente. "
+                    "Use la nueva clave en su próximo inicio de sesión.",
+                    color="white",
+                ),
+                bgcolor=TEAL,
+            )
         )
-        page.show_dialog(aviso)
+
+    btn_guardar.on_click = guardar
 
     dialog = ft.AlertDialog(
         modal=True,
@@ -97,7 +127,7 @@ def abrir_cambio_password(page: ft.Page):
         ),
         actions=[
             ft.TextButton("Cancelar", on_click=lambda _: page.pop_dialog()),
-            ft.Button("Guardar", bgcolor=TEAL, color="white", on_click=guardar),
+            btn_guardar,
         ],
         actions_alignment=ft.MainAxisAlignment.END,
     )

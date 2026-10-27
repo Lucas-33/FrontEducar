@@ -60,7 +60,7 @@ async def get_padre_servicios_view(page: ft.Page) -> ft.Row:
     """Gestión real de Comedor Escolar y Transporte Institucional para cada hijo vinculado."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     try:

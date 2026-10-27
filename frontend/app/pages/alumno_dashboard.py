@@ -95,7 +95,7 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
     """Panel principal del estudiante con carnet digital y resumen real de su cursado."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     try:
@@ -144,8 +144,9 @@ async def get_alumno_dashboard_view(page: ft.Page) -> ft.Row:
     errores: list[str] = []
 
     try:
-        alumnos = await api_client.get_alumnos(solo_activos=False)
-        estado["alumno"] = next((a for a in alumnos if a.get("legajo") == legajo), None)
+        # El listado de alumnos es solo para ADMIN/DOCENTE; el alumno consulta
+        # su propia ficha por legajo.
+        estado["alumno"] = await api_client.get_alumno(legajo)
     except Exception:
         errores.append("datos del alumno")
 

@@ -44,7 +44,7 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
     """Vista de Usuarios, Control de Acceso RBAC conectada a la API."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     # ==================== ESTADO DE LA VISTA ====================
@@ -161,12 +161,11 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
 
     # ==================== 2. TABLA DE USUARIOS Y ROLES ====================
     columnas_usuarios = [
-        ("Usuario", 200, False),
+        ("Usuario de acceso", 200, False),
         ("Rol Asignado", 140, False),
         ("Vinculación / Perfil", 260, False),
         ("Alta", 110, False),
         ("Estado", 100, False),
-        ("Acciones", None, True),
     ]
 
     header_table = create_table_header(columnas_usuarios)
@@ -212,6 +211,12 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 error_text.visible = True
                 error_text.update()
                 return
+
+            # El token en memoria puede haberse perdido si el backend se reinició.
+            token = getattr(page, "auth_token", None)
+            if token and api_client.token != token:
+                api_client.set_token(token)
+
             try:
                 await api_client.update_usuario(
                     usuario["id_usuario"], {"password": nueva}
@@ -233,6 +238,16 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 return
             page.pop_dialog()
             await recargar()
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(
+                        f"Contraseña de '{usuario['username']}' actualizada. "
+                        "La nueva clave ya está activa.",
+                        color="white",
+                    ),
+                    bgcolor=TEAL,
+                )
+            )
 
         dlg = ft.AlertDialog(
             modal=True,
@@ -262,26 +277,322 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         )
         page.show_dialog(dlg)
 
-    def usuario_row(item: dict) -> ft.Container:
-        rol_legible = ROL_DISPLAY.get(item.get("rol", ""), item.get("rol", "-"))
-        activo = bool(item.get("activo", True))
+    async def abrir_editar_usuario(usuario: dict):
+        """Permite ver/editar el usuario de acceso, el rol y su vínculo."""
+        try:
+            alumnos = await api_client.get_alumnos(solo_activos=False)
+        except Exception:
+            alumnos = []
+        try:
+            profesores = await api_client.get_profesores(solo_activos=False)
+        except Exception:
+            profesores = []
+        try:
+            padres = await api_client.get_padres()
+        except Exception:
+            padres = []
 
-        async def toggle_estado(e):
+        ids_rol = {r.get("nombre"): r.get("id_rol") for r in estado["roles"]}
+        rol_actual = ROL_DISPLAY.get(
+            usuario.get("rol", ""), usuario.get("rol", "Alumno")
+        )
+
+        vinculo_actual = ""
+        if usuario.get("legajo_alumno"):
+            vinculo_actual = f"alumno:{usuario['legajo_alumno']}"
+        elif usuario.get("legajo_profesor"):
+            vinculo_actual = f"profesor:{usuario['legajo_profesor']}"
+        elif usuario.get("id_padre"):
+            vinculo_actual = f"padre:{usuario['id_padre']}"
+
+        username_field = ft.TextField(
+            label="Usuario / correo de acceso *",
+            value=usuario.get("username", ""),
+            width=380,
+        )
+        rol_field = ft.Dropdown(
+            label="Rol *",
+            value=rol_actual,
+            width=380,
+            options=[
+                ft.dropdown.Option(r)
+                for r in ["Administrador", "Docente", "Padre / Tutor", "Alumno"]
+            ],
+        )
+        vinculo_field = ft.Dropdown(label="Vincular a", width=380, options=[])
+        error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
+
+        def opciones_vinculo(rol_legible: str) -> list[ft.dropdown.Option]:
+            sin_vinculo = ft.dropdown.Option(key="", text="Sin vínculo")
+            if rol_legible == "Docente":
+                return [sin_vinculo] + [
+                    ft.dropdown.Option(
+                        key=f"profesor:{p['legajo']}",
+                        text=f"{p['apellido']}, {p['nombre']} (#{p['legajo']})",
+                    )
+                    for p in profesores
+                ]
+            if rol_legible == "Padre / Tutor":
+                return [sin_vinculo] + [
+                    ft.dropdown.Option(
+                        key=f"padre:{p['id_padre']}",
+                        text=f"{p['apellido']}, {p['nombre']} (DNI {p['dni']})",
+                    )
+                    for p in padres
+                ]
+            if rol_legible == "Alumno":
+                return [sin_vinculo] + [
+                    ft.dropdown.Option(
+                        key=f"alumno:{a['legajo']}",
+                        text=f"{a['apellido']}, {a['nombre']} (#{a['legajo']})",
+                    )
+                    for a in alumnos
+                ]
+            return [sin_vinculo]
+
+        def on_rol_change(e):
+            vinculo_field.options = opciones_vinculo(rol_field.value or "")
+            vinculo_field.value = ""
+            vinculo_field.update()
+
+        rol_field.on_change = on_rol_change
+        vinculo_field.options = opciones_vinculo(rol_field.value or "")
+        claves = {opc.key for opc in vinculo_field.options}
+        vinculo_field.value = vinculo_actual if vinculo_actual in claves else ""
+
+        async def guardar(e):
+            username = (username_field.value or "").strip()
+            rol_legible = rol_field.value or ""
+
+            if not username:
+                error_text.value = "El usuario / correo de acceso es obligatorio."
+                error_text.visible = True
+                error_text.update()
+                return
+
+            id_rol = ids_rol.get(ROL_API.get(rol_legible, ""))
+            if not id_rol:
+                error_text.value = "No se pudo resolver el rol seleccionado."
+                error_text.visible = True
+                error_text.update()
+                return
+
+            payload: dict = {
+                "username": username,
+                "id_rol": id_rol,
+                "legajo_alumno": None,
+                "legajo_profesor": None,
+                "id_padre": None,
+            }
+            vinculo = vinculo_field.value or ""
+            if vinculo:
+                tipo, ident = vinculo.split(":", 1)
+                if tipo == "alumno":
+                    payload["legajo_alumno"] = int(ident)
+                elif tipo == "profesor":
+                    payload["legajo_profesor"] = int(ident)
+                elif tipo == "padre":
+                    payload["id_padre"] = int(ident)
+
+            # El token en memoria puede haberse perdido si el backend se reinició.
+            token = getattr(page, "auth_token", None)
+            if token and api_client.token != token:
+                api_client.set_token(token)
+
+            try:
+                await api_client.update_usuario(usuario["id_usuario"], payload)
+            except httpx.HTTPStatusError as err:
+                detalle = "No se pudo actualizar el usuario."
+                try:
+                    detalle = err.response.json().get("detail", detalle)
+                except Exception:
+                    pass
+                error_text.value = f"⚠️ {detalle}"
+                error_text.visible = True
+                error_text.update()
+                return
+            except httpx.RequestError:
+                error_text.value = "⚠️ Error de conexión con el backend."
+                error_text.visible = True
+                error_text.update()
+                return
+
+            page.pop_dialog()
+            await recargar()
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(
+                        f"Usuario '{username}' actualizado correctamente.",
+                        color="white",
+                    ),
+                    bgcolor=TEAL,
+                )
+            )
+
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(
+                f"Editar usuario — {usuario['username']}",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+            ),
+            content=ft.Column(
+                spacing=14,
+                width=380,
+                tight=True,
+                controls=[
+                    ft.Text(
+                        "Cambie el correo/usuario de acceso, el rol o el vínculo "
+                        "con alumno, docente o tutor.",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    username_field,
+                    rol_field,
+                    vinculo_field,
+                    error_text,
+                ],
+            ),
+            actions=[
+                ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
+                ft.Button("Guardar", bgcolor=TEAL, color=BG_WHITE, on_click=guardar),
+            ],
+        )
+        page.show_dialog(dlg)
+
+    def boton_accion(
+        texto: str,
+        icono: ft.IconData,
+        color: str,
+        on_click,
+    ) -> ft.Button:
+        return ft.Button(
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=8,
+                controls=[
+                    ft.Icon(icono, size=18, color=BG_WHITE),
+                    ft.Text(
+                        texto,
+                        size=14,
+                        weight=ft.FontWeight.W_600,
+                        color=BG_WHITE,
+                    ),
+                ],
+            ),
+            bgcolor=color,
+            width=300,
+            height=CONTROL_HEIGHT,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+            on_click=on_click,
+        )
+
+    def abrir_panel_acciones(usuario: dict):
+        activo = bool(usuario.get("activo", True))
+        rol_legible = ROL_DISPLAY.get(usuario.get("rol", ""), usuario.get("rol", "-"))
+
+        async def editar_usuario(e):
+            page.pop_dialog()
+            await abrir_editar_usuario(usuario)
+
+        async def alternar_estado(e):
+            # El token en memoria puede haberse perdido si el backend se reinició.
+            token = getattr(page, "auth_token", None)
+            if token and api_client.token != token:
+                api_client.set_token(token)
             try:
                 await api_client.update_usuario(
-                    item["id_usuario"], {"activo": not activo}
+                    usuario["id_usuario"], {"activo": not activo}
                 )
             except Exception as err:
                 mostrar_error(
-                    f"No se pudo cambiar el estado de '{item['username']}': {err}"
+                    f"No se pudo cambiar el estado de '{usuario['username']}': {err}"
                 )
                 return
+
+            page.pop_dialog()
             await recargar()
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(
+                        f"Acceso de '{usuario['username']}' "
+                        f"{'bloqueado' if activo else 'reactivado'}.",
+                        color="white",
+                    ),
+                    bgcolor=TEAL,
+                )
+            )
+
+        dlg = ft.AlertDialog(
+            modal=False,
+            title=ft.Text(
+                f"Usuario: {usuario['username']}",
+                size=16,
+                weight=ft.FontWeight.BOLD,
+                color=TEAL_DARK,
+            ),
+            content=ft.Column(
+                tight=True,
+                spacing=12,
+                controls=[
+                    ft.Text(
+                        f"Usuario / correo de acceso: {usuario.get('username', '-')}",
+                        size=13,
+                        weight=ft.FontWeight.W_600,
+                        color=TEXT_COLOR,
+                    ),
+                    ft.Text(f"Rol: {rol_legible}", size=13, color=TEXT_COLOR),
+                    ft.Text(
+                        f"Vinculación: {usuario.get('vinculacion', '-')}",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    ft.Text(
+                        f"Estado actual: {'Activo' if activo else 'Bloqueado'}",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    boton_accion(
+                        "Editar usuario / vínculo",
+                        ft.Icons.EDIT_OUTLINED,
+                        TEAL_DARK,
+                        editar_usuario,
+                    ),
+                    boton_accion(
+                        "Restablecer contraseña",
+                        ft.Icons.KEY_OUTLINED,
+                        TEAL,
+                        lambda e: (
+                            page.pop_dialog(),
+                            abrir_reset_password(usuario),
+                        ),
+                    ),
+                    boton_accion(
+                        "Reactivar acceso" if not activo else "Bloquear acceso",
+                        ft.Icons.LOCK_OPEN_OUTLINED
+                        if not activo
+                        else ft.Icons.BLOCK_OUTLINED,
+                        "#10B981" if not activo else BADGE_RED_TXT,
+                        alternar_estado,
+                    ),
+                ],
+            ),
+            actions=[ft.TextButton("Cancelar", on_click=lambda _: page.pop_dialog())],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.show_dialog(dlg)
+
+    def usuario_row(item: dict) -> ft.Container:
+        rol_legible = ROL_DISPLAY.get(item.get("rol", ""), item.get("rol", "-"))
+        activo = bool(item.get("activo", True))
 
         return ft.Container(
             height=54,
             padding=ft.Padding(16, 0, 16, 0),
             border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
+            ink=True,
+            tooltip="Haga clic para gestionar este usuario",
+            on_click=lambda e, u=item: abrir_panel_acciones(u),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -311,38 +622,6 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                     ft.Container(
                         width=100,
                         content=status_badge("Activo" if activo else "Bloqueado"),
-                    ),
-                    ft.Container(
-                        expand=True,
-                        alignment=ft.Alignment(1, 0),
-                        content=ft.Row(
-                            spacing=12,
-                            alignment=ft.MainAxisAlignment.END,
-                            controls=[
-                                ft.IconButton(
-                                    icon=ft.Icons.KEY_OUTLINED,
-                                    icon_size=16,
-                                    icon_color=TEAL,
-                                    tooltip="Restablecer Contraseña",
-                                    padding=0,
-                                    on_click=lambda e, u=item: abrir_reset_password(u),
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.LOCK_OPEN_OUTLINED
-                                    if not activo
-                                    else ft.Icons.BLOCK_OUTLINED,
-                                    icon_size=16,
-                                    icon_color="#10B981"
-                                    if not activo
-                                    else BADGE_RED_TXT,
-                                    tooltip="Reactivar Acceso"
-                                    if not activo
-                                    else "Bloquear Acceso",
-                                    padding=0,
-                                    on_click=toggle_estado,
-                                ),
-                            ],
-                        ),
                     ),
                 ],
             ),
@@ -385,7 +664,10 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             ],
         )
         pagination_holder.content = create_pagination_bar(
-            texto_info=f"Mostrando {len(visibles)} de {len(estado['usuarios'])} cuentas registradas",
+            texto_info=(
+                f"Mostrando {len(visibles)} de {len(estado['usuarios'])} cuentas "
+                "registradas · Haga clic en una fila para gestionarla"
+            ),
             pagina_actual=1,
             total_paginas=max(1, (len(visibles) + 9) // 10),
         )

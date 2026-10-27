@@ -39,7 +39,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
     """Reporte integral de deportes: grupos, niveles, horarios, inscriptos y responsable a cargo."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     estado: dict = {

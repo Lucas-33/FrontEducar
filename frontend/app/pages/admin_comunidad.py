@@ -69,7 +69,7 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
     """Bandeja de entrada de la comunidad: mensajes de contacto y moderación de opiniones."""
 
     token = getattr(page, "auth_token", None)
-    if token and not api_client.token:
+    if token and api_client.token != token:
         api_client.set_token(token)
 
     mensajes: list[dict] = []
@@ -214,6 +214,10 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
         resumen = (mensaje.get("mensaje") or "").strip()
         if len(resumen) > 60:
             resumen = resumen[:57] + "..."
+
+        async def marcar_este_leido(e):
+            await marcar_leido(e, mensaje)
+
         return ft.Container(
             height=52,
             padding=ft.Padding(16, 0, 16, 0),
@@ -268,7 +272,7 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
                                     tooltip="Marcar como leído",
                                     padding=0,
                                     visible=not leido,
-                                    on_click=lambda e, m=mensaje: marcar_leido(e, m),
+                                    on_click=marcar_este_leido,
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.VISIBILITY_OUTLINED,
@@ -391,6 +395,10 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
         comentario = (opinion.get("comentario") or "").strip()
         if len(comentario) > 60:
             comentario = comentario[:57] + "..."
+
+        async def aprobar_esta_opinion(e):
+            await aprobar_opinion(e, opinion)
+
         return ft.Container(
             height=52,
             padding=ft.Padding(16, 0, 16, 0),
@@ -440,7 +448,7 @@ async def get_admin_comunidad_view(page: ft.Page) -> ft.Row:
                                     tooltip="Aprobar y publicar",
                                     padding=0,
                                     visible=not aprobada,
-                                    on_click=lambda e, o=opinion: aprobar_opinion(e, o),
+                                    on_click=aprobar_esta_opinion,
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE_OUTLINE,

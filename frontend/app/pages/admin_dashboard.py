@@ -25,7 +25,7 @@ async def get_admin_dashboard_view(page: ft.Page) -> ft.Row:
     con las métricas reales calculadas desde la base de datos."""
 
     token = getattr(page, "auth_token", None)
-    if token and not api_client.token:
+    if token and api_client.token != token:
         api_client.set_token(token)
 
     resumen = {
