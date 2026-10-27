@@ -522,8 +522,8 @@ async def get_admin_deportes_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_nivel_dropdown.on_change = on_filtrar_nivel
-    filtro_deporte_dropdown.on_change = on_filtrar_deporte
+    filtro_nivel_dropdown.on_select = on_filtrar_nivel
+    filtro_deporte_dropdown.on_select = on_filtrar_deporte
 
     # ==================== 4. DIÁLOGO DE ALUMNOS INSCRIPTOS ====================
     def abrir_inscriptos(grupo: dict):

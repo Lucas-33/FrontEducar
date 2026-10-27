@@ -162,6 +162,243 @@ def test_alumno_y_tutor_solo_ven_sus_propias_fichas(
     assert ajeno.status_code == 403
 
 
+def test_admin_vincula_varios_alumnos_a_usuario_tutor(client, cabeceras_admin):
+    crear_padre = client.post(
+        "/api/v1/personas/padres",
+        json={
+            "dni": "29999999",
+            "nombre": "Tutor",
+            "apellido": "Multiple",
+            "telefono": "3624000099",
+            "correo_electronico": "tutor.multiple@example.com",
+        },
+        headers=cabeceras_admin,
+    )
+    assert crear_padre.status_code == 201
+    id_padre = crear_padre.json()["id_padre"]
+
+    crear_usuario = client.post(
+        "/api/v1/auth/usuarios",
+        json={
+            "username": "tutor_multiple",
+            "password": PASSWORD_PRUEBA,
+            "id_rol": 3,
+            "id_padre": id_padre,
+            "legajos_alumnos": [LEGAJO_ALUMNO_1, LEGAJO_ALUMNO_2],
+            "activo": True,
+        },
+        headers=cabeceras_admin,
+    )
+    assert crear_usuario.status_code == 201
+    id_usuario = crear_usuario.json()["id_usuario"]
+
+    listado = client.get("/api/v1/auth/usuarios", headers=cabeceras_admin)
+    assert listado.status_code == 200
+    usuario = next(u for u in listado.json() if u["id_usuario"] == id_usuario)
+    assert set(usuario["alumnos_vinculados"]) == {
+        LEGAJO_ALUMNO_1,
+        LEGAJO_ALUMNO_2,
+    }
+    assert "2 alumnos vinculados" in usuario["vinculacion"]
+
+    # Al editar se reemplaza la selección completa del tutor.
+    actualizar = client.put(
+        f"/api/v1/auth/usuarios/{id_usuario}",
+        json={"legajos_alumnos": [LEGAJO_ALUMNO_2]},
+        headers=cabeceras_admin,
+    )
+    assert actualizar.status_code == 200
+    assert actualizar.json()["alumnos_vinculados"] == [LEGAJO_ALUMNO_2]
+
+    hijos = client.get(
+        f"/api/v1/personas/padres/{id_padre}/alumnos",
+        headers=cabeceras_admin,
+    )
+    assert hijos.status_code == 200
+    assert [hijo["legajo"] for hijo in hijos.json()] == [LEGAJO_ALUMNO_2]
+
+    inexistente = client.put(
+        f"/api/v1/auth/usuarios/{id_usuario}",
+        json={"legajos_alumnos": [999999]},
+        headers=cabeceras_admin,
+    )
+    assert inexistente.status_code == 404
+
+
+def test_admin_crea_usuario_tutor_con_datos_y_alumnos(client, cabeceras_admin):
+    """El alta del tutor y su usuario se resuelve en una sola operación."""
+    crear_usuario = client.post(
+        "/api/v1/auth/usuarios",
+        json={
+            "username": "tutor_autocreado",
+            "password": PASSWORD_PRUEBA,
+            "id_rol": 3,
+            "activo": True,
+            "tutor": {
+                "dni": "28888888",
+                "nombre": "Laura",
+                "apellido": "Nueva",
+                "telefono": "3624000088",
+                "correo_electronico": "laura.nueva@example.com",
+            },
+            "legajos_alumnos": [LEGAJO_ALUMNO_1, LEGAJO_ALUMNO_2],
+        },
+        headers=cabeceras_admin,
+    )
+    assert crear_usuario.status_code == 201
+    creado = crear_usuario.json()
+    assert creado["id_padre"] is not None
+    assert creado["legajo_alumno"] is None
+    id_usuario = creado["id_usuario"]
+    id_padre = creado["id_padre"]
+
+    padres = client.get("/api/v1/personas/padres", headers=cabeceras_admin)
+    assert padres.status_code == 200
+    padre = next(p for p in padres.json() if p["id_padre"] == id_padre)
+    assert padre["dni"] == "28888888"
+    assert padre["nombre"] == "Laura"
+    assert padre["apellido"] == "Nueva"
+    assert padre["correo_electronico"] == "laura.nueva@example.com"
+
+    hijos = client.get(
+        f"/api/v1/personas/padres/{id_padre}/alumnos",
+        headers=cabeceras_admin,
+    )
+    assert hijos.status_code == 200
+    assert {hijo["legajo"] for hijo in hijos.json()} == {
+        LEGAJO_ALUMNO_1,
+        LEGAJO_ALUMNO_2,
+    }
+
+    listado = client.get("/api/v1/auth/usuarios", headers=cabeceras_admin)
+    usuario = next(u for u in listado.json() if u["id_usuario"] == id_usuario)
+    assert usuario["id_padre"] == id_padre
+    assert usuario["legajo_alumno"] is None
+    assert set(usuario["alumnos_vinculados"]) == {
+        LEGAJO_ALUMNO_1,
+        LEGAJO_ALUMNO_2,
+    }
+    assert "Tutor: Nueva, Laura" in usuario["vinculacion"]
+
+
+def test_admin_edita_datos_del_tutor_y_sus_alumnos(client, cabeceras_admin):
+    crear_usuario = client.post(
+        "/api/v1/auth/usuarios",
+        json={
+            "username": "tutor_editado",
+            "password": PASSWORD_PRUEBA,
+            "id_rol": 3,
+            "activo": True,
+            "tutor": {
+                "dni": "28888889",
+                "nombre": "Laura",
+                "apellido": "Nueva",
+                "telefono": "3624000089",
+                "correo_electronico": "laura.nueva@example.com",
+            },
+            "legajos_alumnos": [LEGAJO_ALUMNO_1],
+        },
+        headers=cabeceras_admin,
+    )
+    assert crear_usuario.status_code == 201
+    creado = crear_usuario.json()
+    id_usuario = creado["id_usuario"]
+    id_padre = creado["id_padre"]
+
+    actualizar = client.put(
+        f"/api/v1/auth/usuarios/{id_usuario}",
+        json={
+            "tutor": {
+                "dni": "28888889",
+                "nombre": "Laura Editada",
+                "apellido": "Nueva",
+                "telefono": "3624000090",
+                "correo_electronico": "laura.editada@example.com",
+            },
+            "legajos_alumnos": [LEGAJO_ALUMNO_2],
+        },
+        headers=cabeceras_admin,
+    )
+    assert actualizar.status_code == 200
+    actualizado = actualizar.json()
+    assert actualizado["id_padre"] == id_padre
+    assert actualizado["alumnos_vinculados"] == [LEGAJO_ALUMNO_2]
+
+    padres = client.get("/api/v1/personas/padres", headers=cabeceras_admin)
+    padre = next(p for p in padres.json() if p["id_padre"] == id_padre)
+    assert padre["nombre"] == "Laura Editada"
+    assert padre["telefono"] == "3624000090"
+    assert padre["correo_electronico"] == "laura.editada@example.com"
+
+
+def test_datos_de_tutor_restringidos_a_rol_parent(client, cabeceras_admin):
+    respuesta = client.post(
+        "/api/v1/auth/usuarios",
+        json={
+            "username": "tutor_rol_incorrecto",
+            "password": PASSWORD_PRUEBA,
+            "id_rol": 4,
+            "activo": True,
+            "tutor": {
+                "dni": "28888890",
+                "nombre": "Tutor",
+                "apellido": "Invalido",
+            },
+        },
+        headers=cabeceras_admin,
+    )
+    assert respuesta.status_code == 400
+
+
+def test_reutiliza_tutor_existente_al_crear_usuario(client, cabeceras_admin):
+    crear_padre = client.post(
+        "/api/v1/personas/padres",
+        json={
+            "dni": "28888891",
+            "nombre": "Tutor",
+            "apellido": "Existente",
+            "telefono": "3624000091",
+            "correo_electronico": "tutor.existente@example.com",
+        },
+        headers=cabeceras_admin,
+    )
+    assert crear_padre.status_code == 201
+    id_padre = crear_padre.json()["id_padre"]
+
+    respuesta = client.post(
+        "/api/v1/auth/usuarios",
+        json={
+            "username": "tutor_existente",
+            "password": PASSWORD_PRUEBA,
+            "id_rol": 3,
+            "activo": True,
+            "tutor": {
+                "dni": "28888891",
+                "nombre": "Tutor Actualizado",
+                "apellido": "Existente",
+                "telefono": "3624000092",
+                "correo_electronico": "tutor.actualizado@example.com",
+            },
+            "legajos_alumnos": [LEGAJO_ALUMNO_1],
+        },
+        headers=cabeceras_admin,
+    )
+    assert respuesta.status_code == 201
+    # No se duplica el tutor: se reutiliza el registro con ese DNI.
+    assert respuesta.json()["id_padre"] == id_padre
+
+    padres = client.get("/api/v1/personas/padres", headers=cabeceras_admin)
+    padre = next(p for p in padres.json() if p["id_padre"] == id_padre)
+    assert padre["nombre"] == "Tutor Actualizado"
+    assert padre["telefono"] == "3624000092"
+
+    hijos = client.get(
+        f"/api/v1/personas/padres/{id_padre}/alumnos",
+        headers=cabeceras_admin,
+    )
+    assert [hijo["legajo"] for hijo in hijos.json()] == [LEGAJO_ALUMNO_1]
+
+
 def test_admin_edita_usuario_correo_y_vinculo(client, cabeceras_admin):
     crear = client.post(
         "/api/v1/auth/usuarios",

@@ -31,11 +31,13 @@ class UsuarioRepository(CRUDBase[Usuario, UsuarioCreate, UsuarioUpdate]):
     def create_user_with_hash(
         self, db: Session, obj_in: UsuarioCreate, password_hash: str
     ) -> Usuario:
-        user_data = obj_in.model_dump(exclude={"password"})
+        # `legajos_alumnos` y `tutor` son datos de la relación del tutor, no
+        # columnas del usuario.
+        user_data = obj_in.model_dump(exclude={"password", "legajos_alumnos", "tutor"})
         user_data["password_hash"] = password_hash
         db_user = Usuario(**user_data)
         db.add(db_user)
-        db.commit()
+        db.flush()
         db.refresh(db_user)
         return db_user
 

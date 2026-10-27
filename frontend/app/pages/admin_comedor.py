@@ -351,7 +351,7 @@ async def get_admin_comedor_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_estado_dropdown.on_change = on_filtrar_estado
+    filtro_estado_dropdown.on_select = on_filtrar_estado
 
     # ==================== 5. DIÁLOGO INSCRIBIR ALUMNO ====================
     async def abrir_inscribir_alumno(e):

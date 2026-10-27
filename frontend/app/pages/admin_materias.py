@@ -369,7 +369,7 @@ async def get_admin_materias_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_nivel_dropdown.on_change = on_filtrar_nivel
+    filtro_nivel_dropdown.on_select = on_filtrar_nivel
 
     # ==================== 3. DIÁLOGO NUEVA MATERIA ====================
     def abrir_nueva_materia(e):

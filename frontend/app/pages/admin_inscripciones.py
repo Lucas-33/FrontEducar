@@ -98,8 +98,8 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
             for opc in ["Todos", "Pendiente", "Aprobado", "Rechazado"]
         ],
     )
-    dropdown_nivel.on_change = lambda _: render_tabla()
-    dropdown_estado.on_change = lambda _: render_tabla()
+    dropdown_nivel.on_select = lambda _: render_tabla()
+    dropdown_estado.on_select = lambda _: render_tabla()
 
     def filtro_dropdown(dropdown: ft.Dropdown, width: int) -> ft.Container:
         return ft.Container(

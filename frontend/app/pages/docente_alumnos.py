@@ -397,8 +397,8 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_curso_dropdown.on_change = on_filtrar_curso
-    filtro_estado_dropdown.on_change = on_filtrar_estado
+    filtro_curso_dropdown.on_select = on_filtrar_curso
+    filtro_estado_dropdown.on_select = on_filtrar_estado
     btn_actualizar.on_click = recargar
 
     # ==================== 4. TARJETA INFORMATIVA (RESUMEN REAL) ====================

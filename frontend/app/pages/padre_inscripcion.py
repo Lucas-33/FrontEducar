@@ -502,7 +502,7 @@ async def get_padre_inscripcion_view(page: ft.Page) -> ft.Row:
         estado["legajo"] = int(alumno_dropdown.value) if alumno_dropdown.value else None
         render_detalle()
 
-    alumno_dropdown.on_change = on_cambiar_alumno
+    alumno_dropdown.on_select = on_cambiar_alumno
 
     # ==================== 4. AVISO DEL TRÁMITE PRESENCIAL ====================
     def abrir_info_inscripcion(e):

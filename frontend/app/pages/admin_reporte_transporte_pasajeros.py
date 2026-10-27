@@ -659,9 +659,9 @@ async def get_admin_reporte_transporte_pasajeros_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_recorrido.on_change = on_filtrar_recorrido
-    filtro_nivel.on_change = on_filtrar_nivel
-    filtro_pasajero.on_change = on_filtrar_pasajero
+    filtro_recorrido.on_select = on_filtrar_recorrido
+    filtro_nivel.on_select = on_filtrar_nivel
+    filtro_pasajero.on_select = on_filtrar_pasajero
 
     render()
 
