@@ -1,6 +1,7 @@
+from unittest.mock import MagicMock
+
 import pytest
 from fastapi import HTTPException
-from unittest.mock import MagicMock
 
 # Asumiendo la estructura de tu servicio
 # from backend.app.services.inscripciones import inscripcion_service
