@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from backend.app.schemas.personas import PadreCreate
 
 
 # --- ROL ---
@@ -29,6 +31,10 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     password: str
+    # Solo aplica a usuarios con rol PARENT: legajos de los alumnos a cargo.
+    legajos_alumnos: list[int] | None = None
+    # Datos para dar de alta al tutor junto con su usuario (rol PARENT).
+    tutor: PadreCreate | None = None
 
 
 class UsuarioUpdate(BaseModel):
@@ -36,6 +42,13 @@ class UsuarioUpdate(BaseModel):
     password: str | None = None
     id_rol: int | None = None
     activo: bool | None = None
+    legajo_alumno: int | None = None
+    legajo_profesor: int | None = None
+    id_padre: int | None = None
+    # Si se envía, reemplaza por completo los alumnos vinculados al tutor.
+    legajos_alumnos: list[int] | None = None
+    # Datos del tutor: actualiza el tutor existente o crea uno nuevo.
+    tutor: PadreCreate | None = None
 
 
 class UsuarioResponse(UsuarioBase):
@@ -50,6 +63,8 @@ class UsuarioAdminResponse(UsuarioBase):
     id_usuario: int
     rol: str = ""
     vinculacion: str = "-"
+    # Legajos de los alumnos vinculados cuando el usuario es un tutor.
+    alumnos_vinculados: list[int] = Field(default_factory=list)
     creado_en: datetime | None = None
 
 

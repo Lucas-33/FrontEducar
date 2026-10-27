@@ -6,14 +6,17 @@ import jwt
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from backend.app.models.personas import Padre, PadreAlumno
 from backend.app.models.seguridad import Usuario
 from backend.app.repositories import (
     alumno_repository,
+    padre_alumno_repository,
     padre_repository,
     profesor_repository,
     rol_repository,
     usuario_repository,
 )
+from backend.app.schemas.personas import PadreCreate
 from backend.app.schemas.seguridad import (
     Token,
     UsuarioAdminResponse,
@@ -154,19 +157,133 @@ class SeguridadService:
         db.commit()
         return {"detail": "Contraseña actualizada correctamente"}
 
+    def _validar_alumnos_vinculables(
+        self, db: Session, legajos: list[int]
+    ) -> list[int]:
+        """Valida que todos los legajos existan y devuelve una lista sin repetidos."""
+        resultado: list[int] = []
+        for legajo in legajos:
+            legajo_int = int(legajo)
+            if legajo_int in resultado:
+                continue
+            if not alumno_repository.get_by_legajo(db, legajo_int):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"El alumno con legajo #{legajo_int} no existe",
+                )
+            resultado.append(legajo_int)
+        return resultado
+
+    def _sincronizar_alumnos_tutor(
+        self, db: Session, id_padre: int | None, legajos: list[int]
+    ):
+        """Reemplaza los alumnos vinculados al tutor indicado.
+
+        No hace commit: se confirma junto con el resto de la operación del usuario.
+        """
+        legajos_validos = self._validar_alumnos_vinculables(db, legajos or [])
+        if legajos_validos and not id_padre:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Debe indicar los datos del tutor antes de vincular alumnos",
+            )
+        if not id_padre:
+            return
+        if not padre_repository.get(db, id_padre):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"El tutor con ID {id_padre} no existe",
+            )
+
+        relaciones = padre_alumno_repository.get_alumnos_por_padre(db, id_padre)
+        actuales = {relacion.legajo_alumno for relacion in relaciones}
+        deseados = set(legajos_validos)
+
+        for relacion in relaciones:
+            if relacion.legajo_alumno not in deseados:
+                db.delete(relacion)
+        for legajo in deseados - actuales:
+            db.add(PadreAlumno(id_padre=id_padre, legajo_alumno=legajo))
+
+    def _obtener_o_crear_tutor(self, db: Session, tutor_in: PadreCreate) -> Padre:
+        """Reutiliza el tutor con ese DNI o lo crea en la misma transacción."""
+        padre = padre_repository.get_by_dni(db, tutor_in.dni)
+        if padre:
+            for campo, valor in tutor_in.model_dump().items():
+                if valor is not None:
+                    setattr(padre, campo, valor)
+            return padre
+        padre = Padre(**tutor_in.model_dump())
+        db.add(padre)
+        db.flush()
+        return padre
+
+    def _actualizar_tutor(
+        self, db: Session, padre: Padre, tutor_in: PadreCreate
+    ) -> None:
+        """Actualiza los datos del tutor vinculado al usuario."""
+        existente = padre_repository.get_by_dni(db, tutor_in.dni)
+        if existente and existente.id_padre != padre.id_padre:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Ya existe otro tutor con el DNI '{tutor_in.dni}'",
+            )
+        for campo, valor in tutor_in.model_dump().items():
+            setattr(padre, campo, valor)
+
     def registrar_usuario(self, db: Session, user_in: UsuarioCreate):
         if usuario_repository.get_by_username(db, user_in.username):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"El nombre de usuario '{user_in.username}' ya está registrado",
             )
-        if not rol_repository.get(db, user_in.id_rol):
+        rol = rol_repository.get(db, user_in.id_rol)
+        if not rol:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"El rol con ID {user_in.id_rol} no existe",
             )
+
+        if user_in.tutor is not None:
+            if rol.nombre != "PARENT":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Solo los usuarios con rol Padre / Tutor pueden tener datos de tutor",
+                )
+            if user_in.id_padre is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Indique un tutor existente o los datos de un tutor nuevo, "
+                        "no ambos"
+                    ),
+                )
+
+        legajos_alumnos = user_in.legajos_alumnos
+        if legajos_alumnos:
+            if rol.nombre != "PARENT":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Solo los usuarios con rol Padre / Tutor pueden tener alumnos vinculados",
+                )
+            if not user_in.id_padre and user_in.tutor is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Debe indicar los datos del tutor para vincular alumnos",
+                )
+            self._validar_alumnos_vinculables(db, legajos_alumnos)
+
+        if user_in.tutor is not None:
+            padre = self._obtener_o_crear_tutor(db, user_in.tutor)
+            user_in = user_in.model_copy(update={"id_padre": padre.id_padre})
+
         hashed_pwd = self.get_password_hash(user_in.password)
-        return usuario_repository.create_user_with_hash(db, user_in, hashed_pwd)
+        user = usuario_repository.create_user_with_hash(db, user_in, hashed_pwd)
+        if legajos_alumnos:
+            self._sincronizar_alumnos_tutor(db, user.id_padre, legajos_alumnos)
+        db.commit()
+        db.refresh(user)
+        return user
 
     # ================= ADMINISTRACIÓN DE USUARIOS =================
     def get_roles(self, db: Session):
@@ -175,6 +292,15 @@ class SeguridadService:
     def _to_admin_response(self, db: Session, user) -> UsuarioAdminResponse:
         rol = rol_repository.get(db, user.id_rol)
         rol_nombre = rol.nombre if rol else ""
+
+        alumnos_vinculados: list[int] = []
+        if user.id_padre:
+            alumnos_vinculados = [
+                relacion.legajo_alumno
+                for relacion in padre_alumno_repository.get_alumnos_por_padre(
+                    db, user.id_padre
+                )
+            ]
 
         if user.legajo_alumno:
             alumno = alumno_repository.get_by_legajo(db, user.legajo_alumno)
@@ -197,6 +323,13 @@ class SeguridadService:
                 if padre
                 else f"Tutor #{user.id_padre}"
             )
+            cantidad = len(alumnos_vinculados)
+            vinculacion += (
+                f" · {cantidad} alumno{'s' if cantidad != 1 else ''} vinculado"
+                f"{'s' if cantidad != 1 else ''}"
+                if cantidad
+                else " · Sin alumnos vinculados"
+            )
         elif rol_nombre == "ADMIN":
             vinculacion = "Acceso Total"
         else:
@@ -213,6 +346,7 @@ class SeguridadService:
             creado_en=user.creado_en,
             rol=rol_nombre,
             vinculacion=vinculacion,
+            alumnos_vinculados=alumnos_vinculados,
         )
 
     def get_usuarios(self, db: Session) -> list[UsuarioAdminResponse]:
@@ -231,6 +365,10 @@ class SeguridadService:
 
         data = user_in.model_dump(exclude_unset=True)
         password = data.pop("password", None)
+        legajos_alumnos = data.pop("legajos_alumnos", None)
+        tutor_data = data.pop("tutor", None)
+        if tutor_data is not None:
+            tutor_data = PadreCreate(**tutor_data)
         if password:
             user.password_hash = self.get_password_hash(password)
 
@@ -243,15 +381,102 @@ class SeguridadService:
                 )
 
         nuevo_rol = data.get("id_rol")
-        if nuevo_rol is not None and not rol_repository.get(db, nuevo_rol):
+        rol_efectivo = (
+            rol_repository.get(db, nuevo_rol)
+            if nuevo_rol is not None
+            else rol_repository.get(db, user.id_rol)
+        )
+        if nuevo_rol is not None and not rol_efectivo:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"El rol con ID {nuevo_rol} no existe",
             )
 
+        campos_vinculo = {"legajo_alumno", "legajo_profesor", "id_padre"}
+
+        if tutor_data is not None:
+            if not rol_efectivo or rol_efectivo.nombre != "PARENT":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Solo los usuarios con rol Padre / Tutor pueden tener "
+                        "datos de tutor"
+                    ),
+                )
+            if campos_vinculo & data.keys():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "No combine los datos del tutor con otros vínculos "
+                        "de alumno o docente"
+                    ),
+                )
+
+            # El usuario queda vinculado al tutor, nunca a un alumno o docente.
+            user.legajo_alumno = None
+            user.legajo_profesor = None
+            if user.id_padre:
+                padre = padre_repository.get(db, user.id_padre)
+                if not padre:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"El tutor con ID {user.id_padre} no existe",
+                    )
+                self._actualizar_tutor(db, padre, tutor_data)
+            else:
+                padre = self._obtener_o_crear_tutor(db, tutor_data)
+                user.id_padre = padre.id_padre
+
+        # Los vínculos (alumno/docente/tutor) se gestionan en bloque: si se envía
+        # alguno, se limpian los demás para que una cuenta tenga un único vínculo.
+        elif campos_vinculo & data.keys():
+            vinculos = {campo: data.pop(campo, None) for campo in list(campos_vinculo)}
+
+            if vinculos.get("legajo_alumno") is not None and not (
+                alumno_repository.get_by_legajo(db, vinculos["legajo_alumno"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=(
+                        f"El alumno con legajo #{vinculos['legajo_alumno']} no existe"
+                    ),
+                )
+            if vinculos.get("legajo_profesor") is not None and not (
+                profesor_repository.get_by_legajo(db, vinculos["legajo_profesor"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=(
+                        "El docente con legajo "
+                        f"#{vinculos['legajo_profesor']} no existe"
+                    ),
+                )
+            if vinculos.get("id_padre") is not None and not (
+                padre_repository.get(db, vinculos["id_padre"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"El tutor con ID {vinculos['id_padre']} no existe",
+                )
+
+            for campo in campos_vinculo:
+                setattr(user, campo, vinculos.get(campo))
+
         for field, value in data.items():
             if value is not None:
                 setattr(user, field, value)
+
+        if legajos_alumnos is not None:
+            if rol_efectivo and rol_efectivo.nombre == "PARENT":
+                self._sincronizar_alumnos_tutor(db, user.id_padre, legajos_alumnos)
+            elif legajos_alumnos:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Solo los usuarios con rol Padre / Tutor pueden tener "
+                        "alumnos vinculados"
+                    ),
+                )
 
         db.commit()
         db.refresh(user)

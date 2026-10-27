@@ -126,7 +126,7 @@ async def get_padre_notas_view(page: ft.Page) -> ft.Row:
     """Seguimiento de calificaciones y presentismo de los hijos del tutor."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     try:
@@ -490,7 +490,7 @@ async def get_padre_notas_view(page: ft.Page) -> ft.Row:
         estado["legajo"] = int(hijo_dropdown.value)
         page.run_task(cargar_datos)
 
-    hijo_dropdown.on_change = on_cambiar_hijo
+    hijo_dropdown.on_select = on_cambiar_hijo
 
     # Render inicial vacío y carga asíncrona
     render_datos([], [], None)

@@ -42,7 +42,7 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
 
     # ==================== 0. IDENTIDAD DEL DOCENTE ====================
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     try:
@@ -397,8 +397,8 @@ async def get_docente_alumnos_view(page: ft.Page) -> ft.Row:
         render()
 
     search_field.on_change = on_buscar
-    filtro_curso_dropdown.on_change = on_filtrar_curso
-    filtro_estado_dropdown.on_change = on_filtrar_estado
+    filtro_curso_dropdown.on_select = on_filtrar_curso
+    filtro_estado_dropdown.on_select = on_filtrar_estado
     btn_actualizar.on_click = recargar
 
     # ==================== 4. TARJETA INFORMATIVA (RESUMEN REAL) ====================

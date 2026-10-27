@@ -44,13 +44,30 @@ def listar_alumnos(
 @router.get(
     "/alumnos/{legajo}",
     response_model=AlumnoResponse,
-    summary="Obtener alumno por legajo",
+    summary="Obtener alumno por legajo (propio, hijo o cualquier legajo para staff)",
 )
 def obtener_alumno(
     legajo: int,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    rol = seguridad_service.get_rol_nombre(db, current_user)
+    if rol == "STUDENT" and current_user.legajo_alumno != legajo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo puede consultar su propia ficha de alumno",
+        )
+    if rol == "PARENT":
+        hijos = (
+            personas_service.get_alumnos_de_padre(db, current_user.id_padre)
+            if current_user.id_padre
+            else []
+        )
+        if legajo not in {hijo.legajo for hijo in hijos}:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Solo puede consultar la ficha de sus hijos",
+            )
     return personas_service.get_alumno(db=db, legajo=legajo)
 
 

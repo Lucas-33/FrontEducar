@@ -93,7 +93,7 @@ def registrar_usuario(
 @router.put(
     "/usuarios/{id_usuario}",
     response_model=UsuarioAdminResponse,
-    summary="Actualizar usuario: rol, estado o contraseña (solo ADMIN)",
+    summary="Actualizar usuario: rol, estado, vínculo o contraseña (solo ADMIN)",
 )
 def actualizar_usuario(
     id_usuario: int,
