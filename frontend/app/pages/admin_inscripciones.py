@@ -38,7 +38,7 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
     """Vista de Solicitudes de Admisión conectada a la API (aprobación/rechazo reales)."""
 
     token = getattr(page, "auth_token", None)
-    if token and not api_client.token:
+    if token and api_client.token != token:
         api_client.set_token(token)
 
     solicitudes: list[dict] = []
@@ -163,12 +163,15 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
         ("Teléfono", 130, False),
         ("Fecha", 110, False),
         ("Estado", 110, False),
-        ("Acciones de Secretaría", None, True),
     ]
     header_table = create_table_header(columnas_solicitudes)
     filas_column = ft.Column(spacing=0, controls=[header_table])
 
     async def cambiar_estado(e, solicitud: dict, nuevo_estado: str):
+        # El token en memoria puede haberse perdido si el backend se reinició.
+        token = getattr(page, "auth_token", None)
+        if token and api_client.token != token:
+            api_client.set_token(token)
         try:
             await api_client.cambiar_estado_solicitud(
                 solicitud["id_solicitud"], nuevo_estado
@@ -243,11 +246,113 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
         )
         page.show_dialog(dialog)
 
+    def boton_accion_solicitud(
+        texto: str,
+        icono: ft.IconData,
+        color: str,
+        on_click,
+    ) -> ft.Button:
+        return ft.Button(
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=8,
+                controls=[
+                    ft.Icon(icono, size=18, color=BG_WHITE),
+                    ft.Text(
+                        texto,
+                        size=14,
+                        weight=ft.FontWeight.W_600,
+                        color=BG_WHITE,
+                    ),
+                ],
+            ),
+            bgcolor=color,
+            width=300,
+            height=CONTROL_HEIGHT,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+            on_click=on_click,
+        )
+
+    def abrir_panel_solicitud(solicitud: dict):
+        estado_actual = solicitud.get("estado") or "Pendiente"
+
+        async def aprobar(e):
+            page.pop_dialog()
+            await cambiar_estado(e, solicitud, "Aprobado")
+
+        async def rechazar(e):
+            page.pop_dialog()
+            await cambiar_estado(e, solicitud, "Rechazado")
+
+        def ver_documentos(e):
+            page.pop_dialog()
+            ver_documentacion(e, solicitud)
+
+        dlg = ft.AlertDialog(
+            modal=False,
+            title=ft.Text(
+                f"Solicitud {_nro_solicitud(solicitud)}",
+                size=16,
+                weight=ft.FontWeight.BOLD,
+                color=TEAL_DARK,
+            ),
+            content=ft.Column(
+                tight=True,
+                spacing=12,
+                controls=[
+                    ft.Text(
+                        f"Aspirante: {solicitud.get('postulante') or '—'}",
+                        size=13,
+                        color=TEXT_COLOR,
+                    ),
+                    ft.Text(
+                        f"DNI: {solicitud.get('dni') or '—'}",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    ft.Text(
+                        f"Nivel postulado: {solicitud.get('nivel') or '—'}",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    ft.Text(
+                        f"Estado actual: {estado_actual}",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    boton_accion_solicitud(
+                        "Aprobar admisión",
+                        ft.Icons.CHECK_CIRCLE_OUTLINE,
+                        ONLINE_GREEN,
+                        aprobar,
+                    ),
+                    boton_accion_solicitud(
+                        "Rechazar solicitud",
+                        ft.Icons.CANCEL_OUTLINED,
+                        BADGE_RED_TXT,
+                        rechazar,
+                    ),
+                    boton_accion_solicitud(
+                        "Ver documentación",
+                        ft.Icons.REMOVE_RED_EYE_OUTLINED,
+                        TEAL,
+                        ver_documentos,
+                    ),
+                ],
+            ),
+            actions=[ft.TextButton("Cancelar", on_click=lambda _: page.pop_dialog())],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.show_dialog(dlg)
+
     def solicitud_row(solicitud: dict) -> ft.Container:
         return ft.Container(
             height=54,
             padding=ft.Padding(16, 0, 16, 0),
             border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
+            ink=True,
+            tooltip="Haga clic para aprobar, rechazar o ver la solicitud",
+            on_click=lambda e, s=solicitud: abrir_panel_solicitud(s),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -306,46 +411,6 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
                         width=110,
                         content=status_badge(solicitud.get("estado") or "Pendiente"),
                     ),
-                    ft.Container(
-                        expand=True,
-                        alignment=ft.Alignment(1, 0),
-                        content=ft.Row(
-                            spacing=12,
-                            alignment=ft.MainAxisAlignment.END,
-                            controls=[
-                                ft.IconButton(
-                                    icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
-                                    icon_size=18,
-                                    icon_color=ONLINE_GREEN,
-                                    tooltip="Aprobar Admisión",
-                                    padding=0,
-                                    on_click=lambda e, s=solicitud: cambiar_estado(
-                                        e, s, "Aprobado"
-                                    ),
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.REMOVE_RED_EYE_OUTLINED,
-                                    icon_size=18,
-                                    icon_color=TEAL,
-                                    tooltip="Ver Documentación",
-                                    padding=0,
-                                    on_click=lambda e, s=solicitud: ver_documentacion(
-                                        e, s
-                                    ),
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.CANCEL_OUTLINED,
-                                    icon_size=18,
-                                    icon_color=BADGE_RED_TXT,
-                                    tooltip="Rechazar",
-                                    padding=0,
-                                    on_click=lambda e, s=solicitud: cambiar_estado(
-                                        e, s, "Rechazado"
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
                 ],
             ),
         )
@@ -373,7 +438,8 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
 
         filas_column.controls = [header_table, *filas]
         info_text.value = (
-            f"Mostrando {len(filas)} de {len(solicitudes)} solicitudes recibidas"
+            f"Mostrando {len(filas)} de {len(solicitudes)} solicitudes recibidas "
+            "· Haga clic en una fila para gestionarla"
         )
         page.update()
 
@@ -399,7 +465,7 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
             spacing=0,
             controls=[
                 ft.Container(
-                    width=1250,
+                    width=1120,
                     content=filas_column,
                 ),
             ],

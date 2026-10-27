@@ -44,7 +44,7 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
     """Vista de Usuarios, Control de Acceso RBAC conectada a la API."""
 
     token_almacenado = getattr(page, "auth_token", None)
-    if token_almacenado and not api_client.token:
+    if token_almacenado and api_client.token != token_almacenado:
         api_client.set_token(token_almacenado)
 
     # ==================== ESTADO DE LA VISTA ====================
@@ -166,7 +166,6 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         ("Vinculación / Perfil", 260, False),
         ("Alta", 110, False),
         ("Estado", 100, False),
-        ("Acciones", None, True),
     ]
 
     header_table = create_table_header(columnas_usuarios)
@@ -212,6 +211,12 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 error_text.visible = True
                 error_text.update()
                 return
+
+            # El token en memoria puede haberse perdido si el backend se reinició.
+            token = getattr(page, "auth_token", None)
+            if token and api_client.token != token:
+                api_client.set_token(token)
+
             try:
                 await api_client.update_usuario(
                     usuario["id_usuario"], {"password": nueva}
@@ -233,6 +238,16 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                 return
             page.pop_dialog()
             await recargar()
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(
+                        f"Contraseña de '{usuario['username']}' actualizada. "
+                        "La nueva clave ya está activa.",
+                        color="white",
+                    ),
+                    bgcolor=TEAL,
+                )
+            )
 
         dlg = ft.AlertDialog(
             modal=True,
@@ -262,26 +277,123 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         )
         page.show_dialog(dlg)
 
-    def usuario_row(item: dict) -> ft.Container:
-        rol_legible = ROL_DISPLAY.get(item.get("rol", ""), item.get("rol", "-"))
-        activo = bool(item.get("activo", True))
+    def boton_accion(
+        texto: str,
+        icono: ft.IconData,
+        color: str,
+        on_click,
+    ) -> ft.Button:
+        return ft.Button(
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=8,
+                controls=[
+                    ft.Icon(icono, size=18, color=BG_WHITE),
+                    ft.Text(
+                        texto,
+                        size=14,
+                        weight=ft.FontWeight.W_600,
+                        color=BG_WHITE,
+                    ),
+                ],
+            ),
+            bgcolor=color,
+            width=300,
+            height=CONTROL_HEIGHT,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+            on_click=on_click,
+        )
 
-        async def toggle_estado(e):
+    def abrir_panel_acciones(usuario: dict):
+        activo = bool(usuario.get("activo", True))
+        rol_legible = ROL_DISPLAY.get(usuario.get("rol", ""), usuario.get("rol", "-"))
+
+        async def alternar_estado(e):
+            # El token en memoria puede haberse perdido si el backend se reinició.
+            token = getattr(page, "auth_token", None)
+            if token and api_client.token != token:
+                api_client.set_token(token)
             try:
                 await api_client.update_usuario(
-                    item["id_usuario"], {"activo": not activo}
+                    usuario["id_usuario"], {"activo": not activo}
                 )
             except Exception as err:
                 mostrar_error(
-                    f"No se pudo cambiar el estado de '{item['username']}': {err}"
+                    f"No se pudo cambiar el estado de '{usuario['username']}': {err}"
                 )
                 return
+
+            page.pop_dialog()
             await recargar()
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(
+                        f"Acceso de '{usuario['username']}' "
+                        f"{'bloqueado' if activo else 'reactivado'}.",
+                        color="white",
+                    ),
+                    bgcolor=TEAL,
+                )
+            )
+
+        dlg = ft.AlertDialog(
+            modal=False,
+            title=ft.Text(
+                f"Usuario: {usuario['username']}",
+                size=16,
+                weight=ft.FontWeight.BOLD,
+                color=TEAL_DARK,
+            ),
+            content=ft.Column(
+                tight=True,
+                spacing=12,
+                controls=[
+                    ft.Text(f"Rol: {rol_legible}", size=13, color=TEXT_COLOR),
+                    ft.Text(
+                        f"Vinculación: {usuario.get('vinculacion', '-')}",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    ft.Text(
+                        f"Estado actual: {'Activo' if activo else 'Bloqueado'}",
+                        size=13,
+                        color=MUTED,
+                    ),
+                    boton_accion(
+                        "Restablecer contraseña",
+                        ft.Icons.KEY_OUTLINED,
+                        TEAL,
+                        lambda e: (
+                            page.pop_dialog(),
+                            abrir_reset_password(usuario),
+                        ),
+                    ),
+                    boton_accion(
+                        "Reactivar acceso" if not activo else "Bloquear acceso",
+                        ft.Icons.LOCK_OPEN_OUTLINED
+                        if not activo
+                        else ft.Icons.BLOCK_OUTLINED,
+                        "#10B981" if not activo else BADGE_RED_TXT,
+                        alternar_estado,
+                    ),
+                ],
+            ),
+            actions=[ft.TextButton("Cancelar", on_click=lambda _: page.pop_dialog())],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.show_dialog(dlg)
+
+    def usuario_row(item: dict) -> ft.Container:
+        rol_legible = ROL_DISPLAY.get(item.get("rol", ""), item.get("rol", "-"))
+        activo = bool(item.get("activo", True))
 
         return ft.Container(
             height=54,
             padding=ft.Padding(16, 0, 16, 0),
             border=ft.Border(bottom=ft.BorderSide(1, BORDER_COLOR)),
+            ink=True,
+            tooltip="Haga clic para gestionar este usuario",
+            on_click=lambda e, u=item: abrir_panel_acciones(u),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -311,38 +423,6 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
                     ft.Container(
                         width=100,
                         content=status_badge("Activo" if activo else "Bloqueado"),
-                    ),
-                    ft.Container(
-                        expand=True,
-                        alignment=ft.Alignment(1, 0),
-                        content=ft.Row(
-                            spacing=12,
-                            alignment=ft.MainAxisAlignment.END,
-                            controls=[
-                                ft.IconButton(
-                                    icon=ft.Icons.KEY_OUTLINED,
-                                    icon_size=16,
-                                    icon_color=TEAL,
-                                    tooltip="Restablecer Contraseña",
-                                    padding=0,
-                                    on_click=lambda e, u=item: abrir_reset_password(u),
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.LOCK_OPEN_OUTLINED
-                                    if not activo
-                                    else ft.Icons.BLOCK_OUTLINED,
-                                    icon_size=16,
-                                    icon_color="#10B981"
-                                    if not activo
-                                    else BADGE_RED_TXT,
-                                    tooltip="Reactivar Acceso"
-                                    if not activo
-                                    else "Bloquear Acceso",
-                                    padding=0,
-                                    on_click=toggle_estado,
-                                ),
-                            ],
-                        ),
                     ),
                 ],
             ),
@@ -385,7 +465,10 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
             ],
         )
         pagination_holder.content = create_pagination_bar(
-            texto_info=f"Mostrando {len(visibles)} de {len(estado['usuarios'])} cuentas registradas",
+            texto_info=(
+                f"Mostrando {len(visibles)} de {len(estado['usuarios'])} cuentas "
+                "registradas · Haga clic en una fila para gestionarla"
+            ),
             pagina_actual=1,
             total_paginas=max(1, (len(visibles) + 9) // 10),
         )

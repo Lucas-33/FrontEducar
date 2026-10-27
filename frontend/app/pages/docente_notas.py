@@ -904,6 +904,9 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
         page.show_dialog(dialogo)
 
     def fila_asistencia(registro: dict) -> ft.Container:
+        async def eliminar_este_registro(e):
+            await eliminar_registro(e, registro)
+
         return ft.Container(
             height=50,
             padding=ft.Padding(16, 0, 16, 0),
@@ -950,7 +953,7 @@ async def get_docente_notas_view(page: ft.Page) -> ft.Row:
                             icon_color=BADGE_RED_TXT,
                             tooltip="Eliminar registro",
                             padding=0,
-                            on_click=lambda e, r=registro: eliminar_registro(e, r),
+                            on_click=eliminar_este_registro,
                         ),
                     ),
                 ],
