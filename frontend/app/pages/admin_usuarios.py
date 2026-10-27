@@ -587,9 +587,12 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         panel_tutor.visible = es_tutor_actual
         _precargar_datos_tutor(campos_tutor, padre_actual)
 
-        panel_alumnos, alumnos_seleccionados, establecer_alumnos, _ = (
-            _crear_selector_alumnos_tutor(alumnos)
-        )
+        (
+            panel_alumnos,
+            alumnos_seleccionados,
+            establecer_alumnos,
+            _,
+        ) = _crear_selector_alumnos_tutor(alumnos)
         panel_alumnos.visible = es_tutor_actual
 
         def opciones_vinculo(rol_legible: str) -> list[ft.dropdown.Option]:
@@ -1034,9 +1037,12 @@ async def get_admin_usuarios_view(page: ft.Page) -> ft.Row:
         error_text = ft.Text("", size=12, color=BADGE_RED_TXT, visible=False)
 
         panel_tutor, campos_tutor = _crear_panel_datos_tutor()
-        panel_alumnos, alumnos_seleccionados, establecer_alumnos, _ = (
-            _crear_selector_alumnos_tutor(alumnos)
-        )
+        (
+            panel_alumnos,
+            alumnos_seleccionados,
+            establecer_alumnos,
+            _,
+        ) = _crear_selector_alumnos_tutor(alumnos)
 
         def opciones_vinculo(rol_legible: str) -> list[ft.dropdown.Option]:
             sin_vinculo = ft.dropdown.Option(key="", text="Sin vínculo")

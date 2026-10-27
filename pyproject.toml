@@ -17,6 +17,8 @@ dependencies = [
     "psycopg2-binary>=2.9.13",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.15.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "sqlalchemy>=2.0.54",
@@ -28,8 +30,6 @@ dev = [
     "flet-cli>=0.86.5",
     "flet-desktop>=0.86.5",
     "flet-web>=0.86.5",
-    # Integration testing with `flet test` / pytest. The `test` extra brings in
-    # pytest, pytest-asyncio and the screenshot-comparison dependencies.
     "flet[test]>=0.86.5",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.10",
