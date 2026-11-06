@@ -3,18 +3,18 @@ from sqlalchemy.orm import Session
 
 from backend.app.api.deps import get_current_user, require_roles
 from backend.app.core.database import get_db
-from backend.app.models.seguridad import Usuario
 from backend.app.models.finanzas import (
-    Factura,
-    ItemFactura,
     ComprobantePago,
     ConfiguracionFinanciera,
+    Factura,
+    ItemFactura,
 )
+from backend.app.models.seguridad import Usuario
 from backend.app.schemas.finanzas import (
-    FacturaResponse,
-    ItemFacturaResponse,
     ComprobantePagoCreate,
     ConfiguracionUpdate,
+    FacturaResponse,
+    ItemFacturaResponse,
 )
 
 router = APIRouter()

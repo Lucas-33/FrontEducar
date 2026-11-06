@@ -1,10 +1,10 @@
 from datetime import date
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from backend.app.core.scheduler import (
     es_ultimo_dia_habil,
-    tarea_cierre_mensual,
     tarea_aviso_morosos,
+    tarea_cierre_mensual,
 )
 
 

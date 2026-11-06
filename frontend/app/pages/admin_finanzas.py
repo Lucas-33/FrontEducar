@@ -36,8 +36,9 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
         return ft.TextField(
             label=label,
             value=valor_inicial,
-            prefix=ft.Text("$ "), # <-- Aquí está el cambio para Flet 0.86.x
+            prefix=ft.Text("$ ", color=TEXT_COLOR),
             text_size=14,
+            color=TEXT_COLOR, # <--- FUENTE NEGRA / OSCURA DENTRO DEL INPUT
             width=280,
             height=CONTROL_HEIGHT,
             border_color=BORDER_COLOR,
@@ -84,38 +85,76 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
     )
 
     # ==================== 2. VALORES DE DEPORTES ====================
-    # Nota: Acá deberías hacer un api_client.get_deportes() y armar una lista, 
-    # pero te dejo la estructura visual exacta para que la conectes.
-    
-    lista_deportes = ft.Column(spacing=12) # Se llenará dinámicamente
-    
-    async def cargar_deportes():
+    lista_deportes = ft.Column(spacing=12)
+
+    async def cargar_datos():
+        # --- 1. Cargar Precios Fijos ---
+        try:
+            cuota_data = await api_client.get_configuracion("CUOTA_BASE")
+            comedor_data = await api_client.get_configuracion("COMEDOR")
+            
+            input_cuota.value = str(cuota_data.get("valor", "0.00"))
+            input_comedor.value = str(comedor_data.get("valor", "0.00"))
+        except Exception:
+            pass 
+
+        # --- 2. Cargar Deportes ---
         try:
             deportes = await api_client.get_deportes()
             filas = []
+            inputs_deportes = [] # Guardamos las referencias para procesarlas todas juntas
+            
             for d in deportes:
-                # Asumiendo que el GET trae el precio_mensual
                 input_precio = campo_precio(f"Precio: {d['nombre']}", str(d.get("precio_mensual", 0)))
-                
-                async def guardar_dep(e, id_dep=d["id_deporte"], inp=input_precio, nombre=d["nombre"]):
-                    try:
-                        # Reutilizamos el endpoint existente pero le pasamos el precio
-                        await api_client.update_deporte(id_dep, {"nombre": nombre, "precio_mensual": float(inp.value or 0)})
-                        mostrar_mensaje(f"Precio de {nombre} actualizado.")
-                    except Exception as err:
-                        mostrar_mensaje("Error al actualizar deporte.", es_error=True)
+                inputs_deportes.append({"id_deporte": d["id_deporte"], "nombre": d["nombre"], "input": input_precio})
                 
                 filas.append(ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
                         ft.Text(d["nombre"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR, width=200),
                         input_precio,
-                        ft.IconButton(icon=ft.Icons.SAVE_OUTLINED, icon_color=TEAL, on_click=guardar_dep)
+                        # Eliminamos el botón individual de cada fila
                     ]
                 ))
+
+            if filas:
+                # Botón global para guardar todos los deportes a la vez
+                async def guardar_todos_deportes(e):
+                    errores = 0
+                    for item in inputs_deportes:
+                        try:
+                            await api_client.update_deporte(
+                                item["id_deporte"], 
+                                {"nombre": item["nombre"], "precio_mensual": float(item["input"].value or 0)}
+                            )
+                        except Exception:
+                            errores += 1
+                    
+                    if errores == 0:
+                        mostrar_mensaje("Todos los precios deportivos se actualizaron correctamente.")
+                    else:
+                        mostrar_mensaje(f"Se guardó parcialmente: hubo {errores} errores.", es_error=True)
+
+                btn_guardar_deportes = ft.Button(
+                    "Guardar Precios Deportivos",
+                    bgcolor=TEAL,
+                    color=BG_WHITE,
+                    on_click=guardar_todos_deportes,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                )
+                
+                filas.append(ft.Container(height=8)) # Un pequeño espacio
+                filas.append(btn_guardar_deportes) # Agregamos el botón al final de la lista
+
             lista_deportes.controls = filas or [ft.Text("No hay deportes registrados.", color=MUTED)]
         except Exception:
             lista_deportes.controls = [ft.Text("Error al cargar deportes.", color=BADGE_RED_TXT)]
+
+        # --- 3. Refrescar UI ---
+        page.update()
+
+    # Ejecutar al entrar a la pantalla
+    page.run_task(cargar_datos)
 
     card_deportes = ft.Container(
         bgcolor=BG_WHITE,
@@ -130,8 +169,6 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
             ]
         )
     )
-
-    page.run_task(cargar_deportes) # Carga asíncrona al entrar
 
     return admin_layout(
         page=page,

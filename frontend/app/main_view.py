@@ -14,13 +14,14 @@ from frontend.app.pages.admin_comunidad import get_admin_comunidad_view
 from frontend.app.pages.admin_cursos import get_admin_cursos_view
 from frontend.app.pages.admin_dashboard import get_admin_dashboard_view
 from frontend.app.pages.admin_deportes import get_admin_deportes_view
+from frontend.app.pages.admin_finanzas import get_admin_finanzas_view
 from frontend.app.pages.admin_horarios import get_admin_horarios_view
 from frontend.app.pages.admin_inscripciones import get_admin_inscripciones_view
 from frontend.app.pages.admin_materias import get_admin_materias_view
 from frontend.app.pages.admin_niveles import get_admin_niveles_view
 from frontend.app.pages.admin_profesor_form import get_admin_profesor_form_view
 from frontend.app.pages.admin_profesores import get_admin_profesores_view
-from frontend.app.pages.admin_finanzas import get_admin_finanzas_view
+
 # Reportes
 from frontend.app.pages.admin_reporte_alumnos_docentes import (
     get_admin_reporte_alumnos_docentes_view,

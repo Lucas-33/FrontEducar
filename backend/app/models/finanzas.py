@@ -1,7 +1,8 @@
 """Entidades para la gestión de cuotas, facturación y pagos (PARTE 3)."""
 
-from sqlalchemy import Column, Integer, String, Numeric, Date, ForeignKey, DateTime
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.sql import func
+
 from backend.app.core.database import Base
 
 
