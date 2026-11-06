@@ -474,6 +474,18 @@ class APIClient:
     def reporte_url(self, nombre: str) -> str:
         """URL absoluta de descarga de un reporte Excel, con el token de sesión."""
         return f"{self.base_url}/reportes/{nombre}.xlsx?token={self.token or ''}"
+# ==================== FINANZAS Y PRECIOS ====================
+    async def get_configuracion(self, concepto: str) -> dict[str, Any]:
+        # Si no creaste un GET en el backend, podés implementarlo rápido o usar un fallback
+        try:
+            return await self._get(f"/finanzas/configuracion/{concepto}")
+        except Exception:
+            return {"valor": 0.0}
 
+    async def update_configuracion(self, concepto: str, valor: float) -> dict[str, Any]:
+        return await self._put(
+            "/finanzas/configuracion", 
+            {"concepto": concepto, "valor": valor}
+        )
 
 api_client = APIClient()
