@@ -107,3 +107,13 @@ def actualizar_precio(
     return {
         "mensaje": f"Precio de {config_in.concepto} actualizado a ${config_in.valor}"
     }
+
+@router.get("/configuracion/{concepto}", summary="Obtener precio base (Administrador)")
+def obtener_precio(
+    concepto: str, 
+    current_user: Usuario = Depends(require_roles("ADMIN")), 
+    db: Session = Depends(get_db)
+):
+    """Devuelve el valor actual de CUOTA_BASE o COMEDOR."""
+    config = db.query(ConfiguracionFinanciera).filter_by(concepto=concepto).first()
+    return {"valor": float(config.valor) if config else 0.0}
