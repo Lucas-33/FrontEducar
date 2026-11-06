@@ -17,6 +17,7 @@ from frontend.app.components.constants import (
     TEXT_COLOR,
 )
 
+
 async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
     """Pantalla para que el Administrador configure los precios del sistema."""
 
