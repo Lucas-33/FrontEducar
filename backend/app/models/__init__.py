@@ -22,3 +22,10 @@ from backend.app.models.servicios import (
     InscripcionTransporte,
     RecorridoTransporte,
 )
+
+from backend.app.models.finanzas import (
+    ConfiguracionFinanciera,
+    Factura,
+    ItemFactura,
+    ComprobantePago,
+)

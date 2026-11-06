@@ -557,7 +557,7 @@ def registrar_usuario(
 @router.put(
     "/usuarios/{id_usuario}",
     response_model=UsuarioAdminResponse,
-    summary="Actualizar usuario: rol, estado o contraseña (solo ADMIN)",
+    summary="Actualizar usuario: rol, estado, vínculo o contraseña (solo ADMIN)",
 )
 def actualizar_usuario(
     id_usuario: int,
@@ -1108,13 +1108,30 @@ def listar_alumnos(
 @router.get(
     "/alumnos/{legajo}",
     response_model=AlumnoResponse,
-    summary="Obtener alumno por legajo",
+    summary="Obtener alumno por legajo (propio, hijo o cualquier legajo para staff)",
 )
 def obtener_alumno(
     legajo: int,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    rol = seguridad_service.get_rol_nombre(db, current_user)
+    if rol == "STUDENT" and current_user.legajo_alumno != legajo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo puede consultar su propia ficha de alumno",
+        )
+    if rol == "PARENT":
+        hijos = (
+            personas_service.get_alumnos_de_padre(db, current_user.id_padre)
+            if current_user.id_padre
+            else []
+        )
+        if legajo not in {hijo.legajo for hijo in hijos}:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Solo puede consultar la ficha de sus hijos",
+            )
     return personas_service.get_alumno(db=db, legajo=legajo)
 
 
@@ -3004,11 +3021,13 @@ class UsuarioRepository(CRUDBase[Usuario, UsuarioCreate, UsuarioUpdate]):
     def create_user_with_hash(
         self, db: Session, obj_in: UsuarioCreate, password_hash: str
     ) -> Usuario:
-        user_data = obj_in.model_dump(exclude={"password"})
+        # `legajos_alumnos` y `tutor` son datos de la relación del tutor, no
+        # columnas del usuario.
+        user_data = obj_in.model_dump(exclude={"password", "legajos_alumnos", "tutor"})
         user_data["password_hash"] = password_hash
         db_user = Usuario(**user_data)
         db.add(db_user)
-        db.commit()
+        db.flush()
         db.refresh(db_user)
         return db_user
 
@@ -3517,7 +3536,7 @@ class AlumnoBase(BaseModel):
 
 
 class AlumnoCreate(AlumnoBase):
-    pass
+    legajo: int | None = None  # Permite que llegue vacío desde el frontend
 
 
 class AlumnoUpdate(BaseModel):
@@ -3548,7 +3567,7 @@ class ProfesorBase(BaseModel):
 
 
 class ProfesorCreate(ProfesorBase):
-    pass
+    legajo: int | None = None  # Permite que llegue vacío desde el frontend
 
 
 class ProfesorUpdate(BaseModel):
@@ -3609,7 +3628,9 @@ class PadreAlumnoResponse(PadreAlumnoBase):
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from backend.app.schemas.personas import PadreCreate
 
 
 # --- ROL ---
@@ -3638,6 +3659,10 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     password: str
+    # Solo aplica a usuarios con rol PARENT: legajos de los alumnos a cargo.
+    legajos_alumnos: list[int] | None = None
+    # Datos para dar de alta al tutor junto con su usuario (rol PARENT).
+    tutor: PadreCreate | None = None
 
 
 class UsuarioUpdate(BaseModel):
@@ -3645,6 +3670,13 @@ class UsuarioUpdate(BaseModel):
     password: str | None = None
     id_rol: int | None = None
     activo: bool | None = None
+    legajo_alumno: int | None = None
+    legajo_profesor: int | None = None
+    id_padre: int | None = None
+    # Si se envía, reemplaza por completo los alumnos vinculados al tutor.
+    legajos_alumnos: list[int] | None = None
+    # Datos del tutor: actualiza el tutor existente o crea uno nuevo.
+    tutor: PadreCreate | None = None
 
 
 class UsuarioResponse(UsuarioBase):
@@ -3659,6 +3691,8 @@ class UsuarioAdminResponse(UsuarioBase):
     id_usuario: int
     rol: str = ""
     vinculacion: str = "-"
+    # Legajos de los alumnos vinculados cuando el usuario es un tutor.
+    alumnos_vinculados: list[int] = Field(default_factory=list)
     creado_en: datetime | None = None
 
 
@@ -4616,8 +4650,10 @@ evaluacion_service = EvaluacionService()
 ======================================================================
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from backend.app.models.personas import Alumno, Profesor
 from backend.app.repositories import (
     alumno_repository,
     curso_repository,
@@ -4654,11 +4690,11 @@ class PersonasService:
         return alumno
 
     def create_alumno(self, db: Session, alumno_in: AlumnoCreate):
-        if alumno_repository.get_by_legajo(db, alumno_in.legajo):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un alumno con legajo '{alumno_in.legajo}'",
-            )
+        # 1. Autogeneración estricta y obligatoria del legajo
+        max_legajo = db.query(func.max(Alumno.legajo)).scalar()
+        alumno_in.legajo = (max_legajo or 999) + 1
+
+        # 2. Validaciones estándar
         if alumno_repository.get_by_dni(db, alumno_in.dni):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -4703,11 +4739,11 @@ class PersonasService:
         return profesor
 
     def create_profesor(self, db: Session, profesor_in: ProfesorCreate):
-        if profesor_repository.get_by_legajo(db, profesor_in.legajo):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un profesor con legajo '{profesor_in.legajo}'",
-            )
+        # 1. Autogeneración estricta y obligatoria del legajo
+        max_legajo = db.query(func.max(Profesor.legajo)).scalar()
+        profesor_in.legajo = (max_legajo or 999) + 1
+
+        # 2. Validaciones estándar
         if profesor_repository.get_by_dni(db, profesor_in.dni):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -4728,7 +4764,6 @@ class PersonasService:
         return padre_repository.get_multi(db, skip=skip, limit=limit)
 
     def get_alumnos_de_padre(self, db: Session, id_padre: int) -> list:
-        """Devuelve los alumnos (hijos) vinculados a un tutor."""
         if not padre_repository.get(db, id_padre):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -4781,14 +4816,17 @@ import jwt
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from backend.app.models.personas import Padre, PadreAlumno
 from backend.app.models.seguridad import Usuario
 from backend.app.repositories import (
     alumno_repository,
+    padre_alumno_repository,
     padre_repository,
     profesor_repository,
     rol_repository,
     usuario_repository,
 )
+from backend.app.schemas.personas import PadreCreate
 from backend.app.schemas.seguridad import (
     Token,
     UsuarioAdminResponse,
@@ -4929,19 +4967,133 @@ class SeguridadService:
         db.commit()
         return {"detail": "Contraseña actualizada correctamente"}
 
+    def _validar_alumnos_vinculables(
+        self, db: Session, legajos: list[int]
+    ) -> list[int]:
+        """Valida que todos los legajos existan y devuelve una lista sin repetidos."""
+        resultado: list[int] = []
+        for legajo in legajos:
+            legajo_int = int(legajo)
+            if legajo_int in resultado:
+                continue
+            if not alumno_repository.get_by_legajo(db, legajo_int):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"El alumno con legajo #{legajo_int} no existe",
+                )
+            resultado.append(legajo_int)
+        return resultado
+
+    def _sincronizar_alumnos_tutor(
+        self, db: Session, id_padre: int | None, legajos: list[int]
+    ):
+        """Reemplaza los alumnos vinculados al tutor indicado.
+
+        No hace commit: se confirma junto con el resto de la operación del usuario.
+        """
+        legajos_validos = self._validar_alumnos_vinculables(db, legajos or [])
+        if legajos_validos and not id_padre:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Debe indicar los datos del tutor antes de vincular alumnos",
+            )
+        if not id_padre:
+            return
+        if not padre_repository.get(db, id_padre):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"El tutor con ID {id_padre} no existe",
+            )
+
+        relaciones = padre_alumno_repository.get_alumnos_por_padre(db, id_padre)
+        actuales = {relacion.legajo_alumno for relacion in relaciones}
+        deseados = set(legajos_validos)
+
+        for relacion in relaciones:
+            if relacion.legajo_alumno not in deseados:
+                db.delete(relacion)
+        for legajo in deseados - actuales:
+            db.add(PadreAlumno(id_padre=id_padre, legajo_alumno=legajo))
+
+    def _obtener_o_crear_tutor(self, db: Session, tutor_in: PadreCreate) -> Padre:
+        """Reutiliza el tutor con ese DNI o lo crea en la misma transacción."""
+        padre = padre_repository.get_by_dni(db, tutor_in.dni)
+        if padre:
+            for campo, valor in tutor_in.model_dump().items():
+                if valor is not None:
+                    setattr(padre, campo, valor)
+            return padre
+        padre = Padre(**tutor_in.model_dump())
+        db.add(padre)
+        db.flush()
+        return padre
+
+    def _actualizar_tutor(
+        self, db: Session, padre: Padre, tutor_in: PadreCreate
+    ) -> None:
+        """Actualiza los datos del tutor vinculado al usuario."""
+        existente = padre_repository.get_by_dni(db, tutor_in.dni)
+        if existente and existente.id_padre != padre.id_padre:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Ya existe otro tutor con el DNI '{tutor_in.dni}'",
+            )
+        for campo, valor in tutor_in.model_dump().items():
+            setattr(padre, campo, valor)
+
     def registrar_usuario(self, db: Session, user_in: UsuarioCreate):
         if usuario_repository.get_by_username(db, user_in.username):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"El nombre de usuario '{user_in.username}' ya está registrado",
             )
-        if not rol_repository.get(db, user_in.id_rol):
+        rol = rol_repository.get(db, user_in.id_rol)
+        if not rol:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"El rol con ID {user_in.id_rol} no existe",
             )
+
+        if user_in.tutor is not None:
+            if rol.nombre != "PARENT":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Solo los usuarios con rol Padre / Tutor pueden tener datos de tutor",
+                )
+            if user_in.id_padre is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Indique un tutor existente o los datos de un tutor nuevo, "
+                        "no ambos"
+                    ),
+                )
+
+        legajos_alumnos = user_in.legajos_alumnos
+        if legajos_alumnos:
+            if rol.nombre != "PARENT":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Solo los usuarios con rol Padre / Tutor pueden tener alumnos vinculados",
+                )
+            if not user_in.id_padre and user_in.tutor is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Debe indicar los datos del tutor para vincular alumnos",
+                )
+            self._validar_alumnos_vinculables(db, legajos_alumnos)
+
+        if user_in.tutor is not None:
+            padre = self._obtener_o_crear_tutor(db, user_in.tutor)
+            user_in = user_in.model_copy(update={"id_padre": padre.id_padre})
+
         hashed_pwd = self.get_password_hash(user_in.password)
-        return usuario_repository.create_user_with_hash(db, user_in, hashed_pwd)
+        user = usuario_repository.create_user_with_hash(db, user_in, hashed_pwd)
+        if legajos_alumnos:
+            self._sincronizar_alumnos_tutor(db, user.id_padre, legajos_alumnos)
+        db.commit()
+        db.refresh(user)
+        return user
 
     # ================= ADMINISTRACIÓN DE USUARIOS =================
     def get_roles(self, db: Session):
@@ -4950,6 +5102,15 @@ class SeguridadService:
     def _to_admin_response(self, db: Session, user) -> UsuarioAdminResponse:
         rol = rol_repository.get(db, user.id_rol)
         rol_nombre = rol.nombre if rol else ""
+
+        alumnos_vinculados: list[int] = []
+        if user.id_padre:
+            alumnos_vinculados = [
+                relacion.legajo_alumno
+                for relacion in padre_alumno_repository.get_alumnos_por_padre(
+                    db, user.id_padre
+                )
+            ]
 
         if user.legajo_alumno:
             alumno = alumno_repository.get_by_legajo(db, user.legajo_alumno)
@@ -4972,6 +5133,13 @@ class SeguridadService:
                 if padre
                 else f"Tutor #{user.id_padre}"
             )
+            cantidad = len(alumnos_vinculados)
+            vinculacion += (
+                f" · {cantidad} alumno{'s' if cantidad != 1 else ''} vinculado"
+                f"{'s' if cantidad != 1 else ''}"
+                if cantidad
+                else " · Sin alumnos vinculados"
+            )
         elif rol_nombre == "ADMIN":
             vinculacion = "Acceso Total"
         else:
@@ -4988,6 +5156,7 @@ class SeguridadService:
             creado_en=user.creado_en,
             rol=rol_nombre,
             vinculacion=vinculacion,
+            alumnos_vinculados=alumnos_vinculados,
         )
 
     def get_usuarios(self, db: Session) -> list[UsuarioAdminResponse]:
@@ -5006,6 +5175,10 @@ class SeguridadService:
 
         data = user_in.model_dump(exclude_unset=True)
         password = data.pop("password", None)
+        legajos_alumnos = data.pop("legajos_alumnos", None)
+        tutor_data = data.pop("tutor", None)
+        if tutor_data is not None:
+            tutor_data = PadreCreate(**tutor_data)
         if password:
             user.password_hash = self.get_password_hash(password)
 
@@ -5018,15 +5191,102 @@ class SeguridadService:
                 )
 
         nuevo_rol = data.get("id_rol")
-        if nuevo_rol is not None and not rol_repository.get(db, nuevo_rol):
+        rol_efectivo = (
+            rol_repository.get(db, nuevo_rol)
+            if nuevo_rol is not None
+            else rol_repository.get(db, user.id_rol)
+        )
+        if nuevo_rol is not None and not rol_efectivo:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"El rol con ID {nuevo_rol} no existe",
             )
 
+        campos_vinculo = {"legajo_alumno", "legajo_profesor", "id_padre"}
+
+        if tutor_data is not None:
+            if not rol_efectivo or rol_efectivo.nombre != "PARENT":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Solo los usuarios con rol Padre / Tutor pueden tener "
+                        "datos de tutor"
+                    ),
+                )
+            if campos_vinculo & data.keys():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "No combine los datos del tutor con otros vínculos "
+                        "de alumno o docente"
+                    ),
+                )
+
+            # El usuario queda vinculado al tutor, nunca a un alumno o docente.
+            user.legajo_alumno = None
+            user.legajo_profesor = None
+            if user.id_padre:
+                padre = padre_repository.get(db, user.id_padre)
+                if not padre:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"El tutor con ID {user.id_padre} no existe",
+                    )
+                self._actualizar_tutor(db, padre, tutor_data)
+            else:
+                padre = self._obtener_o_crear_tutor(db, tutor_data)
+                user.id_padre = padre.id_padre
+
+        # Los vínculos (alumno/docente/tutor) se gestionan en bloque: si se envía
+        # alguno, se limpian los demás para que una cuenta tenga un único vínculo.
+        elif campos_vinculo & data.keys():
+            vinculos = {campo: data.pop(campo, None) for campo in list(campos_vinculo)}
+
+            if vinculos.get("legajo_alumno") is not None and not (
+                alumno_repository.get_by_legajo(db, vinculos["legajo_alumno"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=(
+                        f"El alumno con legajo #{vinculos['legajo_alumno']} no existe"
+                    ),
+                )
+            if vinculos.get("legajo_profesor") is not None and not (
+                profesor_repository.get_by_legajo(db, vinculos["legajo_profesor"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=(
+                        "El docente con legajo "
+                        f"#{vinculos['legajo_profesor']} no existe"
+                    ),
+                )
+            if vinculos.get("id_padre") is not None and not (
+                padre_repository.get(db, vinculos["id_padre"])
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"El tutor con ID {vinculos['id_padre']} no existe",
+                )
+
+            for campo in campos_vinculo:
+                setattr(user, campo, vinculos.get(campo))
+
         for field, value in data.items():
             if value is not None:
                 setattr(user, field, value)
+
+        if legajos_alumnos is not None:
+            if rol_efectivo and rol_efectivo.nombre == "PARENT":
+                self._sincronizar_alumnos_tutor(db, user.id_padre, legajos_alumnos)
+            elif legajos_alumnos:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Solo los usuarios con rol Padre / Tutor pueden tener "
+                        "alumnos vinculados"
+                    ),
+                )
 
         db.commit()
         db.refresh(user)
@@ -5373,1207 +5633,4 @@ from backend.app.services.servicios import (
     ServiciosEscolaresService,
     servicios_escolares_service,
 )
-
-
-======================================================================
---- RUTA: tests\conftest.py ---
-======================================================================
-
-"""Configuración de pytest para el backend.
-
-Crea una base de datos PostgreSQL de prueba (por defecto `educar_test`),
-genera el esquema desde los modelos SQLAlchemy, siembra datos mínimos y
-reemplaza la dependencia `get_db` para que ningún test toque la base de
-desarrollo (`educar_db`).
-
-La URL se puede personalizar con la variable de entorno `TEST_DATABASE_URL`.
-"""
-
-import os
-from datetime import date
-
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.engine import make_url
-from sqlalchemy.orm import sessionmaker
-
-from backend.app import (
-    models,  # noqa: F401  (registra todas las tablas en Base.metadata)
-)
-from backend.app.core.database import Base, get_db
-from backend.app.main import app
-from backend.app.models.academico import (
-    Curso,
-    Materia,
-    MateriaCursoProfesor,
-    NivelEducativo,
-)
-from backend.app.models.personas import Alumno, Padre, PadreAlumno, Profesor
-from backend.app.models.seguridad import Rol, Usuario
-from backend.app.services.seguridad import seguridad_service
-
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "postgresql+psycopg2://postgres@127.0.0.1:5432/educar_test",
-)
-
-PASSWORD_PRUEBA = "password123"
-
-LEGAJO_ALUMNO_1 = 9001
-LEGAJO_ALUMNO_2 = 9002
-LEGAJO_PROFESOR = 9001
-ID_PADRE = 9001
-
-
-def _crear_base_si_falta():
-    """Crea la base de datos de prueba conectándose a la base de mantenimiento."""
-    url = make_url(TEST_DATABASE_URL)
-    engine_admin = create_engine(
-        url.set(database="postgres"), isolation_level="AUTOCOMMIT"
-    )
-    try:
-        with engine_admin.connect() as conexion:
-            existe = conexion.exec_driver_sql(
-                "SELECT 1 FROM pg_database WHERE datname = %s", (url.database,)
-            ).scalar()
-            if not existe:
-                conexion.exec_driver_sql(f'CREATE DATABASE "{url.database}"')
-    finally:
-        engine_admin.dispose()
-
-
-def _sembrar_datos(engine):
-    """Datos mínimos y deterministas para los tests de integración."""
-    session = sessionmaker(bind=engine)()
-    try:
-        hash_password = seguridad_service.get_password_hash(PASSWORD_PRUEBA)
-
-        session.add_all(
-            [
-                Rol(id_rol=1, nombre="ADMIN"),
-                Rol(id_rol=2, nombre="TEACHER"),
-                Rol(id_rol=3, nombre="PARENT"),
-                Rol(id_rol=4, nombre="STUDENT"),
-            ]
-        )
-        session.flush()
-
-        session.add(NivelEducativo(id_nivel=1, nombre="Secundario"))
-        session.flush()
-
-        session.add_all(
-            [
-                Curso(id_curso=1, nombre="1° Año A", id_nivel=1),
-                Materia(id_materia=1, nombre="Matemática"),
-            ]
-        )
-        session.flush()
-
-        session.add(
-            Profesor(
-                legajo=LEGAJO_PROFESOR,
-                dni="30000001",
-                nombre="Ana",
-                apellido="Prueba",
-                especialidad="Matemática",
-                correo_electronico="ana.prueba@educar.edu.ar",
-                telefono="3624000001",
-                estado="ACTIVO",
-            )
-        )
-        session.add(
-            Padre(
-                id_padre=ID_PADRE,
-                dni="20000001",
-                nombre="Pedro",
-                apellido="Prueba",
-                telefono="3624000002",
-                correo_electronico="pedro.prueba@gmail.com",
-            )
-        )
-        session.flush()
-
-        session.add_all(
-            [
-                Alumno(
-                    legajo=LEGAJO_ALUMNO_1,
-                    dni="50000001",
-                    nombre="Lucía",
-                    apellido="Prueba",
-                    fecha_nacimiento=date(2013, 4, 10),
-                    domicilio="Calle Prueba 123, Resistencia",
-                    telefono="3624000002",
-                    correo_electronico="lucia.prueba@alumno.educar.ar",
-                    id_curso=1,
-                    estado_alumno="ACTIVO",
-                ),
-                Alumno(
-                    legajo=LEGAJO_ALUMNO_2,
-                    dni="50000002",
-                    nombre="Julián",
-                    apellido="Prueba",
-                    fecha_nacimiento=date(2013, 8, 22),
-                    domicilio="Calle Prueba 456, Resistencia",
-                    telefono="3624000003",
-                    correo_electronico="julian.prueba@alumno.educar.ar",
-                    id_curso=1,
-                    estado_alumno="ACTIVO",
-                ),
-            ]
-        )
-        session.flush()
-
-        session.add(PadreAlumno(id_padre=ID_PADRE, legajo_alumno=LEGAJO_ALUMNO_1))
-        session.add(
-            MateriaCursoProfesor(
-                id_materia=1,
-                id_curso=1,
-                legajo_profesor=LEGAJO_PROFESOR,
-            )
-        )
-        session.flush()
-
-        session.add_all(
-            [
-                Usuario(
-                    username="admin_test",
-                    password_hash=hash_password,
-                    id_rol=1,
-                    activo=True,
-                ),
-                Usuario(
-                    username="prof_test",
-                    password_hash=hash_password,
-                    id_rol=2,
-                    legajo_profesor=LEGAJO_PROFESOR,
-                    activo=True,
-                ),
-                Usuario(
-                    username="papa_test",
-                    password_hash=hash_password,
-                    id_rol=3,
-                    id_padre=ID_PADRE,
-                    activo=True,
-                ),
-                Usuario(
-                    username="alum_test",
-                    password_hash=hash_password,
-                    id_rol=4,
-                    legajo_alumno=LEGAJO_ALUMNO_1,
-                    activo=True,
-                ),
-            ]
-        )
-        session.commit()
-
-        # Al insertar IDs explícitos, las secuencias de PostgreSQL quedan desfasadas.
-        # Se ajustan para que los endpoints que crean registros nuevos no colisionen.
-        tablas = [
-            ("alumno", "legajo"),
-            ("profesor", "legajo"),
-            ("padre", "id_padre"),
-            ("nivel_educativo", "id_nivel"),
-            ("curso", "id_curso"),
-            ("materia", "id_materia"),
-        ]
-        with engine.connect() as conexion:
-            for tabla, pk in tablas:
-                conexion.exec_driver_sql(
-                    f"SELECT setval(pg_get_serial_sequence('{tabla}', '{pk}'), "
-                    f"COALESCE(MAX({pk}), 1)) FROM {tabla}"
-                )
-            conexion.commit()
-    finally:
-        session.close()
-
-
-@pytest.fixture(scope="session")
-def engine_prueba():
-    """Motor de la base de datos de prueba con esquema limpio y datos sembrados."""
-    try:
-        _crear_base_si_falta()
-    except Exception as error:  # pragma: no cover - depende del entorno
-        pytest.skip(f"PostgreSQL no disponible para los tests de integración: {error}")
-
-    engine = create_engine(TEST_DATABASE_URL)
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    _sembrar_datos(engine)
-    yield engine
-    engine.dispose()
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _override_get_db(engine_prueba):
-    """Redirige la dependencia get_db de FastAPI a la base de prueba."""
-    session_prueba = sessionmaker(autocommit=False, autoflush=False, bind=engine_prueba)
-
-    def get_db_prueba():
-        db = session_prueba()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app.dependency_overrides[get_db] = get_db_prueba
-    yield
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture(scope="session")
-def client(engine_prueba):
-    """Cliente HTTP de pruebas con la dependencia de base de datos reemplazada."""
-    with TestClient(app) as test_client:
-        yield test_client
-
-
-def _login(client: TestClient, username: str) -> str:
-    respuesta = client.post(
-        "/api/v1/auth/login",
-        json={"username": username, "password": PASSWORD_PRUEBA},
-    )
-    assert respuesta.status_code == 200, respuesta.text
-    return respuesta.json()["access_token"]
-
-
-@pytest.fixture(scope="session")
-def token_admin(client) -> str:
-    return _login(client, "admin_test")
-
-
-@pytest.fixture(scope="session")
-def token_profesor(client) -> str:
-    return _login(client, "prof_test")
-
-
-@pytest.fixture(scope="session")
-def token_alumno(client) -> str:
-    return _login(client, "alum_test")
-
-
-@pytest.fixture(scope="session")
-def token_padre(client) -> str:
-    return _login(client, "papa_test")
-
-
-@pytest.fixture()
-def cabeceras_admin(token_admin) -> dict:
-    return {"Authorization": f"Bearer {token_admin}"}
-
-
-@pytest.fixture()
-def cabeceras_profesor(token_profesor) -> dict:
-    return {"Authorization": f"Bearer {token_profesor}"}
-
-
-@pytest.fixture()
-def cabeceras_alumno(token_alumno) -> dict:
-    return {"Authorization": f"Bearer {token_alumno}"}
-
-
-@pytest.fixture()
-def cabeceras_padre(token_padre) -> dict:
-    return {"Authorization": f"Bearer {token_padre}"}
-
-
-======================================================================
---- RUTA: tests\test_api.py ---
-======================================================================
-
-from fastapi.testclient import TestClient
-
-from backend.app.main import app
-
-client = TestClient(app)
-
-
-def test_health_check():
-    """La API responde en el endpoint de salud."""
-    resp = client.get("/api/v1/health")
-    assert resp.status_code == 200
-    assert resp.json()["status"] == "ok"
-
-
-def test_documentacion_disponible():
-    """La app levanta y expone Swagger (/docs)."""
-    assert client.get("/docs").status_code == 200
-
-
-def test_esquema_openapi_generado():
-    """El esquema OpenAPI se genera correctamente."""
-    resp = client.get("/openapi.json")
-    assert resp.status_code == 200
-    assert resp.json()["info"]["title"] == "Educar para Transformar - API & Web"
-
-
-======================================================================
---- RUTA: tests\test_catalogos_y_reportes.py ---
-======================================================================
-
-"""Tests de CRUD de catálogos (PUT/DELETE) y de los reportes Excel."""
-
-
-def test_eliminar_nivel_con_cursos_asociados_devuelve_409(client, cabeceras_admin):
-    nivel = client.post(
-        "/api/v1/academico/niveles",
-        json={"nombre": "Nivel Con Cursos"},
-        headers=cabeceras_admin,
-    )
-    assert nivel.status_code == 201
-    id_nivel = nivel.json()["id_nivel"]
-
-    curso = client.post(
-        "/api/v1/academico/cursos",
-        json={"nombre": "Curso Dependiente", "id_nivel": id_nivel},
-        headers=cabeceras_admin,
-    )
-    assert curso.status_code == 201
-    id_curso = curso.json()["id_curso"]
-
-    bloqueado = client.delete(
-        f"/api/v1/academico/niveles/{id_nivel}", headers=cabeceras_admin
-    )
-    assert bloqueado.status_code == 409
-
-    assert (
-        client.delete(
-            f"/api/v1/academico/cursos/{id_curso}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-    assert (
-        client.delete(
-            f"/api/v1/academico/niveles/{id_nivel}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-
-
-def test_crud_completo_de_curso(client, cabeceras_admin):
-    nivel = client.post(
-        "/api/v1/academico/niveles",
-        json={"nombre": "Nivel Para Curso"},
-        headers=cabeceras_admin,
-    ).json()
-
-    curso = client.post(
-        "/api/v1/academico/cursos",
-        json={"nombre": "7° Grado A", "id_nivel": nivel["id_nivel"]},
-        headers=cabeceras_admin,
-    )
-    assert curso.status_code == 201
-    id_curso = curso.json()["id_curso"]
-
-    actualizado = client.put(
-        f"/api/v1/academico/cursos/{id_curso}",
-        json={"nombre": "7° Grado B"},
-        headers=cabeceras_admin,
-    )
-    assert actualizado.status_code == 200
-    assert actualizado.json()["nombre"] == "7° Grado B"
-
-    assert (
-        client.delete(
-            f"/api/v1/academico/cursos/{id_curso}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-    assert (
-        client.delete(
-            f"/api/v1/academico/niveles/{nivel['id_nivel']}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-
-
-def test_crud_completo_de_materia(client, cabeceras_admin):
-    materia = client.post(
-        "/api/v1/academico/materias",
-        json={"nombre": "Música"},
-        headers=cabeceras_admin,
-    )
-    assert materia.status_code == 201
-    id_materia = materia.json()["id_materia"]
-
-    actualizada = client.put(
-        f"/api/v1/academico/materias/{id_materia}",
-        json={"nombre": "Música y Expresión Artística"},
-        headers=cabeceras_admin,
-    )
-    assert actualizada.status_code == 200
-
-    assert (
-        client.delete(
-            f"/api/v1/academico/materias/{id_materia}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-
-
-def test_crud_completo_de_horario(client, cabeceras_admin):
-    horario = client.post(
-        "/api/v1/academico/horarios",
-        json={"descripcion": "Turno Noche (19:30 - 22:00)"},
-        headers=cabeceras_admin,
-    )
-    assert horario.status_code == 201
-    id_horario = horario.json()["id_horario"]
-
-    actualizado = client.put(
-        f"/api/v1/academico/horarios/{id_horario}",
-        json={"descripcion": "Turno Nocturno (20:00 - 22:30)"},
-        headers=cabeceras_admin,
-    )
-    assert actualizado.status_code == 200
-    assert actualizado.json()["descripcion"] == "Turno Nocturno (20:00 - 22:30)"
-
-    assert (
-        client.delete(
-            f"/api/v1/academico/horarios/{id_horario}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-
-
-def test_asignacion_de_materia_curso_profesor(client, cabeceras_admin):
-    nivel = client.post(
-        "/api/v1/academico/niveles",
-        json={"nombre": "Nivel Asignación"},
-        headers=cabeceras_admin,
-    ).json()
-    curso = client.post(
-        "/api/v1/academico/cursos",
-        json={"nombre": "Curso Asignación", "id_nivel": nivel["id_nivel"]},
-        headers=cabeceras_admin,
-    ).json()
-    materia = client.post(
-        "/api/v1/academico/materias",
-        json={"nombre": "Materia Asignación"},
-        headers=cabeceras_admin,
-    ).json()
-
-    asignacion = client.post(
-        "/api/v1/academico/asignaciones",
-        json={
-            "id_materia": materia["id_materia"],
-            "id_curso": curso["id_curso"],
-            "legajo_profesor": 9001,
-        },
-        headers=cabeceras_admin,
-    )
-    assert asignacion.status_code == 201
-
-    detalle = client.get("/api/v1/academico/asignaciones", headers=cabeceras_admin)
-    assert detalle.status_code == 200
-
-    eliminar = client.delete(
-        f"/api/v1/academico/asignaciones/{materia['id_materia']}/{curso['id_curso']}",
-        headers=cabeceras_admin,
-    )
-    assert eliminar.status_code == 200
-
-    assert (
-        client.delete(
-            f"/api/v1/academico/materias/{materia['id_materia']}",
-            headers=cabeceras_admin,
-        ).status_code
-        == 200
-    )
-    assert (
-        client.delete(
-            f"/api/v1/academico/cursos/{curso['id_curso']}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-    assert (
-        client.delete(
-            f"/api/v1/academico/niveles/{nivel['id_nivel']}", headers=cabeceras_admin
-        ).status_code
-        == 200
-    )
-
-
-REPORTES = [
-    "alumnos",
-    "cursos-materias",
-    "deportes",
-    "transporte",
-    "solicitudes",
-    "resumen",
-]
-
-CONTENT_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-
-def test_reportes_excel_se_descargan_como_admin(client, token_admin):
-    for nombre in REPORTES:
-        respuesta = client.get(f"/api/v1/reportes/{nombre}.xlsx?token={token_admin}")
-        assert respuesta.status_code == 200, nombre
-        assert respuesta.headers["content-type"].startswith(CONTENT_TYPE_XLSX), nombre
-        assert respuesta.content[:2] == b"PK", nombre
-        assert len(respuesta.content) > 1000, nombre
-
-
-def test_reportes_exigen_token(client):
-    respuesta = client.get("/api/v1/reportes/alumnos.xlsx")
-    assert respuesta.status_code == 401
-
-
-def test_reportes_solo_para_admin(client, token_profesor):
-    respuesta = client.get(f"/api/v1/reportes/resumen.xlsx?token={token_profesor}")
-    assert respuesta.status_code == 403
-
-
-======================================================================
---- RUTA: tests\test_comunidad_api.py ---
-======================================================================
-
-"""Tests de los formularios públicos y la moderación de la comunidad."""
-
-
-def _crear_solicitud(client, postulante="Test Alumno Solicitud"):
-    return client.post(
-        "/api/v1/comunidad/solicitudes",
-        json={
-            "postulante": postulante,
-            "dni": "55123456",
-            "fecha_nacimiento": "2021-03-10",
-            "nivel": "Inicial (Sala de 5)",
-            "tutor": "Tutor de Prueba",
-            "telefono": "3624000099",
-            "correo": "tutor.prueba@gmail.com",
-        },
-    )
-
-
-def test_solicitud_de_inscripcion_flujo_completo(
-    client, cabeceras_admin, cabeceras_profesor
-):
-    crear = _crear_solicitud(client)
-    assert crear.status_code == 201
-    id_solicitud = crear.json()["id_solicitud"]
-    assert crear.json()["postulante"] == "Test Alumno Solicitud"
-
-    listar = client.get("/api/v1/comunidad/solicitudes", headers=cabeceras_admin)
-    assert listar.status_code == 200
-    assert any(s["id_solicitud"] == id_solicitud for s in listar.json())
-
-    aprobar = client.put(
-        f"/api/v1/comunidad/solicitudes/{id_solicitud}/estado",
-        json={"estado": "Aprobado", "observaciones": "Documentación completa"},
-        headers=cabeceras_admin,
-    )
-    assert aprobar.status_code == 200
-    assert aprobar.json()["estado"] == "Aprobado"
-
-    # El docente no puede ver ni moderar solicitudes
-    assert (
-        client.get(
-            "/api/v1/comunidad/solicitudes", headers=cabeceras_profesor
-        ).status_code
-        == 403
-    )
-    assert (
-        client.put(
-            f"/api/v1/comunidad/solicitudes/{id_solicitud}/estado",
-            json={"estado": "Rechazado"},
-            headers=cabeceras_profesor,
-        ).status_code
-        == 403
-    )
-
-
-def test_solicitud_con_datos_invalidos_devuelve_422(client):
-    respuesta = client.post(
-        "/api/v1/comunidad/solicitudes",
-        json={"postulante": "Ab", "dni": "1", "nivel": "x", "tutor": ""},
-    )
-    assert respuesta.status_code == 422
-
-
-def test_mensaje_de_contacto_y_marcar_leido(client, cabeceras_admin):
-    crear = client.post(
-        "/api/v1/comunidad/contacto",
-        json={
-            "nombre": "Familia Test",
-            "telefono": "3624000088",
-            "correo": "familia.test@gmail.com",
-            "mensaje": "Quisiera consultar por las vacantes de Sala de 4.",
-        },
-    )
-    assert crear.status_code == 201
-    id_mensaje = crear.json()["id_mensaje"]
-    assert crear.json()["leido"] is False
-
-    listar = client.get("/api/v1/comunidad/contacto", headers=cabeceras_admin)
-    assert listar.status_code == 200
-    assert any(m["id_mensaje"] == id_mensaje for m in listar.json())
-
-    marcar = client.put(
-        f"/api/v1/comunidad/contacto/{id_mensaje}/leido",
-        headers=cabeceras_admin,
-    )
-    assert marcar.status_code == 200
-    assert marcar.json()["leido"] is True
-
-
-def test_opiniones_requieren_aprobacion_para_publicarse(
-    client, cabeceras_admin, cabeceras_profesor
-):
-    crear = client.post(
-        "/api/v1/comunidad/opiniones",
-        json={
-            "nombre": "Opinión Test",
-            "vinculo": "Madre de 2° Grado",
-            "comentario": "La escuela acompañó muy bien a mi hija durante el año.",
-            "estrellas": 5,
-        },
-    )
-    assert crear.status_code == 201
-    id_opinion = crear.json()["id_opinion"]
-    assert crear.json()["aprobada"] is False
-
-    # La lista pública no la muestra hasta aprobarla
-    publicas = client.get("/api/v1/comunidad/opiniones")
-    assert publicas.status_code == 200
-    assert all(o["id_opinion"] != id_opinion for o in publicas.json())
-
-    # Solo ADMIN ve las pendientes y puede moderarlas
-    todas = client.get("/api/v1/comunidad/opiniones/todas", headers=cabeceras_admin)
-    assert todas.status_code == 200
-    assert any(o["id_opinion"] == id_opinion for o in todas.json())
-    assert (
-        client.put(
-            f"/api/v1/comunidad/opiniones/{id_opinion}/aprobar",
-            headers=cabeceras_profesor,
-        ).status_code
-        == 403
-    )
-
-    aprobar = client.put(
-        f"/api/v1/comunidad/opiniones/{id_opinion}/aprobar",
-        headers=cabeceras_admin,
-    )
-    assert aprobar.status_code == 200
-    assert aprobar.json()["aprobada"] is True
-
-    publicas = client.get("/api/v1/comunidad/opiniones")
-    assert any(o["id_opinion"] == id_opinion for o in publicas.json())
-
-    eliminar = client.delete(
-        f"/api/v1/comunidad/opiniones/{id_opinion}",
-        headers=cabeceras_admin,
-    )
-    assert eliminar.status_code == 200
-    publicas = client.get("/api/v1/comunidad/opiniones")
-    assert all(o["id_opinion"] != id_opinion for o in publicas.json())
-
-
-def test_postulacion_laboral_publica_y_visible_para_admin(
-    client, cabeceras_admin, cabeceras_profesor
-):
-    crear = client.post(
-        "/api/v1/comunidad/postulaciones",
-        json={
-            "nombre": "Postulante Test",
-            "correo": "postulante.test@gmail.com",
-            "telefono": "3624000077",
-            "puesto": "Docente de Idioma Francés / Inglés",
-            "area": "Departamento de Lenguas Extranjeras",
-            "mensaje": "Cuento con 5 años de experiencia.",
-        },
-    )
-    assert crear.status_code == 201
-    id_postulacion = crear.json()["id_postulacion"]
-
-    listar = client.get("/api/v1/comunidad/postulaciones", headers=cabeceras_admin)
-    assert listar.status_code == 200
-    assert any(p["id_postulacion"] == id_postulacion for p in listar.json())
-
-    assert (
-        client.get(
-            "/api/v1/comunidad/postulaciones", headers=cabeceras_profesor
-        ).status_code
-        == 403
-    )
-
-
-def test_postulacion_espontanea_usa_puesto_por_defecto(client):
-    respuesta = client.post(
-        "/api/v1/comunidad/postulaciones",
-        json={
-            "nombre": "Espontáneo Test",
-            "correo": "espontaneo.test@gmail.com",
-            "area": "Educación Física",
-        },
-    )
-    assert respuesta.status_code == 201
-    assert respuesta.json()["puesto"] == "Postulación espontánea"
-
-
-======================================================================
---- RUTA: tests\test_evaluacion_api.py ---
-======================================================================
-
-"""Tests de calificaciones y asistencia (módulo de evaluación)."""
-
-from backend.tests.conftest import LEGAJO_ALUMNO_1, LEGAJO_ALUMNO_2, LEGAJO_PROFESOR
-
-
-def _crear_calificacion(client, cabeceras, **overrides):
-    payload = {
-        "legajo_alumno": LEGAJO_ALUMNO_1,
-        "id_materia": 1,
-        "id_curso": 1,
-        "periodo": "1° Trimestre",
-        "tipo": "Parcial",
-        "nota": 8.5,
-        "fecha": "2026-10-01",
-        "observacion": "Creada por test automatizado",
-    }
-    payload.update(overrides)
-    return client.post(
-        "/api/v1/academico/calificaciones", json=payload, headers=cabeceras
-    )
-
-
-def test_docente_crea_calificacion_y_se_autoasigna(client, cabeceras_profesor):
-    respuesta = _crear_calificacion(client, cabeceras_profesor, fecha="2026-10-02")
-    assert respuesta.status_code == 201
-    cuerpo = respuesta.json()
-    assert cuerpo["nota"] == 8.5
-    assert cuerpo["legajo_profesor"] == LEGAJO_PROFESOR
-
-
-def test_alumno_solo_ve_sus_propias_calificaciones(
-    client, cabeceras_profesor, cabeceras_alumno
-):
-    propia = _crear_calificacion(client, cabeceras_profesor, fecha="2026-10-03")
-    ajena = _crear_calificacion(
-        client,
-        cabeceras_profesor,
-        legajo_alumno=LEGAJO_ALUMNO_2,
-        fecha="2026-10-04",
-        observacion=None,
-    )
-    assert propia.status_code == 201 and ajena.status_code == 201
-
-    listado = client.get("/api/v1/academico/calificaciones", headers=cabeceras_alumno)
-    assert listado.status_code == 200
-    ids = [c["id_calificacion"] for c in listado.json()]
-    assert propia.json()["id_calificacion"] in ids
-    assert ajena.json()["id_calificacion"] not in ids
-    assert all(c["legajo_alumno"] == LEGAJO_ALUMNO_1 for c in listado.json())
-
-
-def test_padre_accede_solo_a_las_calificaciones_de_sus_hijos(
-    client, cabeceras_profesor, cabeceras_padre
-):
-    _crear_calificacion(client, cabeceras_profesor, fecha="2026-10-05")
-
-    propias = client.get(
-        f"/api/v1/academico/calificaciones?legajo_alumno={LEGAJO_ALUMNO_1}",
-        headers=cabeceras_padre,
-    )
-    assert propias.status_code == 200
-    assert all(c["legajo_alumno"] == LEGAJO_ALUMNO_1 for c in propias.json())
-
-    ajenas = client.get(
-        f"/api/v1/academico/calificaciones?legajo_alumno={LEGAJO_ALUMNO_2}",
-        headers=cabeceras_padre,
-    )
-    assert ajenas.status_code == 403
-
-
-def test_actualizar_y_eliminar_calificacion(
-    client, cabeceras_profesor, cabeceras_alumno, cabeceras_admin
-):
-    creada = _crear_calificacion(
-        client, cabeceras_profesor, fecha="2026-10-06", nota=6.0
-    )
-    assert creada.status_code == 201
-    id_calificacion = creada.json()["id_calificacion"]
-
-    actualizada = client.put(
-        f"/api/v1/academico/calificaciones/{id_calificacion}",
-        json={"nota": 9.25, "observacion": "Nota rectificada"},
-        headers=cabeceras_profesor,
-    )
-    assert actualizada.status_code == 200
-    assert actualizada.json()["nota"] == 9.25
-
-    visibles = client.get(
-        "/api/v1/academico/calificaciones", headers=cabeceras_alumno
-    ).json()
-    coincidencia = [c for c in visibles if c["id_calificacion"] == id_calificacion]
-    assert coincidencia and coincidencia[0]["nota"] == 9.25
-
-    eliminada = client.delete(
-        f"/api/v1/academico/calificaciones/{id_calificacion}",
-        headers=cabeceras_admin,
-    )
-    assert eliminada.status_code == 200
-
-    visibles = client.get(
-        "/api/v1/academico/calificaciones", headers=cabeceras_alumno
-    ).json()
-    assert all(c["id_calificacion"] != id_calificacion for c in visibles)
-
-
-def test_alumno_no_puede_registrar_calificaciones(client, cabeceras_alumno):
-    respuesta = _crear_calificacion(client, cabeceras_alumno, fecha="2026-10-07")
-    assert respuesta.status_code == 403
-
-
-def test_nota_fuera_de_rango_devuelve_422(client, cabeceras_profesor):
-    respuesta = _crear_calificacion(
-        client, cabeceras_profesor, fecha="2026-10-08", nota=12
-    )
-    assert respuesta.status_code == 422
-
-
-def test_asistencia_lote_es_upsert_y_aislamiento_por_rol(
-    client,
-    cabeceras_profesor,
-    cabeceras_alumno,
-    cabeceras_padre,
-    cabeceras_admin,
-):
-    fecha = "2026-10-09"
-    lote = client.post(
-        "/api/v1/academico/asistencia/lote",
-        json={
-            "id_curso": 1,
-            "fecha": fecha,
-            "registros": [
-                {"legajo_alumno": LEGAJO_ALUMNO_1, "estado": "PRESENTE"},
-                {"legajo_alumno": LEGAJO_ALUMNO_2, "estado": "AUSENTE"},
-            ],
-        },
-        headers=cabeceras_profesor,
-    )
-    assert lote.status_code == 200
-    assert len(lote.json()) == 2
-
-    # Reenviar el lote del mismo día actualiza el estado (no duplica)
-    relote = client.post(
-        "/api/v1/academico/asistencia/lote",
-        json={
-            "id_curso": 1,
-            "fecha": fecha,
-            "registros": [
-                {
-                    "legajo_alumno": LEGAJO_ALUMNO_1,
-                    "estado": "TARDE",
-                    "observacion": "Llegó tarde",
-                },
-            ],
-        },
-        headers=cabeceras_profesor,
-    )
-    assert relote.status_code == 200
-    assert len(relote.json()) == 2
-    registro_1 = next(r for r in relote.json() if r["legajo_alumno"] == LEGAJO_ALUMNO_1)
-    assert registro_1["estado"] == "TARDE"
-    id_registro_1 = registro_1["id_asistencia"]
-
-    # El alumno solo ve su propia asistencia
-    propias = client.get("/api/v1/academico/asistencia", headers=cabeceras_alumno)
-    assert propias.status_code == 200
-    assert all(r["legajo_alumno"] == LEGAJO_ALUMNO_1 for r in propias.json())
-
-    # El tutor ve la de su hijo, pero no la de otro alumno
-    assert (
-        client.get(
-            f"/api/v1/academico/asistencia?legajo_alumno={LEGAJO_ALUMNO_1}",
-            headers=cabeceras_padre,
-        ).status_code
-        == 200
-    )
-    assert (
-        client.get(
-            f"/api/v1/academico/asistencia?legajo_alumno={LEGAJO_ALUMNO_2}",
-            headers=cabeceras_padre,
-        ).status_code
-        == 403
-    )
-
-    # Resumen de presentismo
-    resumen = client.get(
-        f"/api/v1/academico/asistencia/resumen/{LEGAJO_ALUMNO_1}",
-        headers=cabeceras_alumno,
-    )
-    assert resumen.status_code == 200
-    cuerpo = resumen.json()
-    assert cuerpo["total"] >= 1
-    assert cuerpo["tardes"] >= 1
-    assert 0 <= cuerpo["porcentaje_presentismo"] <= 100
-    assert (
-        client.get(
-            f"/api/v1/academico/asistencia/resumen/{LEGAJO_ALUMNO_2}",
-            headers=cabeceras_padre,
-        ).status_code
-        == 403
-    )
-
-    # Eliminar el registro como ADMIN lo quita del listado
-    eliminar = client.delete(
-        f"/api/v1/academico/asistencia/{id_registro_1}",
-        headers=cabeceras_admin,
-    )
-    assert eliminar.status_code == 200
-    restantes = client.get(
-        f"/api/v1/academico/asistencia?id_curso=1&fecha={fecha}",
-        headers=cabeceras_admin,
-    ).json()
-    assert all(r["id_asistencia"] != id_registro_1 for r in restantes)
-
-
-======================================================================
---- RUTA: tests\test_main.py ---
-======================================================================
-
-import inspect
-
-from frontend.app.main_view import main
-
-
-def test_main_view_es_coroutine():
-    """El entrypoint de la interfaz Flet debe ser asíncrono y estar exportado."""
-    assert inspect.iscoroutinefunction(main)
-
-
-======================================================================
---- RUTA: tests\test_seguridad_api.py ---
-======================================================================
-
-"""Tests de autenticación, autorización por rol y cambio de contraseña."""
-
-from backend.tests.conftest import PASSWORD_PRUEBA
-
-
-def test_login_correcto_y_perfil(client):
-    respuesta = client.post(
-        "/api/v1/auth/login",
-        json={"username": "admin_test", "password": PASSWORD_PRUEBA},
-    )
-    assert respuesta.status_code == 200
-    cuerpo = respuesta.json()
-    assert cuerpo["access_token"]
-    assert cuerpo["rol"] == "ADMIN"
-    assert cuerpo["username"] == "admin_test"
-
-    perfil = client.get(
-        "/api/v1/auth/me",
-        headers={"Authorization": f"Bearer {cuerpo['access_token']}"},
-    )
-    assert perfil.status_code == 200
-    assert perfil.json()["username"] == "admin_test"
-    assert perfil.json()["rol"] == "ADMIN"
-
-
-def test_login_con_password_incorrecta(client):
-    respuesta = client.post(
-        "/api/v1/auth/login",
-        json={"username": "admin_test", "password": "incorrecta"},
-    )
-    assert respuesta.status_code == 401
-
-
-def test_acceso_sin_token_devuelve_401(client):
-    assert client.get("/api/v1/academico/cursos").status_code == 401
-    assert client.get("/api/v1/auth/me").status_code == 401
-    assert client.get("/api/v1/personas/alumnos").status_code == 401
-
-
-def test_token_invalido_devuelve_401(client):
-    respuesta = client.get(
-        "/api/v1/academico/cursos",
-        headers={"Authorization": "Bearer token-falso.invalido.xyz"},
-    )
-    assert respuesta.status_code == 401
-
-
-def test_escritura_de_catalogos_restringida_a_admin(client, cabeceras_profesor):
-    respuesta = client.post(
-        "/api/v1/academico/niveles",
-        json={"nombre": "Nivel Prohibido"},
-        headers=cabeceras_profesor,
-    )
-    assert respuesta.status_code == 403
-
-
-def test_crud_de_nivel_como_admin(client, cabeceras_admin):
-    crear = client.post(
-        "/api/v1/academico/niveles",
-        json={"nombre": "Nivel Temporal"},
-        headers=cabeceras_admin,
-    )
-    assert crear.status_code == 201
-    id_nivel = crear.json()["id_nivel"]
-
-    actualizar = client.put(
-        f"/api/v1/academico/niveles/{id_nivel}",
-        json={"nombre": "Nivel Temporal Editado"},
-        headers=cabeceras_admin,
-    )
-    assert actualizar.status_code == 200
-    assert actualizar.json()["nombre"] == "Nivel Temporal Editado"
-
-    eliminar = client.delete(
-        f"/api/v1/academico/niveles/{id_nivel}",
-        headers=cabeceras_admin,
-    )
-    assert eliminar.status_code == 200
-
-
-def test_cambio_de_password(client, cabeceras_admin):
-    crear_usuario = client.post(
-        "/api/v1/auth/usuarios",
-        json={
-            "username": "pw_test",
-            "password": "inicial123",
-            "id_rol": 4,
-            "activo": True,
-        },
-        headers=cabeceras_admin,
-    )
-    assert crear_usuario.status_code == 201
-
-    login_inicial = client.post(
-        "/api/v1/auth/login",
-        json={"username": "pw_test", "password": "inicial123"},
-    )
-    assert login_inicial.status_code == 200
-    token = login_inicial.json()["access_token"]
-
-    cambiar = client.put(
-        "/api/v1/auth/me/password",
-        json={"password_actual": "inicial123", "password_nueva": "nueva456"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert cambiar.status_code == 200
-
-    assert (
-        client.post(
-            "/api/v1/auth/login",
-            json={"username": "pw_test", "password": "inicial123"},
-        ).status_code
-        == 401
-    )
-    assert (
-        client.post(
-            "/api/v1/auth/login",
-            json={"username": "pw_test", "password": "nueva456"},
-        ).status_code
-        == 200
-    )
-
-    # Con la contraseña vieja ya no puede autenticarse para cambiarla de nuevo
-    rechazo = client.put(
-        "/api/v1/auth/me/password",
-        json={"password_actual": "inicial123", "password_nueva": "otra789"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert rechazo.status_code in (400, 401)
-
-
-======================================================================
---- RUTA: tests\test_servicios_api.py ---
-======================================================================
-
-"""Tests de los servicios escolares (Deportes, Transporte, Comedor)."""
-
-from backend.tests.conftest import LEGAJO_ALUMNO_1
-
-
-def test_limite_deportes_y_conflictos_horario(client, cabeceras_admin):
-    # 1. Crear turnos/horarios de prueba
-    h1 = client.post(
-        "/api/v1/academico/horarios",
-        json={"descripcion": "Turno Mañana"},
-        headers=cabeceras_admin,
-    ).json()["id_horario"]
-    h2 = client.post(
-        "/api/v1/academico/horarios",
-        json={"descripcion": "Turno Tarde"},
-        headers=cabeceras_admin,
-    ).json()["id_horario"]
-
-    # 2. Crear deportes
-    d_futbol = client.post(
-        "/api/v1/servicios/deportes", json={"nombre": "Fútbol"}, headers=cabeceras_admin
-    ).json()["id_deporte"]
-    d_voley = client.post(
-        "/api/v1/servicios/deportes", json={"nombre": "Vóley"}, headers=cabeceras_admin
-    ).json()["id_deporte"]
-    d_basquet = client.post(
-        "/api/v1/servicios/deportes",
-        json={"nombre": "Básquet"},
-        headers=cabeceras_admin,
-    ).json()["id_deporte"]
-
-    # 3. Crear grupos deportivos (id_nivel=1 ya existe gracias a conftest.py)
-    # Grupo 1: Fútbol a la Mañana
-    g_futbol_manana = client.post(
-        "/api/v1/servicios/deportes/grupos",
-        json={"id_deporte": d_futbol, "id_nivel": 1, "id_horario": h1},
-        headers=cabeceras_admin,
-    ).json()["id_grupo"]
-
-    # Grupo 2: Vóley a la Tarde
-    g_voley_tarde = client.post(
-        "/api/v1/servicios/deportes/grupos",
-        json={"id_deporte": d_voley, "id_nivel": 1, "id_horario": h2},
-        headers=cabeceras_admin,
-    ).json()["id_grupo"]
-
-    # Grupo 3: Básquet a la Mañana (¡Mismo horario que Fútbol!)
-    g_basquet_manana = client.post(
-        "/api/v1/servicios/deportes/grupos",
-        json={"id_deporte": d_basquet, "id_nivel": 1, "id_horario": h1},
-        headers=cabeceras_admin,
-    ).json()["id_grupo"]
-
-    # Grupo 4: Básquet a la Tarde (Diferente horario)
-    g_basquet_tarde = client.post(
-        "/api/v1/servicios/deportes/grupos",
-        json={"id_deporte": d_basquet, "id_nivel": 1, "id_horario": h2},
-        headers=cabeceras_admin,
-    ).json()["id_grupo"]
-
-    # 4. Inscribir al primer deporte (Fútbol a la Mañana) -> DEBE FUNCIONAR (201)
-    resp1 = client.post(
-        "/api/v1/servicios/deportes/inscripciones",
-        json={"legajo_alumno": LEGAJO_ALUMNO_1, "id_grupo": g_futbol_manana},
-        headers=cabeceras_admin,
-    )
-    assert resp1.status_code == 201
-
-    # 5. Inscribir a Básquet a la Mañana -> DEBE FALLAR POR CONFLICTO DE HORARIO (409)
-    resp2 = client.post(
-        "/api/v1/servicios/deportes/inscripciones",
-        json={"legajo_alumno": LEGAJO_ALUMNO_1, "id_grupo": g_basquet_manana},
-        headers=cabeceras_admin,
-    )
-    assert resp2.status_code == 409
-    assert "conflicto de horarios" in resp2.json()["detail"].lower()
-
-    # 6. Inscribir a Vóley a la Tarde -> DEBE FUNCIONAR (201)
-    resp3 = client.post(
-        "/api/v1/servicios/deportes/inscripciones",
-        json={"legajo_alumno": LEGAJO_ALUMNO_1, "id_grupo": g_voley_tarde},
-        headers=cabeceras_admin,
-    )
-    assert resp3.status_code == 201
-
-    # 7. Inscribir a un TERCER deporte (Básquet a la Tarde) -> DEBE FALLAR POR LÍMITE ALCANZADO (400)
-    resp4 = client.post(
-        "/api/v1/servicios/deportes/inscripciones",
-        json={"legajo_alumno": LEGAJO_ALUMNO_1, "id_grupo": g_basquet_tarde},
-        headers=cabeceras_admin,
-    )
-    assert resp4.status_code == 400
-    assert "límite máximo" in resp4.json()["detail"].lower()
 
