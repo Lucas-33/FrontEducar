@@ -8,6 +8,7 @@ authors = [
     { name = "Flet developer", email = "you@example.com" }
 ]
 dependencies = [
+    "apscheduler>=3.11.3",
     "bcrypt>=5.0.0",
     "fastapi>=0.141.1",
     "flet>=0.86.5",

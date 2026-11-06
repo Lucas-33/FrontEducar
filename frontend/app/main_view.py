@@ -14,6 +14,7 @@ from frontend.app.pages.admin_comunidad import get_admin_comunidad_view
 from frontend.app.pages.admin_cursos import get_admin_cursos_view
 from frontend.app.pages.admin_dashboard import get_admin_dashboard_view
 from frontend.app.pages.admin_deportes import get_admin_deportes_view
+from frontend.app.pages.admin_finanzas import get_admin_finanzas_view
 from frontend.app.pages.admin_horarios import get_admin_horarios_view
 from frontend.app.pages.admin_inscripciones import get_admin_inscripciones_view
 from frontend.app.pages.admin_materias import get_admin_materias_view
@@ -93,7 +94,7 @@ RUTA_INICIAL_POR_ROL = {
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0
-
+    
     async def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
         ruta = (page.route or "/").rstrip("/")
@@ -239,6 +240,13 @@ async def main(page: ft.Page):
             )
             page.views.append(
                 ft.View(route=ruta, padding=0, controls=[vista_reporte_trans])
+            )
+            page.update()
+            return
+        elif ruta == "/admin/finanzas":
+            vista_finanzas = await get_admin_finanzas_view(page)
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_finanzas])
             )
             page.update()
             return
