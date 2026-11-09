@@ -29,23 +29,32 @@ def es_ultimo_dia_habil() -> bool:
 
 
 def tarea_cierre_mensual():
-    """Se ejecuta y revisa si es el último día hábil. Si lo es, factura y avisa."""
+    """Se ejecuta y revisa si es el último día hábil. Genera facturas y las envía por mail."""
     if not es_ultimo_dia_habil():
         return
-
-    print("⏰ [SCHEDULER] Ejecutando cierre mensual y generación de facturas...")
-    db = SessionLocal()  # Abrimos conexión a BD manualmente porque no hay endpoint
+        
+    print("⏰ [SCHEDULER] Ejecutando cierre mensual y envío de facturas...")
+    db = SessionLocal() 
     try:
         hoy = date.today()
-        # 1. Generar facturas usando el servicio que creamos en el Paso B
-        resultado = finanzas_service.generar_facturas_mes(
-            db, mes=hoy.month, anio=hoy.year
-        )
-        print(f"✅ [SCHEDULER] {resultado['mensaje']}")
-
-        # 2. Acá iría la lógica para enviar el PDF por correo:
-        # facturas = db.query(Factura).filter_by(mes=hoy.month).all()
-        # para cada factura -> buscar_email_tutor -> enviar_factura(email, pdf)
+        # 1. Generar facturas en BD
+        finanzas_service.generar_facturas_mes(db, mes=hoy.month, anio=hoy.year)
+        
+        # 2. Buscar las recién creadas y enviarlas
+        facturas = db.query(Factura).filter_by(mes=hoy.month, anio=hoy.year).all()
+        for fac in facturas:
+            alumno = db.query(Alumno).filter_by(legajo=fac.legajo_alumno).first()
+            if alumno and alumno.correo_electronico:
+                items = db.query(ItemFactura).filter_by(id_factura=fac.id_factura).all()
+                ruta_pdf = generar_pdf_factura(fac, alumno, items)
+                
+                cuerpo = f"Estimada familia de {alumno.nombre},\n\nAdjuntamos la liquidación de servicios educativos correspondiente al mes {fac.mes}/{fac.anio}.\n\nSaludos cordiales,\nAdministración Educar."
+                enviar_correo_con_pdf(
+                    destinatario=alumno.correo_electronico, 
+                    asunto=f"Nueva Liquidación Mensual - {alumno.apellido}", 
+                    cuerpo=cuerpo, 
+                    ruta_pdf=ruta_pdf
+                )
     except Exception as e:
         print(f"❌ [SCHEDULER] Error en cierre mensual: {e}")
     finally:
@@ -53,14 +62,25 @@ def tarea_cierre_mensual():
 
 
 def tarea_aviso_morosos():
-    """Se ejecuta estrictamente los días 20 de cada mes."""
+    """Se ejecuta los días 20 de cada mes. Envía PDF con recordatorio de deuda."""
     print("⏰ [SCHEDULER] Revisando morosos para enviar aviso de deuda...")
     db = SessionLocal()
     try:
-        # Acá consultaremos las facturas PENDIENTES o PARCIALES
-        # facturas_adeudadas = db.query(Factura).filter(Factura.estado != "PAGADA").all()
-        # para cada factura -> enviar_aviso_deuda(email, monto_adeudado)
-        print("✅ [SCHEDULER] Avisos de deuda enviados.")
+        # Buscar todas las facturas impagas
+        facturas_adeudadas = db.query(Factura).filter(Factura.estado != "PAGADA").all()
+        for fac in facturas_adeudadas:
+            alumno = db.query(Alumno).filter_by(legajo=fac.legajo_alumno).first()
+            if alumno and alumno.correo_electronico:
+                items = db.query(ItemFactura).filter_by(id_factura=fac.id_factura).all()
+                ruta_pdf = generar_pdf_factura(fac, alumno, items)
+                
+                cuerpo = f"Aviso Importante: Saldo Pendiente\n\nEstimada familia de {alumno.nombre},\nLe recordamos que posee un saldo vencido de $ {fac.total:.2f} en su cuenta.\nLe adjuntamos el detalle. Por favor, regularice su situación a la brevedad para evitar recargos.\n\nSaludos."
+                enviar_correo_con_pdf(
+                    destinatario=alumno.correo_electronico, 
+                    asunto=f"Aviso de Deuda - Educar para Transformar", 
+                    cuerpo=cuerpo, 
+                    ruta_pdf=ruta_pdf
+                )
     except Exception as e:
         print(f"❌ [SCHEDULER] Error avisando a morosos: {e}")
     finally:
