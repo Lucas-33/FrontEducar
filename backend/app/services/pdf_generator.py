@@ -1,6 +1,8 @@
 import os
-from fpdf import FPDF
 from datetime import date
+
+from fpdf import FPDF
+
 
 def generar_pdf_factura(factura, alumno, items) -> str:
     """Genera un PDF con el detalle de la deuda y devuelve la ruta del archivo."""

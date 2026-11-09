@@ -77,7 +77,7 @@ def tarea_aviso_morosos():
                 cuerpo = f"Aviso Importante: Saldo Pendiente\n\nEstimada familia de {alumno.nombre},\nLe recordamos que posee un saldo vencido de $ {fac.total:.2f} en su cuenta.\nLe adjuntamos el detalle. Por favor, regularice su situación a la brevedad para evitar recargos.\n\nSaludos."
                 enviar_correo_con_pdf(
                     destinatario=alumno.correo_electronico, 
-                    asunto=f"Aviso de Deuda - Educar para Transformar", 
+                    asunto="Aviso de Deuda - Educar para Transformar", 
                     cuerpo=cuerpo, 
                     ruta_pdf=ruta_pdf
                 )

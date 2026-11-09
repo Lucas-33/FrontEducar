@@ -1,5 +1,5 @@
-import smtplib
 import os
+import smtplib
 from email.message import EmailMessage
 
 # ⚠️ NOTA: Usar variables de entorno en producción. Acá podés hardcodear tu correo para probar.
