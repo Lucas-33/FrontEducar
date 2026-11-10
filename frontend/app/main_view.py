@@ -1,76 +1,76 @@
 import flet as ft
 
 # Componentes públicos
-from frontend.app.components.footer import create_footer
-from frontend.app.components.navbar import create_navbar
+from app.components.footer import create_footer
+from app.components.navbar import create_navbar
 
 # Páginas administrativas
-from frontend.app.pages.admin_alumno_form import get_admin_alumno_form_view
-from frontend.app.pages.admin_alumnos import get_admin_alumnos_view
-from frontend.app.pages.admin_comedor import get_admin_comedor_view
+from app.pages.admin_alumno_form import get_admin_alumno_form_view
+from app.pages.admin_alumnos import get_admin_alumnos_view
+from app.pages.admin_comedor import get_admin_comedor_view
 
 # Páginas nuevas (seguridad, comunidad y notas)
-from frontend.app.pages.admin_comunidad import get_admin_comunidad_view
-from frontend.app.pages.admin_cursos import get_admin_cursos_view
-from frontend.app.pages.admin_dashboard import get_admin_dashboard_view
-from frontend.app.pages.admin_deportes import get_admin_deportes_view
-from frontend.app.pages.admin_horarios import get_admin_horarios_view
-from frontend.app.pages.admin_inscripciones import get_admin_inscripciones_view
-from frontend.app.pages.admin_materias import get_admin_materias_view
-from frontend.app.pages.admin_niveles import get_admin_niveles_view
-from frontend.app.pages.admin_profesor_form import get_admin_profesor_form_view
-from frontend.app.pages.admin_profesores import get_admin_profesores_view
+from app.pages.admin_comunidad import get_admin_comunidad_view
+from app.pages.admin_cursos import get_admin_cursos_view
+from app.pages.admin_dashboard import get_admin_dashboard_view
+from app.pages.admin_deportes import get_admin_deportes_view
+from app.pages.admin_horarios import get_admin_horarios_view
+from app.pages.admin_inscripciones import get_admin_inscripciones_view
+from app.pages.admin_materias import get_admin_materias_view
+from app.pages.admin_niveles import get_admin_niveles_view
+from app.pages.admin_profesor_form import get_admin_profesor_form_view
+from app.pages.admin_profesores import get_admin_profesores_view
 
 # Reportes
-from frontend.app.pages.admin_reporte_alumnos_docentes import (
+from app.pages.admin_reporte_alumnos_docentes import (
     get_admin_reporte_alumnos_docentes_view,
 )
-from frontend.app.pages.admin_reporte_cursos_materias import (
+from app.pages.admin_reporte_cursos_materias import (
     get_admin_reporte_cursos_materias_view,
 )
-from frontend.app.pages.admin_reporte_deportes_avanzado import (
+from app.pages.admin_reporte_deportes_avanzado import (
     get_admin_reporte_deportes_avanzado_view,
 )
-from frontend.app.pages.admin_reporte_transporte_pasajeros import (
+from app.pages.admin_reporte_transporte_pasajeros import (
     get_admin_reporte_transporte_pasajeros_view,
 )
-from frontend.app.pages.admin_reportes import get_admin_reportes_view
-from frontend.app.pages.admin_transporte import get_admin_transporte_view
-from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
+from app.pages.admin_reportes import get_admin_reportes_view
+from app.pages.admin_transporte import get_admin_transporte_view
+from app.pages.admin_usuarios import get_admin_usuarios_view
 
 # Portal Alumno / Estudiante
-from frontend.app.pages.alumno_dashboard import get_alumno_dashboard_view
-from frontend.app.pages.alumno_deportes import get_alumno_deportes_view
-from frontend.app.pages.alumno_materias import get_alumno_materias_view
-from frontend.app.pages.alumno_notas import get_alumno_notas_view
-from frontend.app.pages.alumno_servicios import get_alumno_servicios_view
+from app.pages.alumno_dashboard import get_alumno_dashboard_view
+from app.pages.alumno_deportes import get_alumno_deportes_view
+from app.pages.alumno_materias import get_alumno_materias_view
+from app.pages.alumno_notas import get_alumno_notas_view
+from app.pages.alumno_servicios import get_alumno_servicios_view
 
 # Páginas públicas
-from frontend.app.pages.bienestar_estudiantil import get_bienestar_estudiantil_view
-from frontend.app.pages.contacto import get_contacto_view
+from app.pages.bienestar_estudiantil import get_bienestar_estudiantil_view
+from app.pages.contacto import get_contacto_view
 
 # Portal Docentes
-from frontend.app.pages.docente_alumnos import get_docente_alumnos_view
-from frontend.app.pages.docente_dashboard import get_docente_dashboard_view
-from frontend.app.pages.docente_deportes import get_docente_deportes_view
-from frontend.app.pages.docente_materias import get_docente_materias_view
-from frontend.app.pages.docente_notas import get_docente_notas_view
-from frontend.app.pages.empleo import get_empleo_view
-from frontend.app.pages.home import home_view
-from frontend.app.pages.inscripciones import get_inscripcion_view
-from frontend.app.pages.login import get_login_view
-from frontend.app.pages.niveles import get_niveles_view
-from frontend.app.pages.noticias import get_noticias_view
-from frontend.app.pages.opiniones import get_opiniones_view
+from app.pages.docente_alumnos import get_docente_alumnos_view
+from app.pages.docente_dashboard import get_docente_dashboard_view
+from app.pages.docente_deportes import get_docente_deportes_view
+from app.pages.docente_materias import get_docente_materias_view
+from app.pages.docente_notas import get_docente_notas_view
+from app.pages.empleo import get_empleo_view
+from app.pages.home import home_view
+from app.pages.inscripciones import get_inscripcion_view
+from app.pages.login import get_login_view
+from app.pages.niveles import get_niveles_view
+from app.pages.noticias import get_noticias_view
+from app.pages.opiniones import get_opiniones_view
 
 # Portal Familias / Padres
-from frontend.app.pages.padre_dashboard import get_padre_dashboard_view
-from frontend.app.pages.padre_deportes import get_padre_deportes_view
-from frontend.app.pages.padre_docentes import get_padre_docentes_view
-from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
-from frontend.app.pages.padre_notas import get_padre_notas_view
-from frontend.app.pages.padre_servicios import get_padre_servicios_view
-from frontend.app.pages.quienes_somos import get_quienes_somos_view
+from app.pages.padre_dashboard import get_padre_dashboard_view
+from app.pages.padre_deportes import get_padre_deportes_view
+from app.pages.padre_docentes import get_padre_docentes_view
+from app.pages.padre_inscripcion import get_padre_inscripcion_view
+from app.pages.padre_notas import get_padre_notas_view
+from app.pages.padre_servicios import get_padre_servicios_view
+from app.pages.quienes_somos import get_quienes_somos_view
 
 # Mapa de rol normalizado -> sección de rutas que le corresponde
 SECCION_POR_ROL = {

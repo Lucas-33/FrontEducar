@@ -207,9 +207,85 @@ personalizar con la variable de entorno `TEST_DATABASE_URL`.
 
 ## Build (empaquetado)
 
+La app Flet está en `frontend/` (entry point `frontend/main.py`). Para
+empaquetar se pasa ese directorio para que solo se incluyan las dependencias
+de la interfaz (`flet` + `httpx`); las dependencias del backend
+(`psycopg2`, `bcrypt`, etc.) no tienen wheels de Android y no van en el APK:
+
 ```bash
-uv run flet build apk -v      # Android
-uv run flet build ipa -v      # iOS
-uv run flet build linux -v    # Linux (y macos / windows según SO)
-uv run flet build web -v      # Web
+uv run flet build apk frontend --python-version 3.12   # Android (.apk)
+uv run flet build aab frontend --python-version 3.12   # Android (.aab, Play Store)
+uv run flet build web frontend -v                      # Web
 ```
+
+> iOS (`ipa`) requiere compilar en macOS con Xcode.
+
+El resultado queda en `frontend/build/apk/`. Con `--split-per-abi` se genera
+un APK por arquitectura (menor tamaño). La primera compilación tarda varios
+minutos (Gradle descarga artefactos de Android).
+
+### Requisitos del toolchain (Android)
+
+`flet build apk` necesita **JDK 17**, el **Android SDK** y el **Flutter SDK
+3.44.8** (la versión exacta que exige Flet 0.86.5). Si falta algo, el CLI lo
+descarga e instala automáticamente en:
+
+| Componente     | Ruta                                  |
+| -------------- | ------------------------------------- |
+| JDK 17.0.13+11 | `~/java/17.0.13+11`                   |
+| Android SDK    | `~/Android/sdk`                       |
+| Flutter 3.44.8 | `~/flutter/3.44.8`                    |
+
+También se puede instalar a mano (mismas rutas para que flet los detecte):
+
+```bash
+# JDK 17 (Temurin)
+curl -LO https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jdk_x64_linux_hotspot_17.0.13_11.tar.gz
+mkdir -p ~/java/17.0.13+11 && tar -xzf OpenJDK17U-jdk_x64_linux_hotspot_17.0.13_11.tar.gz -C ~/java/17.0.13+11 --strip-components=1
+
+# Android cmdline-tools
+curl -LO https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+mkdir -p ~/Android/sdk/cmdline-tools && unzip commandlinetools-linux-11076708_latest.zip -d ~/Android/sdk/cmdline-tools
+mv ~/Android/sdk/cmdline-tools/cmdline-tools ~/Android/sdk/cmdline-tools/latest
+
+# Paquetes mínimos + extras requeridos por Flutter 3.44 + licencias
+export JAVA_HOME=~/java/17.0.13+11
+yes | ~/Android/sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/sdk "platform-tools" "platforms;android-35" "build-tools;34.0.0"
+yes | ~/Android/sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/sdk "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
+yes | ~/Android/sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/sdk --licenses
+
+# Flutter 3.44.8
+curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.8-stable.tar.xz
+mkdir -p ~/flutter/3.44.8 && tar -xf flutter_linux_3.44.8-stable.tar.xz -C ~/flutter/3.44.8 --strip-components=1
+```
+
+### Backend en el móvil
+
+La app móvil consume la API con `API_BASE_URL` (ver
+`frontend/app/api_client.py`). El APK usa por defecto el backend de
+producción (`https://educar-para-transformar-zcuo.onrender.com/api/v1`);
+en desarrollo local sigue usando `127.0.0.1` automáticamente.
+
+### Ajuste de memoria de Gradle
+
+Flet configura Gradle por defecto con `-Xmx8G`, pensado para máquinas con
+mucha RAM; en equipos con ~8 GB el OOM killer puede matar el daemon de
+Gradle a mitad de compilación ("Gradle build daemon disappeared
+unexpectedly"). El override en `frontend/pyproject.toml`
+(`[tool.flet.android.gradle_properties]`) lo limita a valores seguros para
+esta máquina. Si el build falla por memoria, ajustar `org.gradle.jvmargs`
+ahí.
+
+El template de build de Flet 0.86.5 fija `jni: 1.0.0`, incompatible con
+los bindings de `shared_preferences_android` actuales (necesitan `jni
+^1.1.0`). El script `scripts/patch_flet_template.py` corrige el template
+cacheado en `~/.flet/cache/` (idempotente):
+
+```bash
+uv run python scripts/patch_flet_template.py
+```
+
+Solo hace falta correrlo una vez por máquina (o después de borrar el
+cache de Flet) y requiere haber corrido `flet build` al menos una vez
+para que el template esté cacheado.
+

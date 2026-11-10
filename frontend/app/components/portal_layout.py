@@ -1,7 +1,7 @@
 import flet as ft
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.constants import (
     BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
@@ -11,7 +11,7 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.password_dialog import abrir_cambio_password
+from app.components.password_dialog import abrir_cambio_password
 
 
 def portal_layout(

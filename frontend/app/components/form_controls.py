@@ -1,6 +1,6 @@
 import flet as ft
 
-from frontend.app.components.constants import (
+from app.components.constants import (
     BADGE_GREEN_BG,
     BADGE_GREEN_TXT,
     BADGE_RED_BG,

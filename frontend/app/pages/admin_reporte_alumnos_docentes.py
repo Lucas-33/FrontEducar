@@ -1,9 +1,9 @@
 import flet as ft
 import httpx
 
-from frontend.app.api_client import api_client
-from frontend.app.components.admin_layout import admin_layout
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.admin_layout import admin_layout
+from app.components.constants import (
     BADGE_RED_BG,
     BADGE_RED_TXT,
     BG_PAGE,
@@ -19,8 +19,8 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.form_controls import status_badge
-from frontend.app.components.table_view import (
+from app.components.form_controls import status_badge
+from app.components.table_view import (
     create_pagination_bar,
     create_table_container,
     create_table_header,

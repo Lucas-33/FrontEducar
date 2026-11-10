@@ -1,7 +1,7 @@
 import flet as ft
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.constants import (
     BADGE_RED_TXT,
     BG_WHITE,
     BORDER_COLOR,
@@ -14,8 +14,8 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.portal_layout import portal_layout
-from frontend.app.components.table_view import (
+from app.components.portal_layout import portal_layout
+from app.components.table_view import (
     create_table_container,
     create_table_header,
 )

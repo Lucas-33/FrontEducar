@@ -3,9 +3,9 @@ from datetime import datetime
 import flet as ft
 import httpx
 
-from frontend.app.api_client import api_client
-from frontend.app.components.admin_layout import admin_layout
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.admin_layout import admin_layout
+from app.components.constants import (
     BADGE_RED_TXT,
     BG_PAGE,
     BG_WHITE,

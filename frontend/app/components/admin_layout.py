@@ -1,8 +1,8 @@
 import flet as ft
 
-from frontend.app.components.constants import BG_PAGE
-from frontend.app.components.sidebar import create_sidebar
-from frontend.app.components.topbar import create_topbar
+from app.components.constants import BG_PAGE
+from app.components.sidebar import create_sidebar
+from app.components.topbar import create_topbar
 
 
 def admin_layout(

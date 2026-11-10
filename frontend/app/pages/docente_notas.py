@@ -3,8 +3,8 @@ from datetime import date
 import flet as ft
 import httpx
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.constants import (
     BADGE_GREEN_BG,
     BADGE_GREEN_TXT,
     BADGE_RED_BG,
@@ -22,8 +22,8 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.portal_layout import portal_layout
-from frontend.app.components.table_view import (
+from app.components.portal_layout import portal_layout
+from app.components.table_view import (
     create_pagination_bar,
     create_table_container,
     create_table_header,

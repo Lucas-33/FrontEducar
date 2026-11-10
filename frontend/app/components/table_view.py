@@ -1,6 +1,6 @@
 import flet as ft
 
-from frontend.app.components.constants import (
+from app.components.constants import (
     BG_WHITE,
     BORDER_COLOR,
     CARD_RADIUS,

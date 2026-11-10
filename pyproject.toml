@@ -48,8 +48,8 @@ company = "Educar para Transformar"
 copyright = "Copyright (C) 2026 by Educar para Transformar"
 
 [tool.flet.app]
-
-path = "src"
+# La app Flet vive en frontend/ (entry point: frontend/main.py)
+path = "frontend"
 
 
 [build-system]

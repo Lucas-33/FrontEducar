@@ -1,8 +1,8 @@
 import flet as ft
 import httpx
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.constants import (
     BADGE_RED_TXT,
     BG_WHITE,
     BORDER_COLOR,
@@ -12,7 +12,7 @@ from frontend.app.components.constants import (
     TEAL_DARK,
     TEXT_COLOR,
 )
-from frontend.app.components.constants import (
+from app.components.constants import (
     BG_PAGE_ALT as BG_PAGE,
 )
 

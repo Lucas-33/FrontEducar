@@ -1,8 +1,8 @@
 import flet as ft
 
-from frontend.app.api_client import api_client
-from frontend.app.components.admin_layout import admin_layout
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.admin_layout import admin_layout
+from app.components.constants import (
     BADGE_GREEN_BG,
     BADGE_GREEN_TXT,
     BADGE_RED_TXT,
@@ -17,7 +17,7 @@ from frontend.app.components.constants import (
     TEAL_DARK,
     TEXT_COLOR,
 )
-from frontend.app.components.table_view import create_table_header
+from app.components.table_view import create_table_header
 
 
 def _fecha_legible(iso: str | None) -> str:
