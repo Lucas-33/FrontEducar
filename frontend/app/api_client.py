@@ -492,5 +492,11 @@ class APIClient:
             "/finanzas/configuracion", {"concepto": concepto, "valor": valor}
         )
 
+    async def post_comprobante(self, id_factura: int, archivo_url: str):
+        """Envía un comprobante de pago al servidor para una factura pendiente."""
+        payload = {"id_factura": id_factura, "archivo_url": archivo_url}
+        # ACÁ ESTÁ EL CAMBIO: usamos data=payload en lugar de json=payload
+        return await self._post("/finanzas/comprobantes", data=payload)
+
 
 api_client = APIClient()
