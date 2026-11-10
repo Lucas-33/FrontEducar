@@ -68,6 +68,7 @@ from frontend.app.pages.opiniones import get_opiniones_view
 from frontend.app.pages.padre_dashboard import get_padre_dashboard_view
 from frontend.app.pages.padre_deportes import get_padre_deportes_view
 from frontend.app.pages.padre_docentes import get_padre_docentes_view
+from frontend.app.pages.padre_facturas import get_padre_facturas_view
 from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
 from frontend.app.pages.padre_notas import get_padre_notas_view
 from frontend.app.pages.padre_servicios import get_padre_servicios_view
@@ -94,7 +95,7 @@ RUTA_INICIAL_POR_ROL = {
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0
-    
+
     async def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
         ruta = (page.route or "/").rstrip("/")
@@ -245,9 +246,7 @@ async def main(page: ft.Page):
             return
         elif ruta == "/admin/finanzas":
             vista_finanzas = await get_admin_finanzas_view(page)
-            page.views.append(
-                ft.View(route=ruta, padding=0, controls=[vista_finanzas])
-            )
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_finanzas]))
             page.update()
             return
         # ==================== 3. RUTAS DEL PORTAL FAMILIAS ====================
@@ -290,6 +289,13 @@ async def main(page: ft.Page):
             vista_padre_notas = await get_padre_notas_view(page)
             page.views.append(
                 ft.View(route=ruta, padding=0, controls=[vista_padre_notas])
+            )
+            page.update()
+            return
+        elif ruta == "/portal/padre/facturas":
+            vista_padre_facturas = await get_padre_facturas_view(page)
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_facturas])
             )
             page.update()
             return

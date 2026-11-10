@@ -108,12 +108,42 @@ def actualizar_precio(
         "mensaje": f"Precio de {config_in.concepto} actualizado a ${config_in.valor}"
     }
 
+
 @router.get("/configuracion/{concepto}", summary="Obtener precio base (Administrador)")
 def obtener_precio(
-    concepto: str, 
-    current_user: Usuario = Depends(require_roles("ADMIN")), 
-    db: Session = Depends(get_db)
+    concepto: str,
+    current_user: Usuario = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
 ):
     """Devuelve el valor actual de CUOTA_BASE o COMEDOR."""
     config = db.query(ConfiguracionFinanciera).filter_by(concepto=concepto).first()
     return {"valor": float(config.valor) if config else 0.0}
+
+
+@router.get("/mis-facturas")
+def obtener_facturas_padre(db: Session = Depends(get_db)):
+    # 1. Obtener el DNI del padre desde el token (requiere Depends de tu autenticación)
+    # 2. Buscar los alumnos asociados a esa familia
+    # 3. Traer las facturas de esos alumnos
+
+    # ⚠️ MOCK TEMPORAL DEL BACKEND HASTA CONECTAR TUS MODELOS EXACTOS:
+    return [
+        {
+            "id": 1,
+            "mes": 11,
+            "anio": 2026,
+            "alumno_nombre": "Valentina Ríos",
+            "fecha_vencimiento": "10/11/2026",
+            "total": 45000.0,
+            "estado": "PENDIENTE",
+        },
+        {
+            "id": 2,
+            "mes": 10,
+            "anio": 2026,
+            "alumno_nombre": "Valentina Ríos",
+            "fecha_vencimiento": "10/10/2026",
+            "total": 45000.0,
+            "estado": "PAGADA",
+        },
+    ]
