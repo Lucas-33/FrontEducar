@@ -1,0 +1,28 @@
+# ============================================================
+# Render Blueprint para Educar para Transformar
+#
+# - La base PostgreSQL se aloja en Neon (servicio externo).
+# - Render solo ejecuta la app (FastAPI + Flet).
+# - DATABASE_URL se carga manualmente al crear el Blueprint.
+# ============================================================
+
+services:
+  - type: web
+    name: educar-para-transformar
+    runtime: python
+    plan: free
+    region: oregon
+    branch: deploy
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
+    healthCheckPath: /api/v1/health
+    envVars:
+      # Pegar acá la connection string de Neon (usar la "Pooled connection").
+      # Render la pide al crear el Blueprint porque sync: false.
+      - key: DATABASE_URL
+        sync: false
+      # Render genera una clave aleatoria y segura.
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"

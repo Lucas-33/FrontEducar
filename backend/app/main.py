@@ -1,7 +1,12 @@
+import os
+
 import flet.fastapi as flet_fastapi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.app import (
+    models,  # noqa: F401  (registra todas las tablas en Base.metadata)
+)
 from backend.app.api.v1.api import api_router
 from backend.app.core.database import Base, engine
 from frontend.app.main_view import main as flet_main
@@ -18,9 +23,27 @@ app = FastAPI(
 )
 
 # 3. Middleware de CORS
+#    - Local: localhost / 127.0.0.1
+#    - Render: RENDER_EXTERNAL_URL se agrega automáticamente
+#    - Otros orígenes: variable CORS_ORIGINS separada por comas
+_origenes = ["http://localhost:8000", "http://127.0.0.1:8000"]
+
+_render_url = os.getenv("RENDER_EXTERNAL_URL")
+if _render_url:
+    _origenes.append(_render_url.rstrip("/"))
+
+_origenes += [
+    origen.strip()
+    for origen in os.getenv("CORS_ORIGINS", "").split(",")
+    if origen.strip()
+]
+
+# Quitamos duplicados conservando el orden.
+_origenes = list(dict.fromkeys(_origenes))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_origins=_origenes,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

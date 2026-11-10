@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -1029,6 +1029,7 @@ dependencies = [
     { name = "bcrypt" },
     { name = "fastapi" },
     { name = "flet" },
+    { name = "flet-web" },
     { name = "httpx" },
     { name = "openpyxl" },
     { name = "passlib", extra = ["bcrypt"] },
@@ -1047,7 +1048,6 @@ dev = [
     { name = "flet", extra = ["test"] },
     { name = "flet-cli" },
     { name = "flet-desktop" },
-    { name = "flet-web" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
@@ -1057,6 +1057,7 @@ requires-dist = [
     { name = "bcrypt", specifier = ">=5.0.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "flet", specifier = ">=0.86.5" },
+    { name = "flet-web", specifier = ">=0.86.5" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
@@ -1074,7 +1075,6 @@ dev = [
     { name = "flet", extras = ["test"], specifier = ">=0.86.5" },
     { name = "flet-cli", specifier = ">=0.86.5" },
     { name = "flet-desktop", specifier = ">=0.86.5" },
-    { name = "flet-web", specifier = ">=0.86.5" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.16.10" },
 ]

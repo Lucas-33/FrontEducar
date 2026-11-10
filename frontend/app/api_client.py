@@ -8,8 +8,12 @@ class APIClient:
     """Cliente HTTP asíncrono centralizado para interactuar con la API REST de FastAPI.
 
     La URL base se puede configurar con la variable de entorno API_BASE_URL
-    (por defecto http://127.0.0.1:8000/api/v1) para poder desplegar el sistema
-    en otro servidor sin tocar el código.
+    para poder desplegar el sistema en otro servidor sin tocar el código.
+
+    Si API_BASE_URL no está definida, se usa el puerto local de la aplicación
+    (`PORT`, que Render asigna automáticamente). Como la interfaz Flet se
+    ejecuta en el mismo proceso/servidor que FastAPI, apuntar a 127.0.0.1
+    evita dar una vuelta innecesaria por Internet.
     """
 
     _instance: Optional["APIClient"] = None
@@ -24,8 +28,11 @@ class APIClient:
         if getattr(self, "_initialized", False):
             return
 
+        puerto = os.getenv("PORT", "8000")
+        base_por_defecto = f"http://127.0.0.1:{puerto}/api/v1"
+
         self.base_url = (
-            base_url or os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
+            base_url or os.getenv("API_BASE_URL") or base_por_defecto
         ).rstrip("/")
         self.token: str | None = None
         self._client: httpx.AsyncClient | None = None

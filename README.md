@@ -100,6 +100,101 @@ contraseña a `password123`:
 uv run python fix_auth.py
 ```
 
+## Deploy en Render + Neon
+
+La aplicación se ejecuta en **un único servicio web de Render** (FastAPI + Flet)
+y usa **PostgreSQL alojado en Neon**. La configuración declarativa del servicio
+está en `render.yaml`.
+
+### 1. Crear la base de datos en Neon
+
+1. Entrá a [neon.tech](https://neon.tech), creá un proyecto y elegí una región
+   cercana a Render (por ejemplo, `US West (Oregon)`).
+2. En **Connect** copiá la **Pooled connection string**. Tiene un formato similar a:
+
+   ```text
+   postgresql://usuario:clave@ep-xxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+   ```
+
+3. Guardala: se usa como `DATABASE_URL` en Render.
+
+### 2. Crear el esquema y los datos iniciales en Neon
+
+Opción recomendada (no requiere `psql`):
+
+```bash
+DATABASE_URL='postgresql://usuario:clave@ep-xxx-pooler...neon.tech/neondb?sslmode=require' \
+  uv run python scripts/init_db.py --reset
+```
+
+Opción con `psql`:
+
+```bash
+psql "$DATABASE_URL" -f Creacion_tablas.pgsql
+psql "$DATABASE_URL" -f Insercion_datosDB.pgsql
+```
+
+> `--reset` elimina las tablas existentes antes de recrearlas. Usalo solo la
+> primera vez o cuando quieras reiniciar los datos. Si la base ya tiene datos,
+> ejecutá el script sin `--reset` (se niega a pisar una base existente).
+>
+> Los scripts crean los usuarios demo (`admin_gral` / `password123`, etc.).
+
+### 3. Subir los cambios a GitHub
+
+```bash
+git add .
+git commit -m "Configura deploy en Render + Neon"
+git push origin deploy
+```
+
+### 4. Crear el servicio en Render
+
+1. En el panel de Render: **New +** → **Blueprint**.
+2. Conectá el repositorio `Lucas-33/FrontEducar`.
+3. Seleccioná la rama `deploy`.
+4. Render detecta `render.yaml` y pide `DATABASE_URL`: pegá la pooled connection
+   string de Neon.
+5. Aplicá los cambios. `SECRET_KEY` se genera automáticamente.
+
+Si preferís crear el servicio manualmente (**New +** → **Web Service**):
+
+- **Runtime**: Python 3 (toma la versión de `.python-version`, 3.12).
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**:
+
+  ```bash
+  uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
+  ```
+
+- **Environment**:
+  - `DATABASE_URL` → connection string de Neon.
+  - `SECRET_KEY` → una clave segura (o usá “Generate”).
+  - `ACCESS_TOKEN_EXPIRE_MINUTES=1440` (opcional).
+  - `API_BASE_URL` → opcional; normalmente no hace falta.
+- **Health Check Path**: `/api/v1/health`
+
+### 5. Verificar el deploy
+
+- App: `https://<tu-servicio>.onrender.com/`
+- Salud: `https://<tu-servicio>.onrender.com/api/v1/health`
+- Swagger: `https://<tu-servicio>.onrender.com/docs`
+- Login demo: `admin_gral` / `password123`
+
+### Notas
+
+- **No subas `.env`**: en Render la configuración va en *Environment*.
+- La app crea las tablas faltantes al iniciar, pero **no carga los datos demo**;
+  eso se hace una vez con `scripts/init_db.py`.
+- Neon suspende la base por inactividad y Render duerme el servicio en el plan
+  free. La primera petición puede tardar unos segundos.
+- `DATABASE_URL` puede venir como `postgresql://` o `postgres://`; la app la
+  normaliza automáticamente al driver `psycopg2`.
+- `RENDER_EXTERNAL_URL` se agrega solo a CORS. Si usás un dominio propio,
+  agregalo en `CORS_ORIGINS` separado por comas.
+- `render.yaml` asume la rama `deploy` y la región `oregon`. Ajustá `branch` y
+  `region` si tu repositorio o ubicación son distintos.
+
 ## Tests
 
 ```bash

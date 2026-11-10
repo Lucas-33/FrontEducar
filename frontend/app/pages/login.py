@@ -114,7 +114,8 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
             btn_submit.disabled = False
             btn_submit.text = "INGRESAR A LA PLATAFORMA"
             error_banner.value = (
-                "No se pudo conectar con el servidor backend en http://127.0.0.1:8000."
+                f"No se pudo conectar con el servidor backend en "
+                f"{api_client.base_url}."
             )
             error_banner.visible = True
             page.update()
