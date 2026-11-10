@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from backend.app.models.personas import Alumno, PadreAlumno
 
 from backend.app.api.deps import get_current_user, require_roles
 from backend.app.core.database import get_db
@@ -120,30 +121,54 @@ def obtener_precio(
     return {"valor": float(config.valor) if config else 0.0}
 
 
-@router.get("/mis-facturas")
-def obtener_facturas_padre(db: Session = Depends(get_db)):
-    # 1. Obtener el DNI del padre desde el token (requiere Depends de tu autenticación)
-    # 2. Buscar los alumnos asociados a esa familia
-    # 3. Traer las facturas de esos alumnos
+@router.get(
+    "/mis-facturas", summary="Obtiene las facturas reales del tutor autenticado"
+)
+def obtener_facturas_padre(
+    db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)
+):
+    # 1. Validar que el usuario sea un tutor (que tenga un id_padre asignado)
+    if not current_user.id_padre:
+        return []
 
-    # ⚠️ MOCK TEMPORAL DEL BACKEND HASTA CONECTAR TUS MODELOS EXACTOS:
-    return [
-        {
-            "id": 1,
-            "mes": 11,
-            "anio": 2026,
-            "alumno_nombre": "Valentina Ríos",
-            "fecha_vencimiento": "10/11/2026",
-            "total": 45000.0,
-            "estado": "PENDIENTE",
-        },
-        {
-            "id": 2,
-            "mes": 10,
-            "anio": 2026,
-            "alumno_nombre": "Valentina Ríos",
-            "fecha_vencimiento": "10/10/2026",
-            "total": 45000.0,
-            "estado": "PAGADA",
-        },
-    ]
+    # 2. Buscar los legajos de los hijos asociados a este padre
+    relaciones = (
+        db.query(PadreAlumno)
+        .filter(PadreAlumno.id_padre == current_user.id_padre)
+        .all()
+    )
+    legajos_hijos = [rel.legajo_alumno for rel in relaciones]
+
+    if not legajos_hijos:
+        return []
+
+    # 3. Buscar los datos de los alumnos para sacar el nombre
+    alumnos = db.query(Alumno).filter(Alumno.legajo.in_(legajos_hijos)).all()
+    nombres_alumnos = {a.legajo: f"{a.apellido}, {a.nombre}" for a in alumnos}
+
+    # 4. Buscar las facturas de esos legajos en PostgreSQL
+    facturas_db = (
+        db.query(Factura)
+        .filter(Factura.legajo_alumno.in_(legajos_hijos))
+        .order_by(Factura.fecha_vencimiento.desc())
+        .all()
+    )
+
+    # 5. Formatear y devolver al Frontend (Flet)
+    lista_facturas = []
+    for f in facturas_db:
+        lista_facturas.append(
+            {
+                "id": f.id_factura,
+                "mes": f.mes,
+                "anio": f.anio,
+                "alumno_nombre": nombres_alumnos.get(f.legajo_alumno, "Estudiante"),
+                "fecha_vencimiento": f.fecha_vencimiento.strftime("%d/%m/%Y")
+                if f.fecha_vencimiento
+                else "-",
+                "total": float(f.total),
+                "estado": f.estado.upper() if f.estado else "PENDIENTE",
+            }
+        )
+
+    return lista_facturas

@@ -3,16 +3,28 @@
 --- RUTA: app\main.py ---
 ======================================================================
 
+from contextlib import asynccontextmanager
+
 import flet.fastapi as flet_fastapi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.v1.api import api_router
 from backend.app.core.database import Base, engine
+from backend.app.core.scheduler import iniciar_scheduler
 from frontend.app.main_view import main as flet_main
 
 # 1. Crear automáticamente las tablas en PostgreSQL si no existen
 Base.metadata.create_all(bind=engine)
+
+
+# 2. Definir el ciclo de vida de la aplicación (Encendido)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    iniciar_scheduler()  # Encendemos el motor de tareas automáticas
+    yield  # La API queda corriendo...
+    # (Acá iría código de apagado si hiciera falta)
+
 
 # 2. Instancia principal de FastAPI
 app = FastAPI(
@@ -20,6 +32,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # 3. Middleware de CORS
@@ -123,6 +136,7 @@ from backend.app.api.v1.endpoints import (
     comunidad,
     dashboard,
     evaluacion,
+    finanzas,
     personas,
     reportes,
     servicios,
@@ -152,6 +166,7 @@ api_router.include_router(
     dashboard.router, prefix="/dashboard", tags=["Panel de control"]
 )
 api_router.include_router(reportes.router, prefix="/reportes", tags=["Reportes Excel"])
+api_router.include_router(finanzas.router, prefix="/finanzas", tags=["Finanzas"])
 
 
 ======================================================================
@@ -1056,6 +1071,161 @@ def eliminar_asistencia(
     db: Session = Depends(get_db),
 ):
     return evaluacion_service.delete_asistencia(db, id_asistencia)
+
+
+======================================================================
+--- RUTA: app\api\v1\endpoints\finanzas.py ---
+======================================================================
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from backend.app.api.deps import get_current_user, require_roles
+from backend.app.core.database import get_db
+from backend.app.models.finanzas import (
+    ComprobantePago,
+    ConfiguracionFinanciera,
+    Factura,
+    ItemFactura,
+)
+from backend.app.models.seguridad import Usuario
+from backend.app.schemas.finanzas import (
+    ComprobantePagoCreate,
+    ConfiguracionUpdate,
+    FacturaResponse,
+    ItemFacturaResponse,
+)
+
+router = APIRouter()
+
+
+@router.get(
+    "/facturas/{legajo_alumno}",
+    response_model=list[FacturaResponse],
+    summary="Historial de deuda/facturas (Padres)",
+)
+def listar_facturas(
+    legajo_alumno: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Devuelve las facturas de un alumno, discriminando los ítems de deuda."""
+    # Nota: Acá deberíamos validar que el current_user (padre) sea el tutor de este legajo.
+
+    facturas_db = (
+        db.query(Factura)
+        .filter(Factura.legajo_alumno == legajo_alumno)
+        .order_by(Factura.id_factura.desc())
+        .all()
+    )
+
+    resultado = []
+    for f in facturas_db:
+        items_db = (
+            db.query(ItemFactura).filter(ItemFactura.id_factura == f.id_factura).all()
+        )
+
+        # Convertimos la BD al Schema de respuesta
+        factura_dict = f.__dict__.copy()
+        factura_dict["items"] = [
+            ItemFacturaResponse.model_validate(i) for i in items_db
+        ]
+        resultado.append(FacturaResponse(**factura_dict))
+
+    return resultado
+
+
+@router.post(
+    "/comprobantes",
+    status_code=status.HTTP_201_CREATED,
+    summary="Subir comprobante de pago (Padres)",
+)
+def subir_comprobante(
+    comprobante_in: ComprobantePagoCreate,
+    current_user: Usuario = Depends(require_roles("PARENT")),
+    db: Session = Depends(get_db),
+):
+    """Vincula un ticket de transferencia bancaria a una factura pendiente."""
+    factura = (
+        db.query(Factura)
+        .filter(Factura.id_factura == comprobante_in.id_factura)
+        .first()
+    )
+    if not factura:
+        raise HTTPException(status_code=404, detail="La factura no existe")
+
+    nuevo_comprobante = ComprobantePago(
+        id_factura=comprobante_in.id_factura,
+        archivo_url=comprobante_in.archivo_url,
+        estado="PENDIENTE",  # El administrador web luego lo aprobará
+    )
+    db.add(nuevo_comprobante)
+    db.commit()
+    return {"mensaje": "Comprobante enviado exitosamente a la administración"}
+
+
+@router.put("/configuracion", summary="Actualizar precios base (Administrador)")
+def actualizar_precio(
+    config_in: ConfiguracionUpdate,
+    current_user: Usuario = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Permite al administrador modificar valores como CUOTA_BASE o COMEDOR."""
+    config = (
+        db.query(ConfiguracionFinanciera).filter_by(concepto=config_in.concepto).first()
+    )
+    if config:
+        config.valor = config_in.valor
+    else:
+        config = ConfiguracionFinanciera(
+            concepto=config_in.concepto, valor=config_in.valor
+        )
+        db.add(config)
+
+    db.commit()
+    return {
+        "mensaje": f"Precio de {config_in.concepto} actualizado a ${config_in.valor}"
+    }
+
+
+@router.get("/configuracion/{concepto}", summary="Obtener precio base (Administrador)")
+def obtener_precio(
+    concepto: str,
+    current_user: Usuario = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Devuelve el valor actual de CUOTA_BASE o COMEDOR."""
+    config = db.query(ConfiguracionFinanciera).filter_by(concepto=concepto).first()
+    return {"valor": float(config.valor) if config else 0.0}
+
+
+@router.get("/mis-facturas")
+def obtener_facturas_padre(db: Session = Depends(get_db)):
+    # 1. Obtener el DNI del padre desde el token (requiere Depends de tu autenticación)
+    # 2. Buscar los alumnos asociados a esa familia
+    # 3. Traer las facturas de esos alumnos
+
+    # ⚠️ MOCK TEMPORAL DEL BACKEND HASTA CONECTAR TUS MODELOS EXACTOS:
+    return [
+        {
+            "id": 1,
+            "mes": 11,
+            "anio": 2026,
+            "alumno_nombre": "Valentina Ríos",
+            "fecha_vencimiento": "10/11/2026",
+            "total": 45000.0,
+            "estado": "PENDIENTE",
+        },
+        {
+            "id": 2,
+            "mes": 10,
+            "anio": 2026,
+            "alumno_nombre": "Valentina Ríos",
+            "fecha_vencimiento": "10/10/2026",
+            "total": 45000.0,
+            "estado": "PAGADA",
+        },
+    ]
 
 
 ======================================================================
@@ -2056,6 +2226,111 @@ def get_db():
 
 
 ======================================================================
+--- RUTA: app\core\scheduler.py ---
+======================================================================
+
+import calendar
+from datetime import date
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+
+from backend.app.core.database import SessionLocal
+from backend.app.services.finanzas import finanzas_service
+
+# from backend.app.services.email import enviar_factura, enviar_aviso_deuda (lo crearemos después)
+
+scheduler = AsyncIOScheduler()
+
+
+def es_ultimo_dia_habil() -> bool:
+    """Calcula matemáticamente si hoy es el último día hábil (lunes a viernes) del mes."""
+    hoy = date.today()
+    ultimo_dia_del_mes = calendar.monthrange(hoy.year, hoy.month)[1]
+    fecha_fin = date(hoy.year, hoy.month, ultimo_dia_del_mes)
+
+    # Si el último día cae Sábado (5), el último hábil es el viernes anterior (-1 día)
+    if fecha_fin.weekday() == 5:
+        fecha_fin = date(hoy.year, hoy.month, ultimo_dia_del_mes - 1)
+    # Si el último día cae Domingo (6), el último hábil es el viernes anterior (-2 días)
+    elif fecha_fin.weekday() == 6:
+        fecha_fin = date(hoy.year, hoy.month, ultimo_dia_del_mes - 2)
+
+    return hoy == fecha_fin
+
+
+def tarea_cierre_mensual():
+    """Se ejecuta y revisa si es el último día hábil. Genera facturas y las envía por mail."""
+    if not es_ultimo_dia_habil():
+        return
+        
+    print("⏰ [SCHEDULER] Ejecutando cierre mensual y envío de facturas...")
+    db = SessionLocal() 
+    try:
+        hoy = date.today()
+        # 1. Generar facturas en BD
+        finanzas_service.generar_facturas_mes(db, mes=hoy.month, anio=hoy.year)
+        
+        # 2. Buscar las recién creadas y enviarlas
+        facturas = db.query(Factura).filter_by(mes=hoy.month, anio=hoy.year).all()
+        for fac in facturas:
+            alumno = db.query(Alumno).filter_by(legajo=fac.legajo_alumno).first()
+            if alumno and alumno.correo_electronico:
+                items = db.query(ItemFactura).filter_by(id_factura=fac.id_factura).all()
+                ruta_pdf = generar_pdf_factura(fac, alumno, items)
+                
+                cuerpo = f"Estimada familia de {alumno.nombre},\n\nAdjuntamos la liquidación de servicios educativos correspondiente al mes {fac.mes}/{fac.anio}.\n\nSaludos cordiales,\nAdministración Educar."
+                enviar_correo_con_pdf(
+                    destinatario=alumno.correo_electronico, 
+                    asunto=f"Nueva Liquidación Mensual - {alumno.apellido}", 
+                    cuerpo=cuerpo, 
+                    ruta_pdf=ruta_pdf
+                )
+    except Exception as e:
+        print(f"❌ [SCHEDULER] Error en cierre mensual: {e}")
+    finally:
+        db.close()
+
+
+def tarea_aviso_morosos():
+    """Se ejecuta los días 20 de cada mes. Envía PDF con recordatorio de deuda."""
+    print("⏰ [SCHEDULER] Revisando morosos para enviar aviso de deuda...")
+    db = SessionLocal()
+    try:
+        # Buscar todas las facturas impagas
+        facturas_adeudadas = db.query(Factura).filter(Factura.estado != "PAGADA").all()
+        for fac in facturas_adeudadas:
+            alumno = db.query(Alumno).filter_by(legajo=fac.legajo_alumno).first()
+            if alumno and alumno.correo_electronico:
+                items = db.query(ItemFactura).filter_by(id_factura=fac.id_factura).all()
+                ruta_pdf = generar_pdf_factura(fac, alumno, items)
+                
+                cuerpo = f"Aviso Importante: Saldo Pendiente\n\nEstimada familia de {alumno.nombre},\nLe recordamos que posee un saldo vencido de $ {fac.total:.2f} en su cuenta.\nLe adjuntamos el detalle. Por favor, regularice su situación a la brevedad para evitar recargos.\n\nSaludos."
+                enviar_correo_con_pdf(
+                    destinatario=alumno.correo_electronico, 
+                    asunto="Aviso de Deuda - Educar para Transformar", 
+                    cuerpo=cuerpo, 
+                    ruta_pdf=ruta_pdf
+                )
+    except Exception as e:
+        print(f"❌ [SCHEDULER] Error avisando a morosos: {e}")
+    finally:
+        db.close()
+
+
+def iniciar_scheduler():
+    """Registra los disparadores de tiempo y enciende el motor."""
+    # Disparador 1: Corre TODOS LOS DÍAS a las 08:00 AM (la función por dentro chequea si es el último día hábil)
+    scheduler.add_job(tarea_cierre_mensual, CronTrigger(hour=8, minute=0))
+
+    # Disparador 2: Corre SOLAMENTE el día 20 de cada mes a las 08:00 AM
+    scheduler.add_job(tarea_aviso_morosos, CronTrigger(day=20, hour=8, minute=0))
+
+    scheduler.start()
+    print("🚀 Planificador de tareas (APScheduler) iniciado en segundo plano.")
+
+
+======================================================================
 --- RUTA: app\core\__init__.py ---
 ======================================================================
 
@@ -2266,6 +2541,82 @@ class Asistencia(Base):
 
 
 ======================================================================
+--- RUTA: app\models\finanzas.py ---
+======================================================================
+
+"""Entidades para la gestión de cuotas, facturación y pagos (PARTE 3)."""
+
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy.sql import func
+
+from backend.app.core.database import Base
+
+
+class ConfiguracionFinanciera(Base):
+    """Guarda valores fijos administrables, como el precio de la Cuota Base y el Comedor."""
+
+    __tablename__ = "configuracion_financiera"
+
+    id_configuracion = Column(Integer, primary_key=True, autoincrement=True)
+    concepto = Column(
+        String(50), nullable=False, unique=True
+    )  # Ej: "CUOTA_BASE", "COMEDOR"
+    valor = Column(Numeric(10, 2), nullable=False)
+
+
+class Factura(Base):
+    """Factura mensual consolidada de un alumno."""
+
+    __tablename__ = "factura"
+
+    id_factura = Column(Integer, primary_key=True, autoincrement=True)
+    legajo_alumno = Column(
+        Integer, ForeignKey("alumno.legajo", ondelete="CASCADE"), nullable=False
+    )
+    mes = Column(Integer, nullable=False)
+    anio = Column(Integer, nullable=False)
+    total = Column(Numeric(10, 2), nullable=False)
+    estado = Column(
+        String(20), default="PENDIENTE", nullable=False
+    )  # PENDIENTE, PAGADA, PARCIAL
+    fecha_emision = Column(Date, server_default=func.current_date(), nullable=False)
+    fecha_vencimiento = Column(Date, nullable=False)
+
+
+class ItemFactura(Base):
+    """Detalle de qué se está cobrando en la factura (Cuota, Vóleibol, Transporte Centro, etc)."""
+
+    __tablename__ = "item_factura"
+
+    id_item = Column(Integer, primary_key=True, autoincrement=True)
+    id_factura = Column(
+        Integer, ForeignKey("factura.id_factura", ondelete="CASCADE"), nullable=False
+    )
+    concepto = Column(String(100), nullable=False)
+    monto = Column(Numeric(10, 2), nullable=False)
+
+
+class ComprobantePago(Base):
+    """Comprobante de transferencia subido por el padre desde la app móvil."""
+
+    __tablename__ = "comprobante_pago"
+
+    id_comprobante = Column(Integer, primary_key=True, autoincrement=True)
+    id_factura = Column(
+        Integer, ForeignKey("factura.id_factura", ondelete="CASCADE"), nullable=False
+    )
+    archivo_url = Column(
+        String(255), nullable=False
+    )  # Ruta física o URL de la imagen/PDF
+    estado = Column(
+        String(20), default="PENDIENTE", nullable=False
+    )  # PENDIENTE, APROBADO, RECHAZADO
+    fecha_subida = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+======================================================================
 --- RUTA: app\models\personas.py ---
 ======================================================================
 
@@ -2380,7 +2731,7 @@ class Usuario(Base):
 --- RUTA: app\models\servicios.py ---
 ======================================================================
 
-from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric, String
 from sqlalchemy.sql import func
 
 from backend.app.core.database import Base
@@ -2395,9 +2746,10 @@ class Horario(Base):
 
 class Deporte(Base):
     __tablename__ = "deporte"
-
     id_deporte = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(100), nullable=False)
+    # NUEVO CAMPO: Valor diferenciado por deporte
+    precio_mensual = Column(Numeric(10, 2), nullable=False, default=0.00)
     legajo_profesor_responsable = Column(
         Integer,
         ForeignKey("profesor.legajo", onupdate="CASCADE", ondelete="SET NULL"),
@@ -2443,6 +2795,7 @@ class RecorridoTransporte(Base):
 
     id_recorrido = Column(Integer, primary_key=True, autoincrement=True)
     descripcion = Column(String(100), nullable=False)
+    precio_mensual = Column(Numeric(10, 2), nullable=False, default=0.00)
 
 
 class InscripcionTransporte(Base):
@@ -2491,6 +2844,12 @@ from backend.app.models.comunidad import (
     SolicitudInscripcion,
 )
 from backend.app.models.evaluacion import Asistencia, Calificacion
+from backend.app.models.finanzas import (
+    ComprobantePago,
+    ConfiguracionFinanciera,
+    Factura,
+    ItemFactura,
+)
 from backend.app.models.personas import Alumno, Padre, PadreAlumno, Profesor
 from backend.app.models.seguridad import Rol, Usuario
 from backend.app.models.servicios import (
@@ -3513,6 +3872,45 @@ class ResumenAsistenciaResponse(BaseModel):
 
 
 ======================================================================
+--- RUTA: app\schemas\finanzas.py ---
+======================================================================
+
+from datetime import date, datetime
+
+from pydantic import BaseModel, ConfigDict
+
+
+class ItemFacturaResponse(BaseModel):
+    id_item: int
+    concepto: str
+    monto: float
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FacturaResponse(BaseModel):
+    id_factura: int
+    legajo_alumno: int
+    mes: int
+    anio: int
+    total: float
+    estado: str
+    fecha_emision: date
+    fecha_vencimiento: date
+    items: list[ItemFacturaResponse] = []  # Detalle de la deuda
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ComprobantePagoCreate(BaseModel):
+    id_factura: int
+    archivo_url: str  # En la app móvil simularemos la subida subiendo a un bucket/nube y mandando la URL
+
+
+class ConfiguracionUpdate(BaseModel):
+    concepto: str
+    valor: float
+
+
+======================================================================
 --- RUTA: app\schemas\personas.py ---
 ======================================================================
 
@@ -3752,6 +4150,7 @@ class HorarioResponse(HorarioBase):
 class DeporteBase(BaseModel):
     nombre: str
     legajo_profesor_responsable: int | None = None
+    precio_mensual: float = 0.0 # <-- AGREGAR ESTO
 
 
 class DeporteCreate(DeporteBase):
@@ -3761,6 +4160,7 @@ class DeporteCreate(DeporteBase):
 class DeporteUpdate(BaseModel):
     nombre: str | None = None
     legajo_profesor_responsable: int | None = None
+    precio_mensual: float | None = None
 
 
 class DeporteResponse(DeporteBase):
@@ -3804,6 +4204,7 @@ class InscripcionDeporteResponse(InscripcionDeporteCreate):
 # --- TRANSPORTE ---
 class RecorridoTransporteBase(BaseModel):
     descripcion: str
+    precio_mensual: float = 0.0 # <-- AGREGAR ESTO
 
 
 class RecorridoTransporteCreate(RecorridoTransporteBase):
@@ -3812,7 +4213,7 @@ class RecorridoTransporteCreate(RecorridoTransporteBase):
 
 class RecorridoTransporteUpdate(BaseModel):
     descripcion: str | None = None
-
+    precio_mensual: float | None = None
 
 class RecorridoTransporteResponse(RecorridoTransporteBase):
     id_recorrido: int
@@ -4374,6 +4775,52 @@ comunidad_service = ComunidadService()
 
 
 ======================================================================
+--- RUTA: app\services\email_service.py ---
+======================================================================
+
+import os
+import smtplib
+from email.message import EmailMessage
+
+# ⚠️ NOTA: Usar variables de entorno en producción. Acá podés hardcodear tu correo para probar.
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+EMAIL_SENDER = os.getenv("EMAIL_SENDER", "tu_correo@gmail.com") 
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "tu_clave_de_aplicacion_gmail") 
+
+def enviar_correo_con_pdf(destinatario: str, asunto: str, cuerpo: str, ruta_pdf: str = None):
+    """Envía un correo electrónico con un archivo adjunto PDF (y luego borra el PDF temporal)."""
+    if not destinatario:
+        return
+
+    msg = EmailMessage()
+    msg['Subject'] = asunto
+    msg['From'] = EMAIL_SENDER
+    msg['To'] = destinatario
+    msg.set_content(cuerpo)
+
+    # Adjuntar PDF si existe
+    if ruta_pdf and os.path.exists(ruta_pdf):
+        with open(ruta_pdf, 'rb') as f:
+            pdf_data = f.read()
+            pdf_name = os.path.basename(ruta_pdf)
+        
+        msg.add_attachment(pdf_data, maintype='application', subtype='pdf', filename=pdf_name)
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.send_message(msg)
+        print(f"📧 Correo enviado exitosamente a {destinatario}")
+    except Exception as e:
+        print(f"❌ Error enviando correo a {destinatario}: {e}")
+    finally:
+        # Limpiar el PDF temporal de tu disco duro
+        if ruta_pdf and os.path.exists(ruta_pdf):
+            os.remove(ruta_pdf)
+
+======================================================================
 --- RUTA: app\services\evaluacion.py ---
 ======================================================================
 
@@ -4644,6 +5091,203 @@ class EvaluacionService:
 
 evaluacion_service = EvaluacionService()
 
+
+======================================================================
+--- RUTA: app\services\finanzas.py ---
+======================================================================
+
+from datetime import date
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from backend.app.models.finanzas import ConfiguracionFinanciera, Factura, ItemFactura
+from backend.app.repositories import (
+    alumno_repository,
+    deporte_repository,
+    grupo_deporte_repository,
+    inscripcion_comedor_repository,
+    inscripcion_deporte_repository,
+    inscripcion_transporte_repository,
+    recorrido_transporte_repository,
+)
+
+
+class FinanzasService:
+    def get_valor_configuracion(self, db: Session, concepto: str) -> float:
+        """Obtiene un valor fijo de la configuración (Ej: CUOTA_BASE)."""
+        config = db.query(ConfiguracionFinanciera).filter_by(concepto=concepto).first()
+        return float(config.valor) if config else 0.0
+
+    def generar_facturas_mes(self, db: Session, mes: int, anio: int):
+        """Genera las facturas detalladas para todos los alumnos activos."""
+
+        # 1. Obtener valores fijos (Cuota y Comedor)
+        precio_cuota_base = self.get_valor_configuracion(db, "CUOTA_BASE")
+        precio_comedor = self.get_valor_configuracion(db, "COMEDOR")
+
+        if precio_cuota_base == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Debe configurar el valor de CUOTA_BASE en el sistema",
+            )
+
+        alumnos = alumno_repository.get_activos(db, limit=5000)
+        facturas_generadas = 0
+
+        # El vencimiento de la factura será el día 10 del mes siguiente
+        mes_vencimiento = 1 if mes == 12 else mes + 1
+        anio_vencimiento = anio + 1 if mes == 12 else anio
+        vencimiento = date(anio_vencimiento, mes_vencimiento, 10)
+
+        for alumno in alumnos:
+            # Evitar duplicar la factura si ya se generó este mes
+            existe = (
+                db.query(Factura)
+                .filter_by(legajo_alumno=alumno.legajo, mes=mes, anio=anio)
+                .first()
+            )
+            if existe:
+                continue
+
+            items = []
+            total = 0.0
+
+            # A. Agregar Cuota Base (Obligatorio)
+            items.append(
+                ItemFactura(concepto="Cuota Base Mensual", monto=precio_cuota_base)
+            )
+            total += precio_cuota_base
+
+            # B. Agregar Comedor (Si está activo)
+            insc_comedor = inscripcion_comedor_repository.get_by_alumno(
+                db, alumno.legajo
+            )
+            if insc_comedor and insc_comedor.estado == "ACTIVO" and precio_comedor > 0:
+                items.append(
+                    ItemFactura(concepto="Servicio de Comedor", monto=precio_comedor)
+                )
+                total += precio_comedor
+
+            # C. Agregar Transporte (Si está activo)
+            insc_transporte = inscripcion_transporte_repository.get_by_alumno(
+                db, alumno.legajo
+            )
+            if insc_transporte and insc_transporte.estado == "ACTIVO":
+                recorrido = recorrido_transporte_repository.get(
+                    db, insc_transporte.id_recorrido
+                )
+                if recorrido and recorrido.precio_mensual > 0:
+                    items.append(
+                        ItemFactura(
+                            concepto=f"Transporte: {recorrido.descripcion}",
+                            monto=recorrido.precio_mensual,
+                        )
+                    )
+                    total += float(recorrido.precio_mensual)
+
+            # D. Agregar Deportes (Máximo 2, según regla de negocio)
+            insc_deportes = inscripcion_deporte_repository.get_by_alumno(
+                db, alumno.legajo
+            )
+            for insc_dep in insc_deportes:
+                grupo = grupo_deporte_repository.get(db, insc_dep.id_grupo)
+                if grupo:
+                    deporte = deporte_repository.get(db, grupo.id_deporte)
+                    if deporte and deporte.precio_mensual > 0:
+                        items.append(
+                            ItemFactura(
+                                concepto=f"Deporte: {deporte.nombre}",
+                                monto=deporte.precio_mensual,
+                            )
+                        )
+                        total += float(deporte.precio_mensual)
+
+            # 3. Crear la factura en la BD
+            factura = Factura(
+                legajo_alumno=alumno.legajo,
+                mes=mes,
+                anio=anio,
+                total=total,
+                estado="PENDIENTE",
+                fecha_emision=date.today(),
+                fecha_vencimiento=vencimiento,
+            )
+            db.add(factura)
+            db.flush()  # Guarda temporalmente para que PostgreSQL asigne el id_factura
+
+            # 4. Vincular el detalle (los ítems) a la factura creada
+            for item in items:
+                item.id_factura = factura.id_factura
+                db.add(item)
+
+            facturas_generadas += 1
+
+        # Confirmar todos los cambios en la base de datos de una sola vez
+        db.commit()
+        return {
+            "mensaje": f"Proceso finalizado. Se generaron {facturas_generadas} facturas nuevas."
+        }
+
+
+finanzas_service = FinanzasService()
+
+
+======================================================================
+--- RUTA: app\services\pdf_generator.py ---
+======================================================================
+
+import os
+from datetime import date
+
+from fpdf import FPDF
+
+
+def generar_pdf_factura(factura, alumno, items) -> str:
+    """Genera un PDF con el detalle de la deuda y devuelve la ruta del archivo."""
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Cabecera Institucional
+    pdf.set_font("helvetica", size=16, style="B")
+    pdf.set_text_color(11, 79, 79) # TEAL_DARK
+    pdf.cell(0, 10, txt="Educar para Transformar - SGE", align='C', new_x="LMARGIN", new_y="NEXT")
+    
+    pdf.set_font("helvetica", size=12, style="B")
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 10, txt="LIQUIDACIÓN DE SERVICIOS EDUCATIVOS", align='C', new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    
+    # Datos del Alumno y Factura
+    pdf.set_font("helvetica", size=11)
+    pdf.cell(0, 8, txt=f"Estudiante: {alumno.apellido}, {alumno.nombre} (Legajo #{alumno.legajo})", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, txt=f"Período Facturado: {factura.mes}/{factura.anio}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, txt=f"Fecha de Emisión: {factura.fecha_emision}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, txt=f"Vencimiento: {factura.fecha_vencimiento}", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    
+    # Tabla de Ítems
+    pdf.set_font("helvetica", size=11, style="B")
+    pdf.cell(140, 10, txt="Concepto", border=1)
+    pdf.cell(50, 10, txt="Monto", border=1, align='R', new_x="LMARGIN", new_y="NEXT")
+    
+    pdf.set_font("helvetica", size=11)
+    for item in items:
+        pdf.cell(140, 10, txt=item.concepto, border=1)
+        pdf.cell(50, 10, txt=f"$ {item.monto:.2f}", border=1, align='R', new_x="LMARGIN", new_y="NEXT")
+        
+    # Total
+    pdf.ln(5)
+    pdf.set_font("helvetica", size=13, style="B")
+    pdf.cell(140, 10, txt="TOTAL A ABONAR:", align='R')
+    pdf.cell(50, 10, txt=f"$ {factura.total:.2f}", border=1, align='R', new_x="LMARGIN", new_y="NEXT")
+    
+    # Guardar en carpeta temporal
+    os.makedirs("temp", exist_ok=True)
+    ruta_pdf = f"temp/Factura_{factura.id_factura}_Leg_{alumno.legajo}.pdf"
+    pdf.output(ruta_pdf)
+    
+    return ruta_pdf
 
 ======================================================================
 --- RUTA: app\services\personas.py ---

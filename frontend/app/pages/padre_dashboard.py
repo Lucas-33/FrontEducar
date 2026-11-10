@@ -1,5 +1,6 @@
 import flet as ft
-
+from frontend.app.api_client import api_client
+from frontend.app.components.portal_layout import portal_layout
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
     BG_WHITE,
@@ -12,10 +13,10 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.portal_layout import portal_layout
 
 
 async def get_padre_dashboard_view(page: ft.Page) -> ft.Container:
+    # Textos que inician en "Calculando..." hasta que la API responda
     estado_deuda = ft.Text(
         "Calculando...", size=24, weight=ft.FontWeight.BOLD, color=TEAL_DARK
     )
@@ -61,28 +62,38 @@ async def get_padre_dashboard_view(page: ft.Page) -> ft.Container:
 
     async def cargar_datos():
         try:
-            facturas_mock = [
-                {
-                    "total": 45000.0,
-                    "estado": "PENDIENTE",
-                    "fecha_vencimiento": "10/11/2026",
-                }
+            # 🚀 LLAMADA A LA API REAL
+            facturas_reales = await api_client.get_mis_facturas()
+
+            # Filtramos solo las facturas que no están pagadas
+            pendientes = [
+                f
+                for f in facturas_reales
+                if f.get("estado", "PENDIENTE").upper() != "PAGADA"
             ]
-            deuda = sum(f["total"] for f in facturas_mock if f["estado"] != "PAGADA")
+
+            # 1. Calculamos la suma total de la deuda
+            deuda = sum(float(f["total"]) for f in pendientes)
             estado_deuda.value = f"$ {deuda:,.2f}"
             estado_deuda.color = BADGE_RED_TXT if deuda > 0 else ONLINE_GREEN
 
-            pendientes = [f for f in facturas_mock if f["estado"] != "PAGADA"]
+            # 2. Buscamos el próximo vencimiento
             if pendientes:
-                estado_vencimiento.value = pendientes[0]["fecha_vencimiento"]
+                # Tomamos la fecha de la factura pendiente más antigua (la última de la lista ordenada desc)
+                estado_vencimiento.value = pendientes[-1].get("fecha_vencimiento", "-")
                 estado_vencimiento.color = TEXT_COLOR
             else:
                 estado_vencimiento.value = "Al día"
                 estado_vencimiento.color = ONLINE_GREEN
-        except Exception:
-            pass
+
+        except Exception as e:
+            estado_deuda.value = "Error de red"
+            estado_deuda.size = 16
+            estado_vencimiento.value = "-"
+
         page.update()
 
+    # Ejecutamos la petición a la API en segundo plano
     page.run_task(cargar_datos)
 
     btn_ir_facturas = ft.Container(
