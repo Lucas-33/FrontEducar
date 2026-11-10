@@ -1,6 +1,7 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from backend.app.core.reglas_academicas import validar_edad_para_nivel
 from backend.app.models.comunidad import Opinion, SolicitudInscripcion
 from backend.app.repositories import (
     mensaje_contacto_repository,
@@ -21,10 +22,27 @@ class ComunidadService:
     def crear_solicitud(
         self, db: Session, solicitud_in: SolicitudInscripcionCreate
     ) -> SolicitudInscripcion:
+        # La edad declarada debe ser coherente con el nivel/grado postulado.
+        validar_edad_para_nivel(solicitud_in.fecha_nacimiento, solicitud_in.nivel)
         return solicitud_inscripcion_repository.create(db, solicitud_in)
 
     def get_solicitudes(self, db: Session) -> list[SolicitudInscripcion]:
         return solicitud_inscripcion_repository.get_multi_ordenadas(db)
+
+    @staticmethod
+    def _validar_aptitud_para_aprobar(
+        solicitud: SolicitudInscripcion,
+    ) -> None:
+        """Revalida la edad al aprobar para bloquear solicitudes antiguas inválidas."""
+        if not solicitud.fecha_nacimiento:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "No se puede aprobar la solicitud porque no registra la "
+                    "fecha de nacimiento del postulante."
+                ),
+            )
+        validar_edad_para_nivel(solicitud.fecha_nacimiento, solicitud.nivel)
 
     def cambiar_estado_solicitud(
         self,
@@ -38,6 +56,8 @@ class ComunidadService:
             raise HTTPException(
                 status_code=404, detail=f"La solicitud #{id_solicitud} no existe"
             )
+        if estado == "Aprobado":
+            self._validar_aptitud_para_aprobar(solicitud)
         solicitud.estado = estado
         if observaciones is not None:
             solicitud.observaciones = observaciones

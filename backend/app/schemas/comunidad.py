@@ -1,17 +1,28 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from backend.app.core.fechas import parsear_fecha
 
 
 # --- SOLICITUD DE INSCRIPCIÓN ---
 class SolicitudInscripcionCreate(BaseModel):
     postulante: str = Field(min_length=3, max_length=120)
     dni: str = Field(min_length=6, max_length=20)
-    fecha_nacimiento: str | None = Field(default=None, max_length=20)
+    fecha_nacimiento: str = Field(min_length=8, max_length=20)
     nivel: str = Field(min_length=3, max_length=80)
     tutor: str = Field(min_length=3, max_length=120)
     telefono: str | None = Field(default=None, max_length=50)
     correo: str | None = Field(default=None, max_length=120)
+
+    @field_validator("fecha_nacimiento")
+    @classmethod
+    def normalizar_fecha_nacimiento(cls, valor: str) -> str:
+        """Acepta AAAA-MM-DD o DD/MM/AAAA y guarda siempre en formato ISO."""
+        try:
+            return parsear_fecha(valor).isoformat()
+        except ValueError as error:
+            raise ValueError(str(error)) from error
 
 
 class SolicitudInscripcionEstadoUpdate(BaseModel):

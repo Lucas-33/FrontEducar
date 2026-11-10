@@ -1,4 +1,5 @@
 import flet as ft
+import httpx
 
 from frontend.app.api_client import api_client
 from frontend.app.components.admin_layout import admin_layout
@@ -176,6 +177,22 @@ async def get_admin_inscripciones_view(page: ft.Page) -> ft.Row:
             await api_client.cambiar_estado_solicitud(
                 solicitud["id_solicitud"], nuevo_estado
             )
+        except httpx.HTTPStatusError as err:
+            detalle = "No se pudo actualizar la solicitud."
+            try:
+                data = err.response.json()
+                detalle_error = data.get("detail")
+                if isinstance(detalle_error, str):
+                    detalle = detalle_error
+            except Exception:
+                pass
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(detalle, color="white"),
+                    bgcolor=BADGE_RED_TXT,
+                )
+            )
+            return
         except Exception:
             page.show_dialog(
                 ft.SnackBar(

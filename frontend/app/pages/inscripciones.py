@@ -15,6 +15,27 @@ BORDER_COLOR = "#EAE6E1"
 BG_MAIN = "#FDFBF9"
 BG_WHITE = "#FFFFFF"
 
+# El grado permite validar en el backend que la edad del postulante coincida
+# con el nivel al que se inscribe.
+OPCIONES_NIVEL = [
+    "Inicial - Sala de 3",
+    "Inicial - Sala de 4",
+    "Inicial - Sala de 5",
+    "Primario - 1° Grado",
+    "Primario - 2° Grado",
+    "Primario - 3° Grado",
+    "Primario - 4° Grado",
+    "Primario - 5° Grado",
+    "Primario - 6° Grado",
+    "Primario - 7° Grado",
+    "Secundario - 1° Año",
+    "Secundario - 2° Año",
+    "Secundario - 3° Año",
+    "Secundario - 4° Año",
+    "Secundario - 5° Año",
+    "Secundario - 6° Año",
+]
+
 
 def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
     """Retorna únicamente los bloques centrales de la página de Inscripción."""
@@ -54,16 +75,12 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
     campo_fecha_nac = crear_campo("DD/MM/AAAA")
     campo_dni = crear_campo("Sin puntos", keyboard_type=ft.KeyboardType.NUMBER)
     campo_nivel = ft.Dropdown(
-        hint_text="Seleccione nivel...",
+        hint_text="Seleccione nivel y grado...",
         border_color=BORDER_COLOR,
         focused_border_color=TEAL,
         bgcolor="#FDFCFB",
         border_radius=6,
-        options=[
-            ft.dropdown.Option("Inicial (Jardín)"),
-            ft.dropdown.Option("Primario"),
-            ft.dropdown.Option("Secundario"),
-        ],
+        options=[ft.dropdown.Option(opcion) for opcion in OPCIONES_NIVEL],
         content_padding=ft.Padding(12, 10, 12, 10),
         text_size=14,
     )
@@ -89,6 +106,7 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
 
     async def enviar_solicitud(e):
         # Validación de campos obligatorios
+        fecha_nacimiento = (campo_fecha_nac.value or "").strip()
         if not campo_nombre.value or not campo_apellido.value or not campo_dni.value:
             mostrar_dialogo(
                 "Datos incompletos",
@@ -96,9 +114,19 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
                 error=True,
             )
             return
+        if not fecha_nacimiento:
+            mostrar_dialogo(
+                "Datos incompletos",
+                "Indique la fecha de nacimiento del postulante para verificar "
+                "que el grado seleccionado corresponda a su edad.",
+                error=True,
+            )
+            return
         if not campo_nivel.value:
             mostrar_dialogo(
-                "Datos incompletos", "Seleccione el nivel al que postula.", error=True
+                "Datos incompletos",
+                "Seleccione el nivel y grado al que postula.",
+                error=True,
             )
             return
         if not campo_tutor.value:
@@ -112,7 +140,7 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
         payload = {
             "postulante": f"{campo_apellido.value.strip()}, {campo_nombre.value.strip()}",
             "dni": campo_dni.value.strip(),
-            "fecha_nacimiento": (campo_fecha_nac.value or "").strip() or None,
+            "fecha_nacimiento": fecha_nacimiento,
             "nivel": campo_nivel.value,
             "tutor": campo_tutor.value.strip(),
             "telefono": (campo_telefono.value or "").strip() or None,
@@ -121,12 +149,18 @@ def get_inscripcion_view(page: ft.Page) -> list[ft.Control]:
 
         try:
             solicitud = await api_client.crear_solicitud(payload)
-        except httpx.HTTPStatusError:
-            mostrar_dialogo(
-                "No se pudo enviar",
-                "Verifique los datos ingresados e intente nuevamente.",
-                error=True,
-            )
+        except httpx.HTTPStatusError as err:
+            detalle = "Verifique los datos ingresados e intente nuevamente."
+            try:
+                data = err.response.json()
+                detalle_error = data.get("detail")
+                if isinstance(detalle_error, str):
+                    detalle = detalle_error
+                elif isinstance(detalle_error, list) and detalle_error:
+                    detalle = detalle_error[0].get("msg", detalle)
+            except Exception:
+                pass
+            mostrar_dialogo("No se pudo enviar", detalle, error=True)
             return
         except Exception:
             mostrar_dialogo(

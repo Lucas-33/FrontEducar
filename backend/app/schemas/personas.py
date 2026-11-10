@@ -1,6 +1,8 @@
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from backend.app.core.fechas import parsear_fecha
 
 
 # --- ALUMNO ---
@@ -16,6 +18,14 @@ class AlumnoBase(BaseModel):
     id_curso: int
     estado_alumno: str = "ACTIVO"
 
+    @field_validator("fecha_nacimiento", mode="before")
+    @classmethod
+    def normalizar_fecha_nacimiento(cls, valor):
+        """Acepta AAAA-MM-DD o DD/MM/AAAA además del tipo date."""
+        if isinstance(valor, str):
+            return parsear_fecha(valor)
+        return valor
+
 
 class AlumnoCreate(AlumnoBase):
     legajo: int | None = None  # Permite que llegue vacío desde el frontend
@@ -30,6 +40,13 @@ class AlumnoUpdate(BaseModel):
     correo_electronico: str | None = None
     id_curso: int | None = None
     estado_alumno: str | None = None
+
+    @field_validator("fecha_nacimiento", mode="before")
+    @classmethod
+    def normalizar_fecha_nacimiento(cls, valor):
+        if isinstance(valor, str):
+            return parsear_fecha(valor)
+        return valor
 
 
 class AlumnoResponse(AlumnoBase):

@@ -9,7 +9,7 @@ Sistema de gestión escolar: **API REST (FastAPI) + interfaz web (Flet) sobre Po
 ## Funcionalidades
 
 - **Seguridad**: login JWT, control de acceso por rol (ADMIN, TEACHER, PARENT, STUDENT), cambio de contraseña y usuarios vinculados a alumnos, docentes o tutores.
-- **Gestión académica**: ABM de niveles, cursos, materias, horarios y asignaciones docente-materia-curso.
+- **Gestión académica**: ABM de niveles, cursos, materias, horarios y asignaciones docente-materia-curso. La matriculación de alumnos y la aprobación de admisiones validan que la edad coincida con el grado/nivel solicitado.
 - **Personas**: ABM de alumnos, docentes y tutores con sus vínculos familiares.
 - **Servicios escolares**: deportes (grupos e inscripciones), transporte y comedor.
 - **Comunidad**: formularios públicos de inscripción, contacto, opiniones y postulaciones laborales; bandeja de mensajes y moderación de opiniones desde el panel admin.

@@ -2,10 +2,12 @@ from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from backend.app.core.reglas_academicas import validar_edad_para_curso
 from backend.app.models.personas import Alumno, Profesor
 from backend.app.repositories import (
     alumno_repository,
     curso_repository,
+    nivel_repository,
     padre_alumno_repository,
     padre_repository,
     profesor_repository,
@@ -49,21 +51,42 @@ class PersonasService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Ya existe un alumno registrado con el DNI '{alumno_in.dni}'",
             )
-        if not curso_repository.get(db, alumno_in.id_curso):
+        curso = curso_repository.get(db, alumno_in.id_curso)
+        if not curso:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"El curso con ID {alumno_in.id_curso} no existe",
             )
+        nivel = nivel_repository.get(db, curso.id_nivel)
+        validar_edad_para_curso(alumno_in.fecha_nacimiento, curso, nivel)
 
         return alumno_repository.create(db, alumno_in)
 
     def update_alumno(self, db: Session, legajo: int, alumno_in: AlumnoUpdate):
         alumno = self.get_alumno(db, legajo)
-        if alumno_in.id_curso and not curso_repository.get(db, alumno_in.id_curso):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"El curso con ID {alumno_in.id_curso} no existe",
+        datos = alumno_in.model_dump(exclude_unset=True)
+
+        # Solo se revalida la edad cuando se modifica el curso o la fecha de
+        # nacimiento, para no bloquear cambios administrativos de fichas
+        # históricas que ya estaban registradas.
+        id_curso_nuevo = datos.get("id_curso")
+        fecha_nueva = datos.get("fecha_nacimiento")
+        if id_curso_nuevo is not None or fecha_nueva is not None:
+            id_curso = (
+                id_curso_nuevo if id_curso_nuevo is not None else alumno.id_curso
             )
+            curso = curso_repository.get(db, id_curso)
+            if not curso:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"El curso con ID {id_curso} no existe",
+                )
+            fecha_nacimiento = (
+                fecha_nueva if fecha_nueva is not None else alumno.fecha_nacimiento
+            )
+            nivel = nivel_repository.get(db, curso.id_nivel)
+            validar_edad_para_curso(fecha_nacimiento, curso, nivel)
+
         return alumno_repository.update(db, alumno, alumno_in)
 
     def delete_alumno(self, db: Session, legajo: int):
