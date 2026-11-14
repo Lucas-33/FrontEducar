@@ -33,6 +33,39 @@ class MobileAPIClient:
             clean_url = f"{clean_url}/api/v1"
         self.base_url = clean_url
 
+    def get_server_url(self, page_host: str | None = None) -> str:
+        """Devuelve la URL raíz del servidor (sin /api/v1), garantizando que sea accesible desde dispositivos móviles en la red local."""
+        import socket
+        from urllib.parse import urlparse
+
+        # 1. Si se configuró explícitamente en el entorno SERVER_PUBLIC_URL
+        env_url = os.getenv("SERVER_PUBLIC_URL")
+        if env_url:
+            return env_url.rstrip("/")
+
+        parsed = urlparse(self.base_url)
+        scheme = parsed.scheme or "http"
+        port = f":{parsed.port}" if parsed.port else ""
+        host = parsed.hostname or "127.0.0.1"
+
+        # Si el host es loopback (127.0.0.1 o localhost), el celular no podrá conectarse a sí mismo
+        if host in ("127.0.0.1", "localhost", "0.0.0.0"):
+            if page_host and page_host not in ("127.0.0.1", "localhost", "0.0.0.0"):
+                host = page_host
+            else:
+                try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    s.connect(("8.8.8.8", 80))
+                    host = s.getsockname()[0]
+                    s.close()
+                except Exception:
+                    try:
+                        host = socket.gethostbyname(socket.gethostname())
+                    except Exception:
+                        host = "127.0.0.1"
+
+        return f"{scheme}://{host}{port}"
+
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(timeout=12.0)
@@ -118,6 +151,25 @@ class MobileAPIClient:
     ) -> dict[str, Any]:
         payload = {"id_factura": id_factura, "archivo_url": archivo_url}
         return await self._post("/finanzas/comprobantes", data=payload)
+
+    async def upload_comprobante_pdf(
+        self, id_factura: int, nombre_archivo: str, contenido_bytes: bytes
+    ) -> dict[str, Any]:
+        client = self._get_client()
+        headers = self._get_headers()
+        headers.pop("Content-Type", None)
+
+        files = {"archivo": (nombre_archivo, contenido_bytes, "application/pdf")}
+        data = {"id_factura": str(id_factura)}
+
+        response = await client.post(
+            f"{self.base_url}/finanzas/comprobantes/upload",
+            data=data,
+            files=files,
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
 
     async def get_hijos(self, id_padre: int) -> list[dict[str, Any]]:
         return await self._get(f"/personas/padres/{id_padre}/alumnos")

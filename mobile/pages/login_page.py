@@ -129,8 +129,9 @@ def get_login_page(page: ft.Page, on_login_success) -> ft.Container:
         actions=[
             ft.TextButton(
                 "Cancelar",
-                on_click=lambda _: setattr(dialogo_config, "open", False)
-                or page.update(),
+                on_click=lambda _: (
+                    setattr(dialogo_config, "open", False) or page.update()
+                ),
             ),
             ft.Button(
                 "Guardar", bgcolor=TEAL, color="white", on_click=guardar_ip_servidor

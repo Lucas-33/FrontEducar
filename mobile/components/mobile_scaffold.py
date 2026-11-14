@@ -75,9 +75,9 @@ def create_mobile_scaffold(
                             icon_color=TEAL,
                             icon_size=20,
                             tooltip="Actualizar",
-                            on_click=lambda _: on_refresh()
-                            if on_refresh
-                            else page.update(),
+                            on_click=lambda _: (
+                                on_refresh() if on_refresh else page.update()
+                            ),
                         ),
                         ft.Container(
                             width=32,

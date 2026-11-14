@@ -40,39 +40,67 @@ def get_facturas_page(page: ft.Page) -> list[ft.Control]:
         "", size=13, weight=ft.FontWeight.W_600, color=TEAL_DARK
     )
     modal_monto_txt = ft.Text("", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK)
-    input_comprobante = ft.TextField(
-        label="Archivo / N° de transferencia",
-        hint_text="Ej: transferencia_123456.pdf",
-        value="comprobante_transferencia.pdf",
-        text_size=13,
+
+    input_ticket_manual = ft.TextField(
+        label="N° de comprobante / Referencia",
+        hint_text="Ej: transf_00129845.pdf o N° 849204",
+        text_size=12,
         border_radius=BORDER_RADIUS,
         border_color=BORDER_COLOR,
         focused_border_color=TEAL,
-        expand=True,
-    )
-
-    btn_confirmar_pago = ft.Button(
-        "Enviar Comprobante",
-        icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
-        bgcolor=TEAL,
-        color=BG_WHITE,
-        height=40,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
     )
 
     def cerrar_dialogo(_=None):
         dialogo_pago.open = False
         page.update()
 
-    async def enviar_comprobante_click(_):
+    async def abrir_subida_movil_click(_):
+        """Abre la pantalla de carga optimizada para celulares en el navegador."""
+        if not factura_seleccionada:
+            return
+
+        page_host = None
+        if getattr(page, "url", None):
+            try:
+                from urllib.parse import urlparse
+
+                parsed_p = urlparse(page.url)
+                if parsed_p.hostname and parsed_p.hostname not in (
+                    "127.0.0.1",
+                    "localhost",
+                ):
+                    page_host = parsed_p.hostname
+            except Exception:
+                pass
+
+        server_url = mobile_api.get_server_url(page_host=page_host)
+        token = mobile_api.token or ""
+        url = f"{server_url}/subir-comprobante?factura_id={factura_seleccionada['id']}&token={token}"
+        await page.launch_url(url)
+
+    async def actualizar_y_cerrar_click(_):
+        cerrar_dialogo()
+        await cargar_facturas()
+        snack_act = ft.SnackBar(
+            ft.Text("Estado de facturas y comprobantes actualizado.", color=BG_WHITE),
+            bgcolor=ONLINE_GREEN,
+        )
+        page.overlay.append(snack_act)
+        snack_act.open = True
+        page.update()
+
+    async def enviar_ticket_manual_click(_):
         nonlocal factura_seleccionada
         if not factura_seleccionada:
             return
 
-        nombre_archivo = (input_comprobante.value or "").strip()
-        if not nombre_archivo:
+        ref_txt = (input_ticket_manual.value or "").strip()
+        if not ref_txt:
             snack_error = ft.SnackBar(
-                ft.Text("Indique el nombre o número del comprobante.", color=BG_WHITE),
+                ft.Text(
+                    "Ingrese el número de transferencia o nombre de archivo.",
+                    color=BG_WHITE,
+                ),
                 bgcolor=BADGE_RED_TXT,
             )
             page.overlay.append(snack_error)
@@ -81,29 +109,24 @@ def get_facturas_page(page: ft.Page) -> list[ft.Control]:
             return
 
         try:
-            btn_confirmar_pago.disabled = True
-            btn_confirmar_pago.text = "Enviando..."
-            page.update()
-
+            nombre_final = (
+                ref_txt if ref_txt.lower().endswith(".pdf") else f"{ref_txt}.pdf"
+            )
             await mobile_api.post_comprobante(
                 id_factura=factura_seleccionada["id"],
-                archivo_url=nombre_archivo,
+                archivo_url=nombre_final,
             )
-
             cerrar_dialogo()
-
             snack_exito = ft.SnackBar(
                 ft.Text(
-                    "¡Comprobante enviado! En revisión por administración.",
+                    f"¡Comprobante '{nombre_final}' informado a administración!",
                     color=BG_WHITE,
                 ),
                 bgcolor=ONLINE_GREEN,
             )
             page.overlay.append(snack_exito)
             snack_exito.open = True
-
             await cargar_facturas()
-
         except Exception as ex:
             snack_err = ft.SnackBar(
                 ft.Text(f"Error al enviar: {ex}", color=BG_WHITE),
@@ -111,12 +134,7 @@ def get_facturas_page(page: ft.Page) -> list[ft.Control]:
             )
             page.overlay.append(snack_err)
             snack_err.open = True
-        finally:
-            btn_confirmar_pago.disabled = False
-            btn_confirmar_pago.text = "Enviar Comprobante"
             page.update()
-
-    btn_confirmar_pago.on_click = enviar_comprobante_click
 
     dialogo_pago = ft.AlertDialog(
         shape=ft.RoundedRectangleBorder(radius=CARD_RADIUS),
@@ -192,26 +210,83 @@ def get_facturas_page(page: ft.Page) -> list[ft.Control]:
                         ),
                     ),
                     ft.Text(
-                        "Adjuntá el ticket de pago emitido por tu banco:",
+                        "Subir comprobante de pago (.PDF):",
                         size=11,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEXT_COLOR,
+                    ),
+                    # Botón principal: abre el selector nativo del teléfono
+                    ft.Button(
+                        content=ft.Row(
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            spacing=8,
+                            controls=[
+                                ft.Icon(ft.Icons.UPLOAD_FILE, color=BG_WHITE, size=18),
+                                ft.Text(
+                                    "Elegir archivo PDF del celular",
+                                    size=12,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=BG_WHITE,
+                                ),
+                            ],
+                        ),
+                        bgcolor=TEAL,
+                        height=42,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                        ),
+                        on_click=abrir_subida_movil_click,
+                    ),
+                    ft.Text(
+                        "Al tocar el botón se abrirá el selector de archivos de tu dispositivo para cargar el archivo .PDF emitido por tu banco.",
+                        size=10,
+                        color=MUTED,
+                        italic=True,
+                    ),
+                    ft.Divider(color=BORDER_COLOR, height=1, thickness=1),
+                    ft.Text(
+                        "O informar por código / número de ticket:",
+                        size=10,
+                        weight=ft.FontWeight.W_600,
                         color=MUTED,
                     ),
-                    input_comprobante,
+                    ft.Row(
+                        spacing=6,
+                        controls=[
+                            ft.Container(expand=True, content=input_ticket_manual),
+                            ft.IconButton(
+                                icon=ft.Icons.SEND_ROUNDED,
+                                tooltip="Enviar ticket manual",
+                                icon_color=TEAL_DARK,
+                                on_click=enviar_ticket_manual_click,
+                            ),
+                        ],
+                    ),
                 ],
             ),
         ),
         actions=[
-            ft.TextButton("Cancelar", on_click=cerrar_dialogo),
-            btn_confirmar_pago,
+            ft.TextButton("Cerrar", on_click=cerrar_dialogo),
+            ft.Button(
+                "Ya lo subí / Actualizar",
+                icon=ft.Icons.REFRESH,
+                bgcolor=TEAL_LIGHT,
+                color=TEAL_DARK,
+                style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                ),
+                on_click=actualizar_y_cerrar_click,
+            ),
         ],
     )
 
     def abrir_modal_pago(factura: dict):
         nonlocal factura_seleccionada
         factura_seleccionada = factura
+        input_ticket_manual.value = f"ticket_fac_{factura.get('id')}.pdf"
+
         modal_titulo_alumno.value = f"Período {factura.get('mes')}/{factura.get('anio')} · {factura.get('alumno_nombre')}"
         modal_monto_txt.value = f"$ {factura.get('total', 0):,.2f}"
-        input_comprobante.value = f"ticket_pago_fac_{factura.get('id')}.pdf"
 
         if dialogo_pago not in page.overlay:
             page.overlay.append(dialogo_pago)
