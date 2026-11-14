@@ -57,19 +57,21 @@ class APIClient:
         response.raise_for_status()
         return response.json()
 
-    async def _post(self, path: str, data: dict[str, Any]) -> Any:
+    async def _post(self, path: str, data: dict[str, Any] | None = None) -> Any:
         client = self._get_client()
-        response = await client.post(
-            f"{self.base_url}{path}", json=data, headers=self._get_headers()
-        )
+        kwargs: dict[str, Any] = {"headers": self._get_headers()}
+        if data is not None:
+            kwargs["json"] = data
+        response = await client.post(f"{self.base_url}{path}", **kwargs)
         response.raise_for_status()
         return response.json()
 
-    async def _put(self, path: str, data: dict[str, Any]) -> Any:
+    async def _put(self, path: str, data: dict[str, Any] | None = None) -> Any:
         client = self._get_client()
-        response = await client.put(
-            f"{self.base_url}{path}", json=data, headers=self._get_headers()
-        )
+        kwargs: dict[str, Any] = {"headers": self._get_headers()}
+        if data is not None:
+            kwargs["json"] = data
+        response = await client.put(f"{self.base_url}{path}", **kwargs)
         response.raise_for_status()
         return response.json()
 
@@ -559,6 +561,19 @@ class APIClient:
     ) -> dict[str, Any]:
         """Obtiene el listado de pagos por recorrido de transporte."""
         return await self._get("/finanzas/reportes/transporte", params=params)
+
+    # ==================== VALIDACIÓN DE COMPROBANTES (ADMIN) ====================
+    async def get_comprobantes_pendientes(self) -> list[dict[str, Any]]:
+        """Obtiene la nómina de comprobantes en revisión esperando aprobación."""
+        return await self._get("/finanzas/comprobantes/pendientes")
+
+    async def aprobar_comprobante(self, id_comprobante: int) -> dict[str, Any]:
+        """Aprueba el comprobante y cancela la factura (PAGADA)."""
+        return await self._put(f"/finanzas/comprobantes/{id_comprobante}/aprobar")
+
+    async def rechazar_comprobante(self, id_comprobante: int) -> dict[str, Any]:
+        """Rechaza el comprobante y mantiene la factura en PENDIENTE."""
+        return await self._put(f"/finanzas/comprobantes/{id_comprobante}/rechazar")
 
 
 api_client = APIClient()

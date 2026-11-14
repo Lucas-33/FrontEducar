@@ -422,3 +422,105 @@ def generar_pdf_reporte_transporte(
         )
 
     return bytes(pdf.output())
+
+
+def generar_pdf_constancia_comprobante(
+    id_comprobante: int,
+    id_factura: int,
+    archivo_url: str,
+    estado_comprobante: str,
+    fecha_subida: str,
+    alumno_datos: dict,
+    total_factura: float,
+    items: list[dict],
+) -> bytes:
+    """Genera una constancia digital en PDF con el detalle del pago y la referencia informada."""
+    pdf = ReportePDFBase(
+        titulo="Constancia Oficial: Comprobante de Pago Informado",
+        subtitulo=f"Comprobante #{id_comprobante} · Factura #{id_factura}",
+    )
+    pdf.add_page()
+
+    # Sección 1: Datos de la Operación
+    pdf.seccion_titulo("1. Datos Generales de la Transacción")
+    pdf.fila_tabla(
+        [55, 135],
+        ["N° de Comprobante:", f"#{id_comprobante}"],
+        es_encabezado=False,
+    )
+    pdf.fila_tabla(
+        [55, 135],
+        ["Estado de Validación:", estado_comprobante.upper()],
+        es_encabezado=False,
+    )
+    pdf.fila_tabla(
+        [55, 135],
+        ["Fecha / Hora de Registro:", fecha_subida],
+        es_encabezado=False,
+    )
+    pdf.fila_tabla(
+        [55, 135],
+        ["Referencia / Archivo Informado:", archivo_url],
+        es_encabezado=False,
+    )
+
+    # Sección 2: Alumno
+    pdf.ln(3)
+    pdf.seccion_titulo("2. Alumno / Estudiante")
+    pdf.fila_tabla(
+        [55, 135],
+        ["Nombre Completo:", alumno_datos.get("nombre_completo", "-")],
+        es_encabezado=False,
+    )
+    pdf.fila_tabla(
+        [55, 135],
+        ["Legajo Estudiantil:", str(alumno_datos.get("legajo", "-"))],
+        es_encabezado=False,
+    )
+    pdf.fila_tabla(
+        [55, 135],
+        ["DNI:", str(alumno_datos.get("dni", "-"))],
+        es_encabezado=False,
+    )
+    pdf.fila_tabla(
+        [55, 135],
+        ["Curso / División:", str(alumno_datos.get("curso", "-"))],
+        es_encabezado=False,
+    )
+
+    # Sección 3: Detalle de Conceptos Facturados
+    pdf.ln(3)
+    pdf.seccion_titulo("3. Detalle de Conceptos Liquidados")
+    anchos = [140, 50]
+    pdf.fila_tabla(anchos, ["Concepto", "Monto"], es_encabezado=True)
+    if items:
+        for it in items:
+            monto_f = float(it.get("monto", 0))
+            pdf.fila_tabla(
+                anchos,
+                [str(it.get("concepto", "Cuota")), f"$ {monto_f:,.2f}"],
+            )
+    else:
+        pdf.fila_tabla(
+            anchos,
+            ["Liquidación de servicios educativos", f"$ {total_factura:,.2f}"],
+        )
+
+    pdf.ln(2)
+    pdf.fila_tabla(
+        [140, 50],
+        ["TOTAL LIQUIDADO:", f"$ {total_factura:,.2f}"],
+        es_encabezado=True,
+    )
+
+    pdf.ln(6)
+    pdf.set_font("helvetica", "I", 9)
+    pdf.set_text_color(107, 114, 128)
+    pdf.multi_cell(
+        0,
+        5,
+        "Nota: Este documento certifica los datos del pago declarados por el responsable a través del portal institucional de Educar para Transformar. "
+        "La acreditación definitiva y cancelación de la deuda está sujeta a la conciliación del saldo en la cuenta bancaria de la institución.",
+    )
+
+    return bytes(pdf.output())

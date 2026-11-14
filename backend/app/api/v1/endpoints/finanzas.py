@@ -12,12 +12,14 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.responses import FileResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from backend.app.api.deps import bearer_scheme, get_current_user, require_roles
 from backend.app.core.database import get_db
 from backend.app.core.scheduler import tarea_aviso_morosos, tarea_cierre_mensual
+from backend.app.models.academico import Curso
 from backend.app.models.finanzas import (
     ComprobantePago,
     ConfiguracionFinanciera,
@@ -33,6 +35,7 @@ from backend.app.schemas.finanzas import (
     ItemFacturaResponse,
 )
 from backend.app.services.finanzas import finanzas_service
+from backend.app.services.pdf_generator import generar_pdf_constancia_comprobante
 from backend.app.services.seguridad import seguridad_service
 
 router = APIRouter()
@@ -207,6 +210,160 @@ def subir_comprobante_archivo(
         "archivo_url": nuevo_comprobante.archivo_url,
         "nombre_original": nombre_original,
     }
+
+
+@router.get(
+    "/comprobantes/pendientes",
+    summary="Listar comprobantes de pago en revisión (Administrador)",
+)
+def listar_comprobantes_pendientes(
+    current_user: Usuario = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Devuelve la nómina de comprobantes bancarios subidos por tutores que esperan validación."""
+    return finanzas_service.listar_comprobantes_pendientes(db)
+
+
+@router.get(
+    "/comprobantes/{id_comprobante}/archivo",
+    summary="Descargar o visualizar archivo PDF de comprobante de pago",
+)
+def obtener_archivo_comprobante(
+    id_comprobante: int,
+    current_user: Usuario = Depends(_obtener_usuario_comprobante),
+    db: Session = Depends(get_db),
+):
+    """Permite visualizar el comprobante bancario subido o genera una constancia digital en PDF."""
+    comp = (
+        db.query(ComprobantePago)
+        .filter(ComprobantePago.id_comprobante == id_comprobante)
+        .first()
+    )
+    if not comp:
+        raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+
+    factura = db.query(Factura).filter(Factura.id_factura == comp.id_factura).first()
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura asociada no encontrada")
+
+    rol = seguridad_service.get_rol_nombre(db, current_user)
+    if rol == "PARENT":
+        alumno_check = (
+            db.query(PadreAlumno)
+            .filter(
+                PadreAlumno.id_padre == current_user.id_usuario,
+                PadreAlumno.legajo_alumno == factura.legajo_alumno,
+            )
+            .first()
+        )
+        if not alumno_check:
+            raise HTTPException(
+                status_code=403,
+                detail="No tiene permiso para ver comprobantes de este alumno",
+            )
+
+    # 1. Verificar si existe un archivo físico real en disco
+    archivo_rel = (comp.archivo_url or "").strip()
+    archivo_limpio = archivo_rel.replace("\\", "/")
+    if archivo_limpio.startswith("/uploads/"):
+        archivo_limpio = archivo_limpio[len("/uploads/") :]
+    elif archivo_limpio.startswith("uploads/"):
+        archivo_limpio = archivo_limpio[len("uploads/") :]
+
+    posibles_rutas = [
+        os.path.join(os.getcwd(), "uploads", archivo_limpio),
+        os.path.join(os.getcwd(), "uploads", "comprobantes", archivo_limpio),
+        os.path.join(
+            os.getcwd(),
+            "uploads",
+            "comprobantes",
+            os.path.basename(archivo_limpio),
+        ),
+        archivo_rel,
+    ]
+
+    for ruta in posibles_rutas:
+        if os.path.isfile(ruta):
+            media_type = "application/pdf"
+            if ruta.lower().endswith((".png", ".jpg", ".jpeg")):
+                media_type = (
+                    "image/png" if ruta.lower().endswith(".png") else "image/jpeg"
+                )
+            return FileResponse(
+                path=ruta,
+                media_type=media_type,
+                filename=os.path.basename(ruta),
+            )
+
+    # 2. Si no hay archivo físico (ej. cargado con referencia manual o entorno demo),
+    # generamos dinámicamente la constancia institucional oficial en PDF
+    alumno = db.query(Alumno).filter(Alumno.legajo == factura.legajo_alumno).first()
+    curso = (
+        db.query(Curso).filter(Curso.id_curso == alumno.id_curso).first()
+        if alumno and alumno.id_curso
+        else None
+    )
+    items = (
+        db.query(ItemFactura).filter(ItemFactura.id_factura == factura.id_factura).all()
+    )
+
+    alumno_datos = {
+        "nombre_completo": f"{alumno.apellido}, {alumno.nombre}"
+        if alumno
+        else f"Legajo #{factura.legajo_alumno}",
+        "legajo": alumno.legajo if alumno else factura.legajo_alumno,
+        "dni": alumno.dni if alumno else "-",
+        "curso": curso.nombre if curso else "Sin Curso",
+    }
+    items_datos = [{"concepto": it.concepto, "monto": float(it.monto)} for it in items]
+    fecha_subida_str = (
+        comp.fecha_subida.strftime("%d/%m/%Y %H:%M") if comp.fecha_subida else "-"
+    )
+
+    pdf_bytes = generar_pdf_constancia_comprobante(
+        id_comprobante=comp.id_comprobante,
+        id_factura=factura.id_factura,
+        archivo_url=comp.archivo_url,
+        estado_comprobante=comp.estado,
+        fecha_subida=fecha_subida_str,
+        alumno_datos=alumno_datos,
+        total_factura=float(factura.total),
+        items=items_datos,
+    )
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename=comprobante_{comp.id_comprobante}.pdf"
+        },
+    )
+
+
+@router.put(
+    "/comprobantes/{id_comprobante}/aprobar",
+    summary="Aprobar comprobante y cancelar cuota (Administrador)",
+)
+def aprobar_comprobante(
+    id_comprobante: int,
+    current_user: Usuario = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Aprueba el comprobante de transferencia y pasa la factura a PAGADA."""
+    return finanzas_service.aprobar_comprobante(db, id_comprobante)
+
+
+@router.put(
+    "/comprobantes/{id_comprobante}/rechazar",
+    summary="Rechazar comprobante de pago (Administrador)",
+)
+def rechazar_comprobante(
+    id_comprobante: int,
+    current_user: Usuario = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Rechaza el comprobante y restablece la factura a PENDIENTE."""
+    return finanzas_service.rechazar_comprobante(db, id_comprobante)
 
 
 @router.put("/configuracion", summary="Actualizar precios base (Administrador)")

@@ -133,14 +133,26 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
 
     # Si el usuario achica o agranda la ventana en la PC, se actualiza en tiempo real
     def actualizar_navbar(e):
-        ahora_es_celular = page.width < 768
-        navbar_container.padding = ft.Padding.symmetric(
-            horizontal=16 if ahora_es_celular else 32
-        )
-        navbar_container.content.controls[1] = (
-            derecha_movil if ahora_es_celular else derecha_desktop
-        )
-        navbar_container.update()
+        try:
+            # Si el navbar ya no está adjunto a la página activa, salimos limpiamente
+            if not getattr(navbar_container, "page", None):
+                return
+            ahora_es_celular = (page.width or 1000) < 768
+            navbar_container.padding = ft.Padding.symmetric(
+                horizontal=16 if ahora_es_celular else 32
+            )
+            if (
+                navbar_container.content
+                and hasattr(navbar_container.content, "controls")
+                and len(navbar_container.content.controls) > 1
+            ):
+                navbar_container.content.controls[1] = (
+                    derecha_movil if ahora_es_celular else derecha_desktop
+                )
+            navbar_container.update()
+        except Exception:
+            # Evita excepciones no controladas en el hilo de eventos de Flet al desmontar la vista
+            pass
 
     # Suscribimos el evento al redimensionar la pantalla
     page.on_resize = actualizar_navbar

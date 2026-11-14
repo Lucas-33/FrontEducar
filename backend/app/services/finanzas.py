@@ -4,7 +4,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend.app.models.academico import Curso, NivelEducativo
-from backend.app.models.finanzas import ConfiguracionFinanciera, Factura, ItemFactura
+from backend.app.models.finanzas import (
+    ComprobantePago,
+    ConfiguracionFinanciera,
+    Factura,
+    ItemFactura,
+)
 from backend.app.models.personas import Alumno, Profesor
 from backend.app.models.servicios import (
     Deporte,
@@ -793,6 +798,152 @@ class FinanzasService:
             "al_dia": total_al_dia,
             "morosos": total_pendientes,
             "items": lista,
+        }
+
+    def listar_comprobantes_pendientes(self, db: Session) -> list[dict]:
+        """Devuelve los comprobantes de pago subidos por tutores que esperan validación del administrador."""
+        comprobantes = (
+            db.query(ComprobantePago)
+            .filter(ComprobantePago.estado == "PENDIENTE")
+            .order_by(ComprobantePago.id_comprobante.desc())
+            .all()
+        )
+        if not comprobantes:
+            return []
+
+        facturas_ids = {c.id_factura for c in comprobantes}
+        facturas = {
+            f.id_factura: f
+            for f in db.query(Factura)
+            .filter(Factura.id_factura.in_(facturas_ids))
+            .all()
+        }
+        alumnos_legajos = {f.legajo_alumno for f in facturas.values()}
+        alumnos = (
+            {
+                a.legajo: a
+                for a in db.query(Alumno)
+                .filter(Alumno.legajo.in_(alumnos_legajos))
+                .all()
+            }
+            if alumnos_legajos
+            else {}
+        )
+        cursos_ids = {a.id_curso for a in alumnos.values() if a.id_curso}
+        cursos = (
+            {
+                c.id_curso: c
+                for c in db.query(Curso).filter(Curso.id_curso.in_(cursos_ids)).all()
+            }
+            if cursos_ids
+            else {}
+        )
+        items_db = (
+            db.query(ItemFactura).filter(ItemFactura.id_factura.in_(facturas_ids)).all()
+            if facturas_ids
+            else []
+        )
+        items_por_fac: dict[int, list[str]] = {}
+        for it in items_db:
+            items_por_fac.setdefault(it.id_factura, []).append(
+                f"{it.concepto} (${float(it.monto):,.0f})"
+            )
+
+        resultado = []
+        for c in comprobantes:
+            fac = facturas.get(c.id_factura)
+            if not fac:
+                continue
+            al = alumnos.get(fac.legajo_alumno)
+            cur = cursos.get(al.id_curso) if al and al.id_curso else None
+
+            resultado.append(
+                {
+                    "id_comprobante": c.id_comprobante,
+                    "id_factura": c.id_factura,
+                    "archivo_url": c.archivo_url,
+                    "estado": c.estado,
+                    "fecha_subida": c.fecha_subida.strftime("%d/%m/%Y %H:%M")
+                    if c.fecha_subida
+                    else "-",
+                    "legajo_alumno": fac.legajo_alumno,
+                    "alumno_nombre": f"{al.apellido}, {al.nombre}"
+                    if al
+                    else f"Legajo #{fac.legajo_alumno}",
+                    "dni": al.dni if al else "-",
+                    "curso": cur.nombre if cur else "Sin Curso",
+                    "mes": fac.mes,
+                    "anio": fac.anio,
+                    "total": float(fac.total),
+                    "estado_factura": fac.estado,
+                    "conceptos": ", ".join(
+                        items_por_fac.get(fac.id_factura, ["Cuota mensual"])
+                    ),
+                }
+            )
+        return resultado
+
+    def aprobar_comprobante(self, db: Session, id_comprobante: int) -> dict:
+        """Aprueba un comprobante de pago y pasa la factura asociada a estado PAGADA."""
+        comp = (
+            db.query(ComprobantePago)
+            .filter(ComprobantePago.id_comprobante == id_comprobante)
+            .first()
+        )
+        if not comp:
+            raise HTTPException(status_code=404, detail="El comprobante no existe")
+
+        fac = db.query(Factura).filter(Factura.id_factura == comp.id_factura).first()
+        if not fac:
+            raise HTTPException(
+                status_code=404, detail="La factura vinculada no existe"
+            )
+
+        comp.estado = "APROBADO"
+        fac.estado = "PAGADA"
+        fac.fecha_emision = date.today()
+        db.commit()
+        db.refresh(comp)
+        db.refresh(fac)
+
+        return {
+            "mensaje": f"Comprobante #{comp.id_comprobante} aprobado exitosamente. Factura #{fac.id_factura} cancelada.",
+            "id_comprobante": comp.id_comprobante,
+            "id_factura": fac.id_factura,
+            "nuevo_estado_factura": fac.estado,
+            "nuevo_estado_comprobante": comp.estado,
+        }
+
+    def rechazar_comprobante(
+        self, db: Session, id_comprobante: int, motivo: str | None = None
+    ) -> dict:
+        """Rechaza un comprobante de pago y restablece la factura a estado PENDIENTE."""
+        comp = (
+            db.query(ComprobantePago)
+            .filter(ComprobantePago.id_comprobante == id_comprobante)
+            .first()
+        )
+        if not comp:
+            raise HTTPException(status_code=404, detail="El comprobante no existe")
+
+        fac = db.query(Factura).filter(Factura.id_factura == comp.id_factura).first()
+        if not fac:
+            raise HTTPException(
+                status_code=404, detail="La factura vinculada no existe"
+            )
+
+        comp.estado = "RECHAZADO"
+        fac.estado = "PENDIENTE"
+        db.commit()
+        db.refresh(comp)
+        db.refresh(fac)
+
+        return {
+            "mensaje": f"Comprobante #{comp.id_comprobante} rechazado. La factura #{fac.id_factura} continúa pendiente.",
+            "id_comprobante": comp.id_comprobante,
+            "id_factura": fac.id_factura,
+            "nuevo_estado_factura": fac.estado,
+            "nuevo_estado_comprobante": comp.estado,
         }
 
 

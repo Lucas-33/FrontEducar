@@ -61,6 +61,13 @@ def test_ruta_estatica_uploads_montada():
     assert resp.status_code == 404
 
 
+def test_endpoints_validacion_comprobantes_protegidos():
+    """Verifica que los endpoints de validación de comprobantes exijan autenticación ADMIN."""
+    assert client.get("/api/v1/finanzas/comprobantes/pendientes").status_code == 401
+    assert client.put("/api/v1/finanzas/comprobantes/1/aprobar").status_code == 401
+    assert client.put("/api/v1/finanzas/comprobantes/1/rechazar").status_code == 401
+
+
 def test_endpoints_reportes_pdf_protegidos():
     """Verifica que los endpoints de reportes PDF exijan autenticación ADMIN."""
     assert client.get("/api/v1/reportes/alumnos.pdf").status_code == 401
@@ -169,3 +176,30 @@ def test_generadores_pdf_reportes():
     )
     assert isinstance(pdf_transporte, bytes)
     assert len(pdf_transporte) > 500
+
+
+def test_generar_pdf_constancia_comprobante():
+    from backend.app.services.pdf_generator import (
+        generar_pdf_constancia_comprobante,
+    )
+
+    alumno_datos = {
+        "nombre_completo": "Pérez, Juan",
+        "legajo": 1002,
+        "dni": "45999888",
+        "curso": "2° Año B",
+    }
+    items = [{"concepto": "Cuota Marzo 2026", "monto": 85000.0}]
+    pdf_bytes = generar_pdf_constancia_comprobante(
+        id_comprobante=1,
+        id_factura=10,
+        archivo_url="ticket_fac_10.pdf",
+        estado_comprobante="PENDIENTE",
+        fecha_subida="14/11/2026 18:30",
+        alumno_datos=alumno_datos,
+        total_factura=85000.0,
+        items=items,
+    )
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 500
+    assert pdf_bytes.startswith(b"%PDF")
