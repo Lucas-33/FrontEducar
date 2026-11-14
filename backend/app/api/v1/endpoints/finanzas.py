@@ -34,6 +34,7 @@ from backend.app.schemas.finanzas import (
     FacturaResponse,
     ItemFacturaResponse,
 )
+from backend.app.services.email_service import probar_conexion_email
 from backend.app.services.finanzas import finanzas_service
 from backend.app.services.pdf_generator import generar_pdf_constancia_comprobante
 from backend.app.services.seguridad import seguridad_service
@@ -493,10 +494,16 @@ def obtener_facturas_padre(
 def ejecutar_cierre_mensual_endpoint(
     mes: int | None = None,
     anio: int | None = None,
+    email_override: str | None = None,
     current_user: Usuario = Depends(require_roles("ADMIN")),
 ):
-    """Fuerza la ejecución del cierre mensual, detallando los conceptos facturados y enviando el PDF por correo."""
-    return tarea_cierre_mensual(forzar=True, mes=mes, anio=anio)
+    """Fuerza la ejecución del cierre mensual, detallando los conceptos facturados y enviando el PDF por correo.
+
+    Si se especifica email_override, todas las facturas se remitirán a esa casilla de correo (ideal para pruebas).
+    """
+    return tarea_cierre_mensual(
+        forzar=True, mes=mes, anio=anio, email_override=email_override
+    )
 
 
 @router.post(
@@ -504,10 +511,26 @@ def ejecutar_cierre_mensual_endpoint(
     summary="Ejecutar envío de avisos a morosos del día 20 por correo (Admin)",
 )
 def ejecutar_aviso_morosos_endpoint(
+    email_override: str | None = None,
     current_user: Usuario = Depends(require_roles("ADMIN")),
 ):
-    """Fuerza la ejecución del aviso de saldo pendiente con factura detallada en PDF a las familias con deuda."""
-    return tarea_aviso_morosos(forzar=True)
+    """Fuerza la ejecución del aviso de saldo pendiente con factura detallada en PDF a las familias con deuda.
+
+    Si se especifica email_override, todos los recordatorios se remitirán a esa casilla de correo (ideal para pruebas).
+    """
+    return tarea_aviso_morosos(forzar=True, email_override=email_override)
+
+
+@router.post(
+    "/scheduler/probar-correo",
+    summary="Probar conexión SMTP y envío de correo a una casilla (Admin)",
+)
+def probar_correo_endpoint(
+    destinatario: str = Query(..., description="Correo de destino para la prueba"),
+    current_user: Usuario = Depends(require_roles("ADMIN")),
+):
+    """Prueba la conexión directa con el servidor SMTP (Gmail) y envía un mensaje de diagnóstico."""
+    return probar_conexion_email(destinatario=destinatario)
 
 
 # ==================== REPORTES FINANCIEROS Y DE PAGOS ====================

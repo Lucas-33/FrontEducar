@@ -61,7 +61,10 @@ def _formatear_desglose_items(items: list[ItemFactura]) -> str:
 
 
 def tarea_cierre_mensual(
-    forzar: bool = False, mes: int | None = None, anio: int | None = None
+    forzar: bool = False,
+    mes: int | None = None,
+    anio: int | None = None,
+    email_override: str | None = None,
 ) -> dict[str, Any]:
     """Se ejecuta y revisa si es el último día hábil del mes (o si forzar=True).
 
@@ -69,6 +72,7 @@ def tarea_cierre_mensual(
     1. El total a abonar.
     2. La composición detallada del valor (cuota base, comedor, transporte, deportes).
     3. La factura adjunta en formato PDF.
+    Si se proporciona email_override, todos los correos se redirigen a esa dirección (ideal para pruebas).
     """
     hoy = date.today()
     if not forzar and not es_ultimo_dia_habil(hoy):
@@ -104,8 +108,10 @@ def tarea_cierre_mensual(
             facturas_procesadas += 1
             alumno = db.query(Alumno).filter_by(legajo=fac.legajo_alumno).first()
             items = db.query(ItemFactura).filter_by(id_factura=fac.id_factura).all()
-            destinatarios = _obtener_destinatarios_factura(
-                db, fac.legajo_alumno, alumno
+            destinatarios = (
+                [email_override.strip()]
+                if email_override
+                else _obtener_destinatarios_factura(db, fac.legajo_alumno, alumno)
             )
 
             if not alumno or not destinatarios:
@@ -189,11 +195,14 @@ def tarea_cierre_mensual(
         db.close()
 
 
-def tarea_aviso_morosos(forzar: bool = False) -> dict[str, Any]:
+def tarea_aviso_morosos(
+    forzar: bool = False, email_override: str | None = None
+) -> dict[str, Any]:
     """Se ejecuta los días 20 de cada mes (o si forzar=True).
 
     Envía a cada padre con saldo pendiente el recordatorio de deuda,
     detallando los ítems adeudados y adjuntando la liquidación en formato PDF.
+    Si se proporciona email_override, todos los correos se redirigen a esa dirección (ideal para pruebas).
     """
     print(
         "⏰ [SCHEDULER] Revisando cuentas con saldo pendiente para aviso del día 20..."
@@ -216,8 +225,10 @@ def tarea_aviso_morosos(forzar: bool = False) -> dict[str, Any]:
             facturas_adeudadas_count += 1
             alumno = db.query(Alumno).filter_by(legajo=fac.legajo_alumno).first()
             items = db.query(ItemFactura).filter_by(id_factura=fac.id_factura).all()
-            destinatarios = _obtener_destinatarios_factura(
-                db, fac.legajo_alumno, alumno
+            destinatarios = (
+                [email_override.strip()]
+                if email_override
+                else _obtener_destinatarios_factura(db, fac.legajo_alumno, alumno)
             )
 
             if not alumno or not destinatarios:
