@@ -3,7 +3,17 @@ from datetime import date
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from backend.app.models.academico import Curso, NivelEducativo
 from backend.app.models.finanzas import ConfiguracionFinanciera, Factura, ItemFactura
+from backend.app.models.personas import Alumno, Profesor
+from backend.app.models.servicios import (
+    Deporte,
+    GrupoDeporte,
+    Horario,
+    InscripcionDeporte,
+    InscripcionTransporte,
+    RecorridoTransporte,
+)
 from backend.app.repositories import (
     alumno_repository,
     deporte_repository,
@@ -129,6 +139,660 @@ class FinanzasService:
         db.commit()
         return {
             "mensaje": f"Proceso finalizado. Se generaron {facturas_generadas} facturas nuevas."
+        }
+
+    def obtener_reporte_ingresos(
+        self,
+        db: Session,
+        fecha_desde: date | None = None,
+        fecha_hasta: date | None = None,
+        mes: int | None = None,
+        anio: int | None = None,
+    ) -> dict:
+        """Listado de ingresos por período de tiempo (facturas cobradas con desglose)."""
+        query = db.query(Factura).filter(Factura.estado == "PAGADA")
+        if fecha_desde:
+            query = query.filter(Factura.fecha_emision >= fecha_desde)
+        if fecha_hasta:
+            query = query.filter(Factura.fecha_emision <= fecha_hasta)
+        if mes:
+            query = query.filter(Factura.mes == mes)
+        if anio:
+            query = query.filter(Factura.anio == anio)
+
+        facturas = query.order_by(
+            Factura.fecha_emision.desc(), Factura.id_factura.desc()
+        ).all()
+
+        alumnos_ids = {f.legajo_alumno for f in facturas}
+        alumnos = (
+            {
+                a.legajo: a
+                for a in db.query(Alumno).filter(Alumno.legajo.in_(alumnos_ids)).all()
+            }
+            if alumnos_ids
+            else {}
+        )
+        cursos_ids = {a.id_curso for a in alumnos.values() if a.id_curso}
+        cursos = (
+            {
+                c.id_curso: c
+                for c in db.query(Curso).filter(Curso.id_curso.in_(cursos_ids)).all()
+            }
+            if cursos_ids
+            else {}
+        )
+        niveles_ids = {c.id_nivel for c in cursos.values() if c.id_nivel}
+        niveles = (
+            {
+                n.id_nivel: n
+                for n in db.query(NivelEducativo)
+                .filter(NivelEducativo.id_nivel.in_(niveles_ids))
+                .all()
+            }
+            if niveles_ids
+            else {}
+        )
+
+        facturas_ids = [f.id_factura for f in facturas]
+        items_db = (
+            db.query(ItemFactura).filter(ItemFactura.id_factura.in_(facturas_ids)).all()
+            if facturas_ids
+            else []
+        )
+        items_por_factura: dict[int, list[dict]] = {}
+        for it in items_db:
+            items_por_factura.setdefault(it.id_factura, []).append(
+                {
+                    "concepto": it.concepto,
+                    "monto": float(it.monto),
+                }
+            )
+
+        lista = []
+        total_ingresos = 0.0
+        for f in facturas:
+            al = alumnos.get(f.legajo_alumno)
+            cur = cursos.get(al.id_curso) if al and al.id_curso else None
+            niv = niveles.get(cur.id_nivel) if cur and cur.id_nivel else None
+            monto = float(f.total)
+            total_ingresos += monto
+            lista.append(
+                {
+                    "id_factura": f.id_factura,
+                    "legajo_alumno": f.legajo_alumno,
+                    "alumno_nombre": f"{al.apellido}, {al.nombre}"
+                    if al
+                    else f"Legajo #{f.legajo_alumno}",
+                    "dni": al.dni if al else "-",
+                    "curso": cur.nombre if cur else "Sin Curso",
+                    "nivel": niv.nombre if niv else "-",
+                    "mes": f.mes,
+                    "anio": f.anio,
+                    "fecha_emision": f.fecha_emision.strftime("%d/%m/%Y")
+                    if f.fecha_emision
+                    else "-",
+                    "fecha_vencimiento": f.fecha_vencimiento.strftime("%d/%m/%Y")
+                    if f.fecha_vencimiento
+                    else "-",
+                    "total": monto,
+                    "estado": f.estado,
+                    "items": items_por_factura.get(f.id_factura, []),
+                }
+            )
+
+        return {
+            "total_ingresos": total_ingresos,
+            "cantidad_cobros": len(lista),
+            "promedio_cobro": round(total_ingresos / len(lista), 2) if lista else 0.0,
+            "items": lista,
+        }
+
+    def obtener_reporte_pagos_completos(
+        self,
+        db: Session,
+        anio: int | None = None,
+        mes: int | None = None,
+        fecha_desde: date | None = None,
+        fecha_hasta: date | None = None,
+    ) -> dict:
+        """Listado de pagos completos realizados por período, discriminado por año y curso/alumno."""
+        query = db.query(Factura).filter(Factura.estado == "PAGADA")
+        if anio:
+            query = query.filter(Factura.anio == anio)
+        if mes:
+            query = query.filter(Factura.mes == mes)
+        if fecha_desde:
+            query = query.filter(Factura.fecha_emision >= fecha_desde)
+        if fecha_hasta:
+            query = query.filter(Factura.fecha_emision <= fecha_hasta)
+
+        facturas = query.order_by(Factura.anio.desc(), Factura.mes.desc()).all()
+
+        alumnos_ids = {f.legajo_alumno for f in facturas}
+        alumnos = (
+            {
+                a.legajo: a
+                for a in db.query(Alumno).filter(Alumno.legajo.in_(alumnos_ids)).all()
+            }
+            if alumnos_ids
+            else {}
+        )
+        cursos_ids = {a.id_curso for a in alumnos.values() if a.id_curso}
+        cursos = (
+            {
+                c.id_curso: c
+                for c in db.query(Curso).filter(Curso.id_curso.in_(cursos_ids)).all()
+            }
+            if cursos_ids
+            else {}
+        )
+        niveles_ids = {c.id_nivel for c in cursos.values() if c.id_nivel}
+        niveles = (
+            {
+                n.id_nivel: n
+                for n in db.query(NivelEducativo)
+                .filter(NivelEducativo.id_nivel.in_(niveles_ids))
+                .all()
+            }
+            if niveles_ids
+            else {}
+        )
+
+        items_db = (
+            db.query(ItemFactura)
+            .filter(ItemFactura.id_factura.in_([f.id_factura for f in facturas]))
+            .all()
+            if facturas
+            else []
+        )
+        items_por_factura: dict[int, list[str]] = {}
+        for it in items_db:
+            items_por_factura.setdefault(it.id_factura, []).append(
+                f"{it.concepto} (${float(it.monto):,.0f})"
+            )
+
+        grupos_anio: dict[str, dict] = {}
+        total_general = 0.0
+
+        for f in facturas:
+            al = alumnos.get(f.legajo_alumno)
+            cur = cursos.get(al.id_curso) if al and al.id_curso else None
+            niv = niveles.get(cur.id_nivel) if cur and cur.id_nivel else None
+            nom_curso = cur.nombre if cur else "Sin Asignar"
+            monto = float(f.total)
+            total_general += monto
+
+            reg = {
+                "id_factura": f.id_factura,
+                "mes": f.mes,
+                "anio": f.anio,
+                "legajo_alumno": f.legajo_alumno,
+                "alumno_nombre": f"{al.apellido}, {al.nombre}"
+                if al
+                else f"Legajo #{f.legajo_alumno}",
+                "dni": al.dni if al else "-",
+                "curso": nom_curso,
+                "nivel": niv.nombre if niv else "-",
+                "monto_pagado": monto,
+                "fecha_pago": f.fecha_emision.strftime("%d/%m/%Y")
+                if f.fecha_emision
+                else "-",
+                "conceptos": ", ".join(items_por_factura.get(f.id_factura, ["Cuota"])),
+            }
+
+            key_anio = str(f.anio)
+            if key_anio not in grupos_anio:
+                grupos_anio[key_anio] = {
+                    "anio": f.anio,
+                    "subtotal": 0.0,
+                    "cursos": {},
+                }
+            grupos_anio[key_anio]["subtotal"] += monto
+
+            if nom_curso not in grupos_anio[key_anio]["cursos"]:
+                grupos_anio[key_anio]["cursos"][nom_curso] = {
+                    "curso": nom_curso,
+                    "subtotal": 0.0,
+                    "alumnos": [],
+                }
+            grupos_anio[key_anio]["cursos"][nom_curso]["subtotal"] += monto
+            grupos_anio[key_anio]["cursos"][nom_curso]["alumnos"].append(reg)
+
+        return {
+            "total_recaudado": total_general,
+            "cantidad_pagos": len(facturas),
+            "grupos_anio": [
+                {
+                    "anio": g["anio"],
+                    "subtotal": g["subtotal"],
+                    "cursos": list(g["cursos"].values()),
+                }
+                for g in grupos_anio.values()
+            ],
+            "items_planos": [
+                {
+                    "id_factura": f.id_factura,
+                    "anio": f.anio,
+                    "mes": f.mes,
+                    "legajo": f.legajo_alumno,
+                    "alumno": f"{alumnos.get(f.legajo_alumno).apellido}, {alumnos.get(f.legajo_alumno).nombre}"
+                    if alumnos.get(f.legajo_alumno)
+                    else "-",
+                    "curso": cursos.get(alumnos.get(f.legajo_alumno).id_curso).nombre
+                    if alumnos.get(f.legajo_alumno)
+                    and alumnos.get(f.legajo_alumno).id_curso
+                    and cursos.get(alumnos.get(f.legajo_alumno).id_curso)
+                    else "-",
+                    "monto": float(f.total),
+                    "fecha": f.fecha_emision.strftime("%d/%m/%Y")
+                    if f.fecha_emision
+                    else "-",
+                    "conceptos": ", ".join(items_por_factura.get(f.id_factura, [])),
+                }
+                for f in facturas
+            ],
+        }
+
+    def obtener_reporte_pagos_incompletos(
+        self,
+        db: Session,
+        anio: int | None = None,
+        mes: int | None = None,
+        fecha_desde: date | None = None,
+        fecha_hasta: date | None = None,
+    ) -> dict:
+        """Listado de pagos incompletos / deudas por período, discriminado por año y curso/alumno."""
+        query = db.query(Factura).filter(Factura.estado != "PAGADA")
+        if anio:
+            query = query.filter(Factura.anio == anio)
+        if mes:
+            query = query.filter(Factura.mes == mes)
+        if fecha_desde:
+            query = query.filter(Factura.fecha_vencimiento >= fecha_desde)
+        if fecha_hasta:
+            query = query.filter(Factura.fecha_vencimiento <= fecha_hasta)
+
+        facturas = query.order_by(Factura.anio.desc(), Factura.mes.desc()).all()
+
+        alumnos_ids = {f.legajo_alumno for f in facturas}
+        alumnos = (
+            {
+                a.legajo: a
+                for a in db.query(Alumno).filter(Alumno.legajo.in_(alumnos_ids)).all()
+            }
+            if alumnos_ids
+            else {}
+        )
+        cursos_ids = {a.id_curso for a in alumnos.values() if a.id_curso}
+        cursos = (
+            {
+                c.id_curso: c
+                for c in db.query(Curso).filter(Curso.id_curso.in_(cursos_ids)).all()
+            }
+            if cursos_ids
+            else {}
+        )
+        niveles_ids = {c.id_nivel for c in cursos.values() if c.id_nivel}
+        niveles = (
+            {
+                n.id_nivel: n
+                for n in db.query(NivelEducativo)
+                .filter(NivelEducativo.id_nivel.in_(niveles_ids))
+                .all()
+            }
+            if niveles_ids
+            else {}
+        )
+
+        items_db = (
+            db.query(ItemFactura)
+            .filter(ItemFactura.id_factura.in_([f.id_factura for f in facturas]))
+            .all()
+            if facturas
+            else []
+        )
+        items_por_factura: dict[int, list[str]] = {}
+        for it in items_db:
+            items_por_factura.setdefault(it.id_factura, []).append(
+                f"{it.concepto} (${float(it.monto):,.0f})"
+            )
+
+        grupos_anio: dict[str, dict] = {}
+        total_deuda = 0.0
+        hoy = date.today()
+
+        for f in facturas:
+            al = alumnos.get(f.legajo_alumno)
+            cur = cursos.get(al.id_curso) if al and al.id_curso else None
+            niv = niveles.get(cur.id_nivel) if cur and cur.id_nivel else None
+            nom_curso = cur.nombre if cur else "Sin Asignar"
+            monto = float(f.total)
+            total_deuda += monto
+            dias_mora = (
+                (hoy - f.fecha_vencimiento).days
+                if f.fecha_vencimiento and hoy > f.fecha_vencimiento
+                else 0
+            )
+
+            reg = {
+                "id_factura": f.id_factura,
+                "mes": f.mes,
+                "anio": f.anio,
+                "legajo_alumno": f.legajo_alumno,
+                "alumno_nombre": f"{al.apellido}, {al.nombre}"
+                if al
+                else f"Legajo #{f.legajo_alumno}",
+                "dni": al.dni if al else "-",
+                "curso": nom_curso,
+                "nivel": niv.nombre if niv else "-",
+                "saldo_pendiente": monto,
+                "estado": f.estado,
+                "fecha_vencimiento": f.fecha_vencimiento.strftime("%d/%m/%Y")
+                if f.fecha_vencimiento
+                else "-",
+                "dias_mora": dias_mora,
+                "conceptos": ", ".join(items_por_factura.get(f.id_factura, ["Cuota"])),
+            }
+
+            key_anio = str(f.anio)
+            if key_anio not in grupos_anio:
+                grupos_anio[key_anio] = {
+                    "anio": f.anio,
+                    "subtotal": 0.0,
+                    "cursos": {},
+                }
+            grupos_anio[key_anio]["subtotal"] += monto
+
+            if nom_curso not in grupos_anio[key_anio]["cursos"]:
+                grupos_anio[key_anio]["cursos"][nom_curso] = {
+                    "curso": nom_curso,
+                    "subtotal": 0.0,
+                    "alumnos": [],
+                }
+            grupos_anio[key_anio]["cursos"][nom_curso]["subtotal"] += monto
+            grupos_anio[key_anio]["cursos"][nom_curso]["alumnos"].append(reg)
+
+        return {
+            "total_deuda": total_deuda,
+            "cantidad_incompletos": len(facturas),
+            "grupos_anio": [
+                {
+                    "anio": g["anio"],
+                    "subtotal": g["subtotal"],
+                    "cursos": list(g["cursos"].values()),
+                }
+                for g in grupos_anio.values()
+            ],
+            "items_planos": [
+                {
+                    "id_factura": f.id_factura,
+                    "anio": f.anio,
+                    "mes": f.mes,
+                    "legajo": f.legajo_alumno,
+                    "alumno": f"{alumnos.get(f.legajo_alumno).apellido}, {alumnos.get(f.legajo_alumno).nombre}"
+                    if alumnos.get(f.legajo_alumno)
+                    else "-",
+                    "curso": cursos.get(alumnos.get(f.legajo_alumno).id_curso).nombre
+                    if alumnos.get(f.legajo_alumno)
+                    and alumnos.get(f.legajo_alumno).id_curso
+                    and cursos.get(alumnos.get(f.legajo_alumno).id_curso)
+                    else "-",
+                    "monto": float(f.total),
+                    "vencimiento": f.fecha_vencimiento.strftime("%d/%m/%Y")
+                    if f.fecha_vencimiento
+                    else "-",
+                    "dias_mora": (hoy - f.fecha_vencimiento).days
+                    if f.fecha_vencimiento and hoy > f.fecha_vencimiento
+                    else 0,
+                    "estado": f.estado,
+                    "conceptos": ", ".join(items_por_factura.get(f.id_factura, [])),
+                }
+                for f in facturas
+            ],
+        }
+
+    def obtener_reporte_pagos_deportes(
+        self,
+        db: Session,
+        mes: int | None = None,
+        anio: int | None = None,
+        id_deporte: int | None = None,
+    ) -> dict:
+        """Listado de pagos de alumnos discriminado por deporte, nivel, horario y profesor a cargo."""
+        q_grupos = db.query(GrupoDeporte)
+        if id_deporte:
+            q_grupos = q_grupos.filter(GrupoDeporte.id_deporte == id_deporte)
+        grupos = q_grupos.all()
+
+        deportes = {d.id_deporte: d for d in db.query(Deporte).all()}
+        niveles = {n.id_nivel: n for n in db.query(NivelEducativo).all()}
+        horarios = {h.id_horario: h for h in db.query(Horario).all()}
+        profesores = {p.legajo: p for p in db.query(Profesor).all()}
+        alumnos = {a.legajo: a for a in db.query(Alumno).all()}
+        cursos = {c.id_curso: c for c in db.query(Curso).all()}
+
+        grupos_ids = [g.id_grupo for g in grupos]
+        inscripciones = (
+            db.query(InscripcionDeporte)
+            .filter(InscripcionDeporte.id_grupo.in_(grupos_ids))
+            .all()
+            if grupos_ids
+            else []
+        )
+
+        hoy = date.today()
+        mes_filtro = mes or hoy.month
+        anio_filtro = anio or hoy.year
+
+        legajos_inscritos = [i.legajo_alumno for i in inscripciones]
+        facturas_mes = (
+            db.query(Factura)
+            .filter(
+                Factura.legajo_alumno.in_(legajos_inscritos),
+                Factura.mes == mes_filtro,
+                Factura.anio == anio_filtro,
+            )
+            .all()
+            if legajos_inscritos
+            else []
+        )
+        factura_por_legajo = {f.legajo_alumno: f for f in facturas_mes}
+
+        lista = []
+        total_recaudado = 0.0
+        total_al_dia = 0
+        total_pendientes = 0
+
+        grupos_dict = {g.id_grupo: g for g in grupos}
+
+        for i in inscripciones:
+            grupo = grupos_dict.get(i.id_grupo)
+            if not grupo:
+                continue
+            dep = deportes.get(grupo.id_deporte)
+            niv = niveles.get(grupo.id_nivel)
+            hor = horarios.get(grupo.id_horario)
+            prof = (
+                profesores.get(dep.legajo_profesor_responsable)
+                if dep and dep.legajo_profesor_responsable
+                else None
+            )
+            al = alumnos.get(i.legajo_alumno)
+            cur = cursos.get(al.id_curso) if al and al.id_curso else None
+
+            precio_deporte = float(dep.precio_mensual) if dep else 0.0
+            fac = factura_por_legajo.get(i.legajo_alumno)
+
+            if fac:
+                estado_pago = "PAGADO" if fac.estado == "PAGADA" else "PENDIENTE"
+                fecha_ref = (
+                    fac.fecha_emision.strftime("%d/%m/%Y")
+                    if fac.estado == "PAGADA"
+                    else (
+                        fac.fecha_vencimiento.strftime("%d/%m/%Y")
+                        if fac.fecha_vencimiento
+                        else "-"
+                    )
+                )
+            else:
+                estado_pago = "NO FACTURADO"
+                fecha_ref = "-"
+
+            if estado_pago == "PAGADO":
+                total_recaudado += precio_deporte
+                total_al_dia += 1
+            elif estado_pago == "PENDIENTE":
+                total_pendientes += 1
+
+            lista.append(
+                {
+                    "deporte": dep.nombre if dep else "-",
+                    "id_deporte": dep.id_deporte if dep else 0,
+                    "nivel": niv.nombre if niv else "-",
+                    "horario": hor.descripcion if hor else "-",
+                    "profesor": f"{prof.apellido}, {prof.nombre}"
+                    if prof
+                    else "Sin asignar",
+                    "legajo_profesor": prof.legajo if prof else None,
+                    "legajo_alumno": i.legajo_alumno,
+                    "alumno_nombre": f"{al.apellido}, {al.nombre}"
+                    if al
+                    else f"Legajo #{i.legajo_alumno}",
+                    "curso": cur.nombre if cur else "Sin Curso",
+                    "precio_deporte": precio_deporte,
+                    "estado_pago": estado_pago,
+                    "fecha_referencia": fecha_ref,
+                    "mes": mes_filtro,
+                    "anio": anio_filtro,
+                }
+            )
+
+        lista.sort(key=lambda x: (x["deporte"], x["nivel"], x["alumno_nombre"]))
+
+        return {
+            "mes": mes_filtro,
+            "anio": anio_filtro,
+            "total_recaudado": total_recaudado,
+            "total_inscriptos": len(lista),
+            "al_dia": total_al_dia,
+            "morosos": total_pendientes,
+            "items": lista,
+        }
+
+    def obtener_reporte_pagos_transporte(
+        self,
+        db: Session,
+        mes: int | None = None,
+        anio: int | None = None,
+        id_recorrido: int | None = None,
+    ) -> dict:
+        """Listado de pagos de alumnos por recorrido del servicio de transporte escolar."""
+        q_recorridos = db.query(RecorridoTransporte)
+        if id_recorrido:
+            q_recorridos = q_recorridos.filter(
+                RecorridoTransporte.id_recorrido == id_recorrido
+            )
+        recorridos = q_recorridos.all()
+        recorridos_dict = {r.id_recorrido: r for r in recorridos}
+
+        recorridos_ids = list(recorridos_dict.keys())
+        inscripciones = (
+            db.query(InscripcionTransporte)
+            .filter(
+                InscripcionTransporte.id_recorrido.in_(recorridos_ids),
+                InscripcionTransporte.estado == "ACTIVO",
+            )
+            .all()
+            if recorridos_ids
+            else []
+        )
+
+        alumnos = {a.legajo: a for a in db.query(Alumno).all()}
+        cursos = {c.id_curso: c for c in db.query(Curso).all()}
+
+        hoy = date.today()
+        mes_filtro = mes or hoy.month
+        anio_filtro = anio or hoy.year
+
+        legajos_inscritos = [i.legajo_alumno for i in inscripciones]
+        facturas_mes = (
+            db.query(Factura)
+            .filter(
+                Factura.legajo_alumno.in_(legajos_inscritos),
+                Factura.mes == mes_filtro,
+                Factura.anio == anio_filtro,
+            )
+            .all()
+            if legajos_inscritos
+            else []
+        )
+        factura_por_legajo = {f.legajo_alumno: f for f in facturas_mes}
+
+        lista = []
+        total_recaudado = 0.0
+        total_al_dia = 0
+        total_pendientes = 0
+
+        for i in inscripciones:
+            rec = recorridos_dict.get(i.id_recorrido)
+            if not rec:
+                continue
+            al = alumnos.get(i.legajo_alumno)
+            cur = cursos.get(al.id_curso) if al and al.id_curso else None
+
+            precio_transporte = float(rec.precio_mensual)
+            fac = factura_por_legajo.get(i.legajo_alumno)
+
+            if fac:
+                estado_pago = "PAGADO" if fac.estado == "PAGADA" else "PENDIENTE"
+                fecha_ref = (
+                    fac.fecha_emision.strftime("%d/%m/%Y")
+                    if fac.estado == "PAGADA"
+                    else (
+                        fac.fecha_vencimiento.strftime("%d/%m/%Y")
+                        if fac.fecha_vencimiento
+                        else "-"
+                    )
+                )
+            else:
+                estado_pago = "NO FACTURADO"
+                fecha_ref = "-"
+
+            if estado_pago == "PAGADO":
+                total_recaudado += precio_transporte
+                total_al_dia += 1
+            elif estado_pago == "PENDIENTE":
+                total_pendientes += 1
+
+            lista.append(
+                {
+                    "recorrido": rec.descripcion,
+                    "id_recorrido": rec.id_recorrido,
+                    "precio_mensual": precio_transporte,
+                    "legajo_alumno": i.legajo_alumno,
+                    "alumno_nombre": f"{al.apellido}, {al.nombre}"
+                    if al
+                    else f"Legajo #{i.legajo_alumno}",
+                    "dni": al.dni if al else "-",
+                    "curso": cur.nombre if cur else "Sin Curso",
+                    "estado_pago": estado_pago,
+                    "fecha_referencia": fecha_ref,
+                    "mes": mes_filtro,
+                    "anio": anio_filtro,
+                }
+            )
+
+        lista.sort(key=lambda x: (x["recorrido"], x["alumno_nombre"]))
+
+        return {
+            "mes": mes_filtro,
+            "anio": anio_filtro,
+            "total_recaudado": total_recaudado,
+            "total_pasajeros": len(lista),
+            "al_dia": total_al_dia,
+            "morosos": total_pendientes,
+            "items": lista,
         }
 
 

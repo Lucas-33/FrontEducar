@@ -14,6 +14,7 @@ from frontend.app.components.constants import (
     ONLINE_GREEN,
     TEAL,
     TEAL_DARK,
+    TEAL_LIGHT,
     TEXT_COLOR,
 )
 
@@ -39,7 +40,7 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
             value=valor_inicial,
             prefix=ft.Text("$ ", color=TEXT_COLOR),
             text_size=14,
-            color=TEXT_COLOR, # <--- FUENTE NEGRA / OSCURA DENTRO DEL INPUT
+            color=TEXT_COLOR,  # <--- FUENTE NEGRA / OSCURA DENTRO DEL INPUT
             width=280,
             height=CONTROL_HEIGHT,
             border_color=BORDER_COLOR,
@@ -71,18 +72,29 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=16,
             controls=[
-                ft.Text("Cuota Base y Comedor", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                ft.Text("Estos valores impactarán en la facturación del próximo mes para todos los inscriptos.", size=13, color=MUTED),
+                ft.Text(
+                    "Cuota Base y Comedor",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
+                ft.Text(
+                    "Estos valores impactarán en la facturación del próximo mes para todos los inscriptos.",
+                    size=13,
+                    color=MUTED,
+                ),
                 ft.Row(spacing=16, controls=[input_cuota, input_comedor]),
                 ft.Button(
                     "Guardar Valores Fijos",
                     bgcolor=TEAL,
                     color=BG_WHITE,
                     on_click=guardar_fijos,
-                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
-                )
-            ]
-        )
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                    ),
+                ),
+            ],
+        ),
     )
 
     # ==================== 2. VALORES DE DEPORTES ====================
@@ -93,30 +105,46 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
         try:
             cuota_data = await api_client.get_configuracion("CUOTA_BASE")
             comedor_data = await api_client.get_configuracion("COMEDOR")
-            
+
             input_cuota.value = str(cuota_data.get("valor", "0.00"))
             input_comedor.value = str(comedor_data.get("valor", "0.00"))
         except Exception:
-            pass 
+            pass
 
         # --- 2. Cargar Deportes ---
         try:
             deportes = await api_client.get_deportes()
             filas = []
-            inputs_deportes = [] # Guardamos las referencias para procesarlas todas juntas
-            
+            inputs_deportes = []  # Guardamos las referencias para procesarlas todas juntas
+
             for d in deportes:
-                input_precio = campo_precio(f"Precio: {d['nombre']}", str(d.get("precio_mensual", 0)))
-                inputs_deportes.append({"id_deporte": d["id_deporte"], "nombre": d["nombre"], "input": input_precio})
-                
-                filas.append(ft.Row(
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    controls=[
-                        ft.Text(d["nombre"], size=14, weight=ft.FontWeight.W_600, color=TEXT_COLOR, width=200),
-                        input_precio,
-                        # Eliminamos el botón individual de cada fila
-                    ]
-                ))
+                input_precio = campo_precio(
+                    f"Precio: {d['nombre']}", str(d.get("precio_mensual", 0))
+                )
+                inputs_deportes.append(
+                    {
+                        "id_deporte": d["id_deporte"],
+                        "nombre": d["nombre"],
+                        "input": input_precio,
+                    }
+                )
+
+                filas.append(
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        controls=[
+                            ft.Text(
+                                d["nombre"],
+                                size=14,
+                                weight=ft.FontWeight.W_600,
+                                color=TEXT_COLOR,
+                                width=200,
+                            ),
+                            input_precio,
+                            # Eliminamos el botón individual de cada fila
+                        ],
+                    )
+                )
 
             if filas:
                 # Botón global para guardar todos los deportes a la vez
@@ -125,31 +153,47 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
                     for item in inputs_deportes:
                         try:
                             await api_client.update_deporte(
-                                item["id_deporte"], 
-                                {"nombre": item["nombre"], "precio_mensual": float(item["input"].value or 0)}
+                                item["id_deporte"],
+                                {
+                                    "nombre": item["nombre"],
+                                    "precio_mensual": float(item["input"].value or 0),
+                                },
                             )
                         except Exception:
                             errores += 1
-                    
+
                     if errores == 0:
-                        mostrar_mensaje("Todos los precios deportivos se actualizaron correctamente.")
+                        mostrar_mensaje(
+                            "Todos los precios deportivos se actualizaron correctamente."
+                        )
                     else:
-                        mostrar_mensaje(f"Se guardó parcialmente: hubo {errores} errores.", es_error=True)
+                        mostrar_mensaje(
+                            f"Se guardó parcialmente: hubo {errores} errores.",
+                            es_error=True,
+                        )
 
                 btn_guardar_deportes = ft.Button(
                     "Guardar Precios Deportivos",
                     bgcolor=TEAL,
                     color=BG_WHITE,
                     on_click=guardar_todos_deportes,
-                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
+                    ),
                 )
-                
-                filas.append(ft.Container(height=8)) # Un pequeño espacio
-                filas.append(btn_guardar_deportes) # Agregamos el botón al final de la lista
 
-            lista_deportes.controls = filas or [ft.Text("No hay deportes registrados.", color=MUTED)]
+                filas.append(ft.Container(height=8))  # Un pequeño espacio
+                filas.append(
+                    btn_guardar_deportes
+                )  # Agregamos el botón al final de la lista
+
+            lista_deportes.controls = filas or [
+                ft.Text("No hay deportes registrados.", color=MUTED)
+            ]
         except Exception:
-            lista_deportes.controls = [ft.Text("Error al cargar deportes.", color=BADGE_RED_TXT)]
+            lista_deportes.controls = [
+                ft.Text("Error al cargar deportes.", color=BADGE_RED_TXT)
+            ]
 
         # --- 3. Refrescar UI ---
         page.update()
@@ -165,10 +209,34 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
         content=ft.Column(
             spacing=16,
             controls=[
-                ft.Text("Precios de Disciplinas Deportivas", size=18, weight=ft.FontWeight.BOLD, color=TEAL_DARK),
-                lista_deportes
-            ]
-        )
+                ft.Text(
+                    "Precios de Disciplinas Deportivas",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
+                lista_deportes,
+            ],
+        ),
+    )
+
+    btn_reportes = ft.Button(
+        content=ft.Row(
+            spacing=8,
+            controls=[
+                ft.Icon(ft.Icons.ANALYTICS_OUTLINED, color=TEAL_DARK, size=18),
+                ft.Text(
+                    "Ver Listados y Reportes Financieros",
+                    size=13,
+                    weight=ft.FontWeight.BOLD,
+                    color=TEAL_DARK,
+                ),
+            ],
+        ),
+        bgcolor=TEAL_LIGHT,
+        height=40,
+        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)),
+        on_click=lambda _: page.go("/admin/reportes-financieros"),
     )
 
     return admin_layout(
@@ -176,6 +244,10 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
         titulo="Gestión de Precios y Finanzas",
         active_route="/admin/finanzas",
         content_controls=[
+            ft.Row(
+                alignment=ft.MainAxisAlignment.END,
+                controls=[btn_reportes],
+            ),
             aviso,
             ft.Row(
                 spacing=24,
@@ -183,7 +255,7 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
                 controls=[
                     ft.Column(expand=True, spacing=24, controls=[card_fijos]),
                     ft.Column(expand=True, spacing=24, controls=[card_deportes]),
-                ]
-            )
+                ],
+            ),
         ],
     )
