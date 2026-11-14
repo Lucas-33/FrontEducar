@@ -8,6 +8,7 @@ from backend.app.api.v1.api import api_router
 from backend.app.core.database import Base, engine
 from backend.app.core.scheduler import iniciar_scheduler
 from frontend.app.main_view import main as flet_main
+from mobile.main import main as mobile_main
 
 # 1. Crear automáticamente las tablas en PostgreSQL si no existen
 Base.metadata.create_all(bind=engine)
@@ -49,6 +50,9 @@ def health_check():
 # Conectar routers REST
 app.include_router(api_router, prefix="/api/v1")
 
-# 5. Montar la interfaz de Flet en la raíz
-# NOTA: Se monta AL FINAL para que las rutas de la API (/api/... y /docs) tengan prioridad
-app.mount("/", flet_fastapi.app(flet_main))
+# 5. Montar la aplicación móvil dedicada en "/mobile"
+app.mount("/mobile", flet_fastapi.app(mobile_main, assets_dir="mobile/assets"))
+
+# 6. Montar la interfaz de Flet Web en la raíz
+# NOTA: Se monta AL FINAL para que las rutas de la API (/api/...) y la app móvil (/mobile) tengan prioridad
+app.mount("/", flet_fastapi.app(flet_main, assets_dir="frontend/app/assets"))

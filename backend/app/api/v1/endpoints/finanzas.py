@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from backend.app.models.personas import Alumno, PadreAlumno
 
 from backend.app.api.deps import get_current_user, require_roles
 from backend.app.core.database import get_db
@@ -10,6 +9,7 @@ from backend.app.models.finanzas import (
     Factura,
     ItemFactura,
 )
+from backend.app.models.personas import Alumno, PadreAlumno
 from backend.app.models.seguridad import Usuario
 from backend.app.schemas.finanzas import (
     ComprobantePagoCreate,
@@ -154,20 +154,52 @@ def obtener_facturas_padre(
         .all()
     )
 
-    # 5. Formatear y devolver al Frontend (Flet)
+    # 5. Formatear y devolver al Frontend (Flet) con desglose de ítems y comprobantes
     lista_facturas = []
     for f in facturas_db:
+        items_db = (
+            db.query(ItemFactura).filter(ItemFactura.id_factura == f.id_factura).all()
+        )
+        comprobantes_db = (
+            db.query(ComprobantePago)
+            .filter(ComprobantePago.id_factura == f.id_factura)
+            .order_by(ComprobantePago.id_comprobante.desc())
+            .all()
+        )
         lista_facturas.append(
             {
                 "id": f.id_factura,
                 "mes": f.mes,
                 "anio": f.anio,
+                "legajo_alumno": f.legajo_alumno,
                 "alumno_nombre": nombres_alumnos.get(f.legajo_alumno, "Estudiante"),
+                "fecha_emision": f.fecha_emision.strftime("%d/%m/%Y")
+                if f.fecha_emision
+                else "-",
                 "fecha_vencimiento": f.fecha_vencimiento.strftime("%d/%m/%Y")
                 if f.fecha_vencimiento
                 else "-",
                 "total": float(f.total),
                 "estado": f.estado.upper() if f.estado else "PENDIENTE",
+                "items": [
+                    {
+                        "id_item": it.id_item,
+                        "concepto": it.concepto,
+                        "monto": float(it.monto),
+                    }
+                    for it in items_db
+                ],
+                "comprobantes": [
+                    {
+                        "id_comprobante": c.id_comprobante,
+                        "archivo_url": c.archivo_url,
+                        "estado": c.estado.upper() if c.estado else "PENDIENTE",
+                        "fecha_subida": c.fecha_subida.strftime("%d/%m/%Y %H:%M")
+                        if c.fecha_subida
+                        else "-",
+                    }
+                    for c in comprobantes_db
+                ],
             }
         )
 
