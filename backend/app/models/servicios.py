@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric, String
 from sqlalchemy.sql import func
 
 from backend.app.core.database import Base
@@ -13,9 +13,10 @@ class Horario(Base):
 
 class Deporte(Base):
     __tablename__ = "deporte"
-
     id_deporte = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(100), nullable=False)
+    # NUEVO CAMPO: Valor diferenciado por deporte
+    precio_mensual = Column(Numeric(10, 2), nullable=False, default=0.00)
     legajo_profesor_responsable = Column(
         Integer,
         ForeignKey("profesor.legajo", onupdate="CASCADE", ondelete="SET NULL"),
@@ -61,6 +62,7 @@ class RecorridoTransporte(Base):
 
     id_recorrido = Column(Integer, primary_key=True, autoincrement=True)
     descripcion = Column(String(100), nullable=False)
+    precio_mensual = Column(Numeric(10, 2), nullable=False, default=0.00)
 
 
 class InscripcionTransporte(Base):

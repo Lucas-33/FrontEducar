@@ -28,6 +28,13 @@ from backend.app.repositories import (
 )
 from backend.app.services.academico import academico_service
 from backend.app.services.comunidad import comunidad_service
+from backend.app.services.finanzas import finanzas_service
+from backend.app.services.pdf_generator import (
+    generar_pdf_reporte_alumnos_docentes,
+    generar_pdf_reporte_cursos_materias,
+    generar_pdf_reporte_deportes,
+    generar_pdf_reporte_transporte,
+)
 from backend.app.services.seguridad import seguridad_service
 from backend.app.services.servicios import servicios_escolares_service
 
@@ -87,6 +94,15 @@ def _respuesta_xlsx(wb: Workbook, nombre_archivo: str) -> StreamingResponse:
     )
 
 
+def _respuesta_pdf(pdf_bytes: bytes, nombre_archivo: str) -> StreamingResponse:
+    buffer = BytesIO(pdf_bytes)
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{nombre_archivo}"'},
+    )
+
+
 def _nombre_curso(db: Session, id_curso: int) -> str:
     curso = curso_repository.get(db, id_curso)
     return curso.nombre if curso else f"Curso #{id_curso}"
@@ -103,6 +119,9 @@ def _nombre_nivel_de_curso(db: Session, id_curso: int) -> str:
 # ==================== ALUMNOS Y DOCENTES ====================
 @router.get(
     "/alumnos.xlsx", summary="Nómina de alumnos y docentes en Excel (solo ADMIN)"
+)
+@router.get(
+    "/docentes.xlsx", summary="Nómina de alumnos y docentes en Excel (solo ADMIN)"
 )
 def exportar_alumnos_docentes(
     token: str | None = Query(None),
@@ -176,6 +195,42 @@ def exportar_alumnos_docentes(
     return _respuesta_xlsx(wb, "nomina_alumnos_docentes.xlsx")
 
 
+@router.get("/alumnos.pdf", summary="Nómina de alumnos y docentes en PDF (solo ADMIN)")
+@router.get("/docentes.pdf", summary="Plantel docente en PDF (solo ADMIN)")
+def exportar_alumnos_docentes_pdf(
+    token: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    alumnos = alumno_repository.get_multi(db, limit=2000)
+    lista_alumnos = [
+        {
+            "legajo": a.legajo,
+            "apellido": a.apellido,
+            "nombre": a.nombre,
+            "dni": a.dni,
+            "curso": _nombre_curso(db, a.id_curso),
+            "nivel": _nombre_nivel_de_curso(db, a.id_curso),
+            "estado_alumno": a.estado_alumno,
+        }
+        for a in sorted(alumnos, key=lambda x: (x.apellido, x.nombre))
+    ]
+    profesores = profesor_repository.get_multi(db, limit=2000)
+    lista_profesores = [
+        {
+            "legajo": p.legajo,
+            "apellido": p.apellido,
+            "nombre": p.nombre,
+            "dni": p.dni,
+            "especialidad": p.especialidad,
+            "estado": p.estado,
+        }
+        for p in sorted(profesores, key=lambda x: (x.apellido, x.nombre))
+    ]
+    pdf_bytes = generar_pdf_reporte_alumnos_docentes(lista_alumnos, lista_profesores)
+    return _respuesta_pdf(pdf_bytes, "nomina_alumnos_docentes.pdf")
+
+
 # ==================== CURSOS Y MATERIAS ====================
 @router.get(
     "/cursos-materias.xlsx",
@@ -219,6 +274,51 @@ def exportar_cursos_materias(
         [[m.id_materia, m.nombre] for m in sorted(materias, key=lambda x: x.nombre)],
     )
     return _respuesta_xlsx(wb, "cursos_y_materias.xlsx")
+
+
+@router.get(
+    "/cursos-materias.pdf",
+    summary="Cursos y materias en PDF (solo ADMIN)",
+)
+@router.get(
+    "/cursos.pdf",
+    summary="Cursos en PDF (solo ADMIN)",
+)
+@router.get(
+    "/materias.pdf",
+    summary="Materias en PDF (solo ADMIN)",
+)
+def exportar_cursos_materias_pdf(
+    token: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    cursos = curso_repository.get_multi(db, limit=1000)
+    lista_cursos = []
+    for c in cursos:
+        nivel = nivel_repository.get(db, c.id_nivel)
+        cantidad = len(alumno_repository.get_by_curso(db, c.id_curso))
+        lista_cursos.append(
+            {
+                "id_curso": c.id_curso,
+                "nombre": c.nombre,
+                "nivel": nivel.nombre if nivel else "-",
+                "cantidad_alumnos": cantidad,
+            }
+        )
+    asignaciones = academico_service.get_asignaciones(db)
+    lista_asig = [
+        {
+            "materia": a.materia,
+            "curso": a.curso,
+            "nivel": a.nivel,
+            "profesor": a.profesor,
+            "legajo_profesor": a.legajo_profesor,
+        }
+        for a in sorted(asignaciones, key=lambda x: (x.nivel, x.curso, x.materia))
+    ]
+    pdf_bytes = generar_pdf_reporte_cursos_materias(lista_cursos, lista_asig)
+    return _respuesta_pdf(pdf_bytes, "cursos_y_materias.pdf")
 
 
 # ==================== DEPORTES ====================
@@ -266,6 +366,40 @@ def exportar_deportes(
     return _respuesta_xlsx(wb, "reporte_deportes.xlsx")
 
 
+@router.get("/deportes.pdf", summary="Reporte integral de deportes en PDF (solo ADMIN)")
+def exportar_deportes_pdf(
+    token: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    grupos = servicios_escolares_service.get_grupos_deporte(db)
+    inscripciones = servicios_escolares_service.get_inscripciones_deporte(db)
+    inscriptos_por_grupo = {}
+    for i in inscripciones:
+        inscriptos_por_grupo[i.id_grupo] = inscriptos_por_grupo.get(i.id_grupo, 0) + 1
+
+    lista_grupos = [
+        {
+            "id_grupo": g.id_grupo,
+            "deporte": g.deporte,
+            "nivel": g.nivel,
+            "horario": g.horario,
+            "inscriptos": inscriptos_por_grupo.get(g.id_grupo, 0),
+        }
+        for g in grupos
+    ]
+    lista_inscripciones = [
+        {
+            "alumno": i.alumno,
+            "deporte": i.deporte,
+            "fecha_inscripcion": i.fecha_inscripcion.strftime("%d/%m/%Y"),
+        }
+        for i in inscripciones
+    ]
+    pdf_bytes = generar_pdf_reporte_deportes(lista_grupos, lista_inscripciones)
+    return _respuesta_pdf(pdf_bytes, "reporte_deportes.pdf")
+
+
 # ==================== TRANSPORTE ====================
 @router.get(
     "/transporte.xlsx", summary="Hoja de ruta de transporte en Excel (solo ADMIN)"
@@ -310,6 +444,42 @@ def exportar_transporte(
         ],
     )
     return _respuesta_xlsx(wb, "transporte_pasajeros.xlsx")
+
+
+@router.get("/transporte.pdf", summary="Hoja de ruta de transporte en PDF (solo ADMIN)")
+def exportar_transporte_pdf(
+    token: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    recorridos = servicios_escolares_service.get_recorridos(db)
+    inscripciones = servicios_escolares_service.get_inscripciones_transporte(db)
+    activos_por_recorrido = {}
+    for i in inscripciones:
+        if i.estado == "ACTIVO":
+            activos_por_recorrido[i.id_recorrido] = (
+                activos_por_recorrido.get(i.id_recorrido, 0) + 1
+            )
+
+    lista_recorridos = [
+        {
+            "id_recorrido": r.id_recorrido,
+            "descripcion": r.descripcion,
+            "pasajeros_activos": activos_por_recorrido.get(r.id_recorrido, 0),
+        }
+        for r in recorridos
+    ]
+    lista_inscripciones = [
+        {
+            "alumno": i.alumno,
+            "recorrido": i.recorrido,
+            "fecha_alta": i.fecha_alta.strftime("%d/%m/%Y"),
+            "estado": i.estado,
+        }
+        for i in sorted(inscripciones, key=lambda x: x.alumno)
+    ]
+    pdf_bytes = generar_pdf_reporte_transporte(lista_recorridos, lista_inscripciones)
+    return _respuesta_pdf(pdf_bytes, "transporte_pasajeros.pdf")
 
 
 # ==================== SOLICITUDES DE ADMISIÓN ====================
@@ -396,3 +566,312 @@ def exportar_resumen(
     ]
     _agregar_hoja(wb, "Resumen", ["Métrica", "Valor"], metricas)
     return _respuesta_xlsx(wb, "resumen_general.xlsx")
+
+
+# ==================== REPORTES FINANCIEROS EN EXCEL ====================
+@router.get(
+    "/ingresos.xlsx", summary="Exportar listado de ingresos en Excel (solo ADMIN)"
+)
+def exportar_ingresos_xlsx(
+    token: str | None = Query(None),
+    mes: int | None = Query(None),
+    anio: int | None = Query(None),
+    fecha_desde: str | None = Query(None),
+    fecha_hasta: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    f_desde = None
+    f_hasta = None
+    try:
+        from datetime import date
+
+        if fecha_desde:
+            f_desde = date.fromisoformat(fecha_desde)
+        if fecha_hasta:
+            f_hasta = date.fromisoformat(fecha_hasta)
+    except Exception:
+        pass
+
+    datos = finanzas_service.obtener_reporte_ingresos(
+        db, fecha_desde=f_desde, fecha_hasta=f_hasta, mes=mes, anio=anio
+    )
+
+    filas = [
+        [
+            it["id_factura"],
+            f"{it['mes']:02d}/{it['anio']}",
+            it["fecha_emision"],
+            it["legajo_alumno"],
+            it["alumno_nombre"],
+            it["dni"],
+            it["curso"],
+            it["nivel"],
+            ", ".join(
+                f"{c['concepto']} (${c['monto']:,.0f})" for c in it.get("items", [])
+            ),
+            it["total"],
+        ]
+        for it in datos["items"]
+    ]
+    if filas:
+        filas.append(
+            ["", "", "", "", "TOTAL RECAUDADO", "", "", "", "", datos["total_ingresos"]]
+        )
+
+    _agregar_hoja(
+        wb,
+        "Ingresos",
+        [
+            "N° Factura",
+            "Período",
+            "Fecha Cobro",
+            "Legajo",
+            "Alumno",
+            "DNI",
+            "Curso",
+            "Nivel",
+            "Conceptos Cobrados",
+            "Monto Total ($)",
+        ],
+        filas,
+    )
+    return _respuesta_xlsx(wb, "reporte_ingresos.xlsx")
+
+
+@router.get(
+    "/pagos-completos.xlsx", summary="Exportar pagos completos en Excel (solo ADMIN)"
+)
+def exportar_pagos_completos_xlsx(
+    token: str | None = Query(None),
+    anio: int | None = Query(None),
+    mes: int | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    datos = finanzas_service.obtener_reporte_pagos_completos(db, anio=anio, mes=mes)
+
+    filas = [
+        [
+            it["anio"],
+            it["mes"],
+            it["id_factura"],
+            it["legajo"],
+            it["alumno"],
+            it["curso"],
+            it["monto"],
+            it["fecha"],
+            it["conceptos"],
+        ]
+        for it in datos["items_planos"]
+    ]
+    if filas:
+        filas.append(
+            ["", "", "", "", "TOTAL PAGADO", "", datos["total_recaudado"], "", ""]
+        )
+
+    _agregar_hoja(
+        wb,
+        "Pagos Completos",
+        [
+            "Año Calendario",
+            "Mes",
+            "N° Factura",
+            "Legajo",
+            "Alumno",
+            "Curso / Año Escolar",
+            "Monto Abonado ($)",
+            "Fecha de Pago",
+            "Detalle de Conceptos",
+        ],
+        filas,
+    )
+    return _respuesta_xlsx(wb, "pagos_completos.xlsx")
+
+
+@router.get(
+    "/pagos-incompletos.xlsx",
+    summary="Exportar pagos incompletos en Excel (solo ADMIN)",
+)
+def exportar_pagos_incompletos_xlsx(
+    token: str | None = Query(None),
+    anio: int | None = Query(None),
+    mes: int | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    datos = finanzas_service.obtener_reporte_pagos_incompletos(db, anio=anio, mes=mes)
+
+    filas = [
+        [
+            it["anio"],
+            it["mes"],
+            it["id_factura"],
+            it["legajo"],
+            it["alumno"],
+            it["curso"],
+            it["monto"],
+            it["vencimiento"],
+            it["dias_mora"],
+            it["estado"],
+            it["conceptos"],
+        ]
+        for it in datos["items_planos"]
+    ]
+    if filas:
+        filas.append(
+            ["", "", "", "", "TOTAL DEUDA", "", datos["total_deuda"], "", "", "", ""]
+        )
+
+    _agregar_hoja(
+        wb,
+        "Pagos Incompletos",
+        [
+            "Año Calendario",
+            "Mes",
+            "N° Factura",
+            "Legajo",
+            "Alumno",
+            "Curso / Año Escolar",
+            "Saldo Pendiente ($)",
+            "Fecha Vencimiento",
+            "Días Mora",
+            "Estado",
+            "Conceptos Adeudados",
+        ],
+        filas,
+    )
+    return _respuesta_xlsx(wb, "pagos_incompletos.xlsx")
+
+
+@router.get(
+    "/pagos-deportes.xlsx", summary="Exportar pagos de deportes en Excel (solo ADMIN)"
+)
+def exportar_pagos_deportes_xlsx(
+    token: str | None = Query(None),
+    mes: int | None = Query(None),
+    anio: int | None = Query(None),
+    id_deporte: int | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    datos = finanzas_service.obtener_reporte_pagos_deportes(
+        db, mes=mes, anio=anio, id_deporte=id_deporte
+    )
+
+    filas = [
+        [
+            it["deporte"],
+            it["nivel"],
+            it["horario"],
+            it["profesor"],
+            it["legajo_alumno"],
+            it["alumno_nombre"],
+            it["curso"],
+            it["precio_deporte"],
+            it["estado_pago"],
+            it["fecha_referencia"],
+        ]
+        for it in datos["items"]
+    ]
+    if filas:
+        filas.append(
+            [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "TOTAL RECAUDADO",
+                "",
+                datos["total_recaudado"],
+                "",
+                "",
+            ]
+        )
+
+    _agregar_hoja(
+        wb,
+        "Pagos Deportes",
+        [
+            "Deporte",
+            "Nivel",
+            "Horario",
+            "Profesor a Cargo",
+            "Legajo",
+            "Alumno",
+            "Curso",
+            "Cuota Mensual ($)",
+            "Estado de Pago",
+            "Fecha Ref",
+        ],
+        filas,
+    )
+    return _respuesta_xlsx(wb, "pagos_deportes.xlsx")
+
+
+@router.get(
+    "/pagos-transporte.xlsx",
+    summary="Exportar pagos de transporte en Excel (solo ADMIN)",
+)
+def exportar_pagos_transporte_xlsx(
+    token: str | None = Query(None),
+    mes: int | None = Query(None),
+    anio: int | None = Query(None),
+    id_recorrido: int | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    _autorizar_admin(db, token)
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    datos = finanzas_service.obtener_reporte_pagos_transporte(
+        db, mes=mes, anio=anio, id_recorrido=id_recorrido
+    )
+
+    filas = [
+        [
+            it["recorrido"],
+            it["precio_mensual"],
+            it["legajo_alumno"],
+            it["alumno_nombre"],
+            it["dni"],
+            it["curso"],
+            it["estado_pago"],
+            it["fecha_referencia"],
+        ]
+        for it in datos["items"]
+    ]
+    if filas:
+        filas.append(
+            ["", "TOTAL RECAUDADO", "", "", "", "", datos["total_recaudado"], ""]
+        )
+
+    _agregar_hoja(
+        wb,
+        "Pagos Transporte",
+        [
+            "Recorrido del Servicio",
+            "Tarifa Mensual ($)",
+            "Legajo",
+            "Alumno",
+            "DNI",
+            "Curso",
+            "Estado de Pago",
+            "Fecha Ref",
+        ],
+        filas,
+    )
+    return _respuesta_xlsx(wb, "pagos_transporte.xlsx")

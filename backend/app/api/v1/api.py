@@ -6,6 +6,7 @@ from backend.app.api.v1.endpoints import (
     comunidad,
     dashboard,
     evaluacion,
+    finanzas,
     personas,
     reportes,
     servicios,
@@ -35,3 +36,4 @@ api_router.include_router(
     dashboard.router, prefix="/dashboard", tags=["Panel de control"]
 )
 api_router.include_router(reportes.router, prefix="/reportes", tags=["Reportes Excel"])
+api_router.include_router(finanzas.router, prefix="/finanzas", tags=["Finanzas"])

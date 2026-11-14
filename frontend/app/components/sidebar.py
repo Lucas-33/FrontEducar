@@ -36,6 +36,7 @@ def create_sidebar(
         ("Comunidad", "/admin/comunidad", ft.Icons.FORUM_OUTLINED),
         ("Transporte", "/admin/transporte", ft.Icons.DIRECTIONS_BUS_OUTLINED),
         ("Comedor", "/admin/comedor", ft.Icons.RESTAURANT_OUTLINED),
+        ("Precios y Finanzas", "/admin/finanzas", ft.Icons.ATTACH_MONEY),
         ("Usuarios y Permisos", "/admin/usuarios", ft.Icons.LOCK_OUTLINE),
         ("Reportes", "/admin/reportes", ft.Icons.BAR_CHART_OUTLINED),
     ]
