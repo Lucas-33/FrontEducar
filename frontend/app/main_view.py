@@ -14,6 +14,7 @@ from frontend.app.pages.admin_comunidad import get_admin_comunidad_view
 from frontend.app.pages.admin_cursos import get_admin_cursos_view
 from frontend.app.pages.admin_dashboard import get_admin_dashboard_view
 from frontend.app.pages.admin_deportes import get_admin_deportes_view
+from frontend.app.pages.admin_finanzas import get_admin_finanzas_view
 from frontend.app.pages.admin_horarios import get_admin_horarios_view
 from frontend.app.pages.admin_inscripciones import get_admin_inscripciones_view
 from frontend.app.pages.admin_materias import get_admin_materias_view
@@ -67,6 +68,7 @@ from frontend.app.pages.opiniones import get_opiniones_view
 from frontend.app.pages.padre_dashboard import get_padre_dashboard_view
 from frontend.app.pages.padre_deportes import get_padre_deportes_view
 from frontend.app.pages.padre_docentes import get_padre_docentes_view
+from frontend.app.pages.padre_facturas import get_padre_facturas_view
 from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
 from frontend.app.pages.padre_notas import get_padre_notas_view
 from frontend.app.pages.padre_servicios import get_padre_servicios_view
@@ -242,6 +244,11 @@ async def main(page: ft.Page):
             )
             page.update()
             return
+        elif ruta == "/admin/finanzas":
+            vista_finanzas = await get_admin_finanzas_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_finanzas]))
+            page.update()
+            return
         # ==================== 3. RUTAS DEL PORTAL FAMILIAS ====================
         if ruta == "/portal/padre/dashboard":
             vista_padre_dash = await get_padre_dashboard_view(page)
@@ -282,6 +289,13 @@ async def main(page: ft.Page):
             vista_padre_notas = await get_padre_notas_view(page)
             page.views.append(
                 ft.View(route=ruta, padding=0, controls=[vista_padre_notas])
+            )
+            page.update()
+            return
+        elif ruta == "/portal/padre/facturas":
+            vista_padre_facturas = await get_padre_facturas_view(page)
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_facturas])
             )
             page.update()
             return

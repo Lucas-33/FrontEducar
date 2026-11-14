@@ -17,7 +17,7 @@ IGNORAR_DIRS = {
 # Extensiones estrictamente de texto y código
 EXTENSIONES = {".py", ".pgsql", ".sql", ".md", ".toml"}
 
-archivo_salida = "proyecto_completo_limpio.txt"
+archivo_salida = "backend_unificado.txt"
 
 directorio_raiz = os.path.dirname(os.path.abspath(__file__))
 

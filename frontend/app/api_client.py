@@ -221,6 +221,10 @@ class APIClient:
     async def create_padre(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/personas/padres", data)
 
+    async def get_mis_facturas(self):
+        """Obtiene las facturas de los hijos asociados al padre autenticado."""
+        return await self._get("/finanzas/mis-facturas")
+
     # ==================== NIVELES EDUCATIVOS ====================
     async def get_niveles(self) -> list[dict[str, Any]]:
         return await self._get("/academico/niveles")
@@ -474,6 +478,25 @@ class APIClient:
     def reporte_url(self, nombre: str) -> str:
         """URL absoluta de descarga de un reporte Excel, con el token de sesión."""
         return f"{self.base_url}/reportes/{nombre}.xlsx?token={self.token or ''}"
+
+    # ==================== FINANZAS Y PRECIOS ====================
+    async def get_configuracion(self, concepto: str) -> dict[str, Any]:
+        # Si no creaste un GET en el backend, podés implementarlo rápido o usar un fallback
+        try:
+            return await self._get(f"/finanzas/configuracion/{concepto}")
+        except Exception:
+            return {"valor": 0.0}
+
+    async def update_configuracion(self, concepto: str, valor: float) -> dict[str, Any]:
+        return await self._put(
+            "/finanzas/configuracion", {"concepto": concepto, "valor": valor}
+        )
+
+    async def post_comprobante(self, id_factura: int, archivo_url: str):
+        """Envía un comprobante de pago al servidor para una factura pendiente."""
+        payload = {"id_factura": id_factura, "archivo_url": archivo_url}
+        # ACÁ ESTÁ EL CAMBIO: usamos data=payload en lugar de json=payload
+        return await self._post("/finanzas/comprobantes", data=payload)
 
 
 api_client = APIClient()
