@@ -33,20 +33,28 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
             spacing=10,
             controls=[
                 ft.Container(
-                    width=38, height=38, bgcolor=TEAL, border_radius=19,
+                    width=38,
+                    height=38,
+                    bgcolor=TEAL,
+                    border_radius=19,
                     alignment=ft.Alignment(0, 0),
-                    content=ft.Icon(ft.Icons.SCHOOL, color="white", size=20)
+                    content=ft.Icon(ft.Icons.SCHOOL, color="white", size=20),
                 ),
                 ft.Column(
                     spacing=0,
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
-                        ft.Text("Educar SGE", weight=ft.FontWeight.BOLD, size=18, color=TEAL_DARK),
+                        ft.Text(
+                            "Educar SGE",
+                            weight=ft.FontWeight.BOLD,
+                            size=18,
+                            color=TEAL_DARK,
+                        ),
                         ft.Text("INSTITUTO EDUCATIVO", size=10, color=MUTED),
-                    ]
-                )
-            ]
-        )
+                    ],
+                ),
+            ],
+        ),
     )
 
     # ==================== 2. DISEÑO ESCRITORIO (PC) ====================
@@ -55,15 +63,15 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
         # CORRECCIÓN: Usamos content=ft.Text() en lugar de text="" para tu versión de Flet
         return ft.TextButton(
             content=ft.Text(
-                texto, 
-                size=14, 
-                weight=ft.FontWeight.W_600 if es_activo else ft.FontWeight.W_500
+                texto,
+                size=14,
+                weight=ft.FontWeight.W_600 if es_activo else ft.FontWeight.W_500,
             ),
             style=ft.ButtonStyle(
                 color=TEAL if es_activo else TEXT_COLOR,
                 overlay_color="transparent",
             ),
-            on_click=lambda _: navegar(ruta)
+            on_click=lambda _: navegar(ruta),
         )
 
     derecha_desktop = ft.Row(
@@ -74,9 +82,9 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
             desktop_link("Niveles", "/niveles"),
             desktop_link("Inscripción", "/inscripcion"),
             desktop_link("Contacto", "/contacto"),
-            ft.Container(width=8), # Espaciador
-            btn_portal
-        ]
+            ft.Container(width=8),  # Espaciador
+            btn_portal,
+        ],
     )
 
     # ==================== 3. DISEÑO MÓVIL ====================
@@ -86,10 +94,10 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
                 spacing=12,
                 controls=[
                     ft.Icon(icono, size=18, color=TEAL_DARK),
-                    ft.Text(texto, size=14, color=TEXT_COLOR)
-                ]
+                    ft.Text(texto, size=14, color=TEXT_COLOR),
+                ],
             ),
-            on_click=lambda _: navegar(ruta)
+            on_click=lambda _: navegar(ruta),
         )
 
     menu_hamburguesa = ft.PopupMenuButton(
@@ -102,13 +110,10 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
             nav_item("Niveles", "/niveles", ft.Icons.ACCOUNT_TREE_OUTLINED),
             nav_item("Inscripción", "/inscripcion", ft.Icons.APP_REGISTRATION),
             nav_item("Contacto", "/contacto", ft.Icons.MAIL_OUTLINE),
-        ]
+        ],
     )
 
-    derecha_movil = ft.Row(
-        spacing=4,
-        controls=[btn_portal, menu_hamburguesa]
-    )
+    derecha_movil = ft.Row(spacing=4, controls=[btn_portal, menu_hamburguesa])
 
     # ==================== 4. LÓGICA RESPONSIVA ====================
     # Evaluamos el ancho de la pantalla al crear la barra
@@ -122,18 +127,19 @@ def create_navbar(page: ft.Page, active_route: str = "/") -> ft.Container:
         content=ft.Row(
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                logo_area,
-                derecha_movil if es_celular else derecha_desktop
-            ]
-        )
+            controls=[logo_area, derecha_movil if es_celular else derecha_desktop],
+        ),
     )
 
     # Si el usuario achica o agranda la ventana en la PC, se actualiza en tiempo real
     def actualizar_navbar(e):
         ahora_es_celular = page.width < 768
-        navbar_container.padding = ft.Padding.symmetric(horizontal=16 if ahora_es_celular else 32)
-        navbar_container.content.controls[1] = derecha_movil if ahora_es_celular else derecha_desktop
+        navbar_container.padding = ft.Padding.symmetric(
+            horizontal=16 if ahora_es_celular else 32
+        )
+        navbar_container.content.controls[1] = (
+            derecha_movil if ahora_es_celular else derecha_desktop
+        )
         navbar_container.update()
 
     # Suscribimos el evento al redimensionar la pantalla

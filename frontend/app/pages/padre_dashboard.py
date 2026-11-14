@@ -1,6 +1,6 @@
 import flet as ft
+
 from frontend.app.api_client import api_client
-from frontend.app.components.portal_layout import portal_layout
 from frontend.app.components.constants import (
     BADGE_RED_TXT,
     BG_WHITE,
@@ -13,6 +13,7 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
+from frontend.app.components.portal_layout import portal_layout
 
 
 async def get_padre_dashboard_view(page: ft.Page) -> ft.Container:
