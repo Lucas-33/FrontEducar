@@ -45,6 +45,9 @@ from frontend.app.pages.admin_reporte_transporte_pasajeros import (
     get_admin_reporte_transporte_pasajeros_view,
 )
 from frontend.app.pages.admin_reportes import get_admin_reportes_view
+from frontend.app.pages.admin_reportes_financieros import (
+    get_admin_reportes_financieros_view,
+)
 from frontend.app.pages.admin_transporte import get_admin_transporte_view
 from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
 
@@ -266,6 +269,11 @@ async def main(page: ft.Page):
             page.views.append(
                 ft.View(route=ruta, padding=0, controls=[vista_reporte_trans])
             )
+            page.update()
+            return
+        elif ruta == "/admin/reportes-financieros":
+            vista_rep_fin = await get_admin_reportes_financieros_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_rep_fin]))
             page.update()
             return
         elif ruta == "/admin/finanzas":

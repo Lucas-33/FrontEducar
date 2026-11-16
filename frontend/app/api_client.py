@@ -91,19 +91,21 @@ class APIClient:
         response.raise_for_status()
         return response.json()
 
-    async def _post(self, path: str, data: dict[str, Any]) -> Any:
+    async def _post(self, path: str, data: dict[str, Any] | None = None) -> Any:
         client = self._get_client()
-        response = await client.post(
-            f"{self.base_url}{path}", json=data, headers=self._get_headers()
-        )
+        kwargs: dict[str, Any] = {"headers": self._get_headers()}
+        if data is not None:
+            kwargs["json"] = data
+        response = await client.post(f"{self.base_url}{path}", **kwargs)
         response.raise_for_status()
         return response.json()
 
-    async def _put(self, path: str, data: dict[str, Any]) -> Any:
+    async def _put(self, path: str, data: dict[str, Any] | None = None) -> Any:
         client = self._get_client()
-        response = await client.put(
-            f"{self.base_url}{path}", json=data, headers=self._get_headers()
-        )
+        kwargs: dict[str, Any] = {"headers": self._get_headers()}
+        if data is not None:
+            kwargs["json"] = data
+        response = await client.put(f"{self.base_url}{path}", **kwargs)
         response.raise_for_status()
         return response.json()
 
@@ -508,10 +510,21 @@ class APIClient:
     async def get_resumen_dashboard(self) -> dict[str, Any]:
         return await self._get("/dashboard/resumen")
 
-    # ==================== REPORTES EXCEL ====================
-    def reporte_url(self, nombre: str) -> str:
-        """URL absoluta de descarga de un reporte Excel, con el token de sesión."""
-        return f"{self.base_url}/reportes/{nombre}.xlsx?token={self.token or ''}"
+    # ==================== REPORTES EXCEL Y PDF ====================
+    def reporte_url(
+        self, nombre: str, formato: str = "xlsx", params: dict[str, Any] | None = None
+    ) -> str:
+        """URL absoluta de descarga de un reporte Excel o PDF, con el token de sesión."""
+        import urllib.parse
+
+        url = f"{self.base_url}/reportes/{nombre}.{formato}?token={self.token or ''}"
+        if params:
+            query = urllib.parse.urlencode(
+                {k: v for k, v in params.items() if v is not None and v != ""}
+            )
+            if query:
+                url = f"{url}&{query}"
+        return url
 
     # ==================== FINANZAS Y PRECIOS ====================
     async def get_configuracion(self, concepto: str) -> dict[str, Any]:
@@ -531,6 +544,70 @@ class APIClient:
         payload = {"id_factura": id_factura, "archivo_url": archivo_url}
         # ACÁ ESTÁ EL CAMBIO: usamos data=payload en lugar de json=payload
         return await self._post("/finanzas/comprobantes", data=payload)
+
+    async def upload_comprobante_pdf(
+        self, id_factura: int, nombre_archivo: str, contenido_bytes: bytes
+    ) -> dict[str, Any]:
+        """Sube un archivo PDF real de comprobante asociado a una factura."""
+        client = self._get_client()
+        headers = self._get_headers()
+        headers.pop("Content-Type", None)
+
+        files = {"archivo": (nombre_archivo, contenido_bytes, "application/pdf")}
+        data = {"id_factura": str(id_factura)}
+
+        response = await client.post(
+            f"{self.base_url}/finanzas/comprobantes/upload",
+            data=data,
+            files=files,
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== REPORTES FINANCIEROS Y DE PAGOS ====================
+    async def get_reporte_ingresos(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el reporte de ingresos por período."""
+        return await self._get("/finanzas/reportes/ingresos", params=params)
+
+    async def get_reporte_pagos_completos(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos completos discriminado por año y alumno."""
+        return await self._get("/finanzas/reportes/pagos-completos", params=params)
+
+    async def get_reporte_pagos_incompletos(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos incompletos/deuda discriminado por año y alumno."""
+        return await self._get("/finanzas/reportes/pagos-incompletos", params=params)
+
+    async def get_reporte_pagos_deportes(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos por deporte, nivel, horario y docente."""
+        return await self._get("/finanzas/reportes/deportes", params=params)
+
+    async def get_reporte_pagos_transporte(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos por recorrido de transporte."""
+        return await self._get("/finanzas/reportes/transporte", params=params)
+
+    # ==================== VALIDACIÓN DE COMPROBANTES (ADMIN) ====================
+    async def get_comprobantes_pendientes(self) -> list[dict[str, Any]]:
+        """Obtiene la nómina de comprobantes en revisión esperando aprobación."""
+        return await self._get("/finanzas/comprobantes/pendientes")
+
+    async def aprobar_comprobante(self, id_comprobante: int) -> dict[str, Any]:
+        """Aprueba el comprobante y cancela la factura (PAGADA)."""
+        return await self._put(f"/finanzas/comprobantes/{id_comprobante}/aprobar")
+
+    async def rechazar_comprobante(self, id_comprobante: int) -> dict[str, Any]:
+        """Rechaza el comprobante y mantiene la factura en PENDIENTE."""
+        return await self._put(f"/finanzas/comprobantes/{id_comprobante}/rechazar")
 
 
 api_client = APIClient()

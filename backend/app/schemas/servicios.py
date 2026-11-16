@@ -25,7 +25,7 @@ class HorarioResponse(HorarioBase):
 class DeporteBase(BaseModel):
     nombre: str
     legajo_profesor_responsable: int | None = None
-    precio_mensual: float = 0.0 # <-- AGREGAR ESTO
+    precio_mensual: float = 0.0  # <-- AGREGAR ESTO
 
 
 class DeporteCreate(DeporteBase):
@@ -79,7 +79,7 @@ class InscripcionDeporteResponse(InscripcionDeporteCreate):
 # --- TRANSPORTE ---
 class RecorridoTransporteBase(BaseModel):
     descripcion: str
-    precio_mensual: float = 0.0 # <-- AGREGAR ESTO
+    precio_mensual: float = 0.0  # <-- AGREGAR ESTO
 
 
 class RecorridoTransporteCreate(RecorridoTransporteBase):
@@ -89,6 +89,7 @@ class RecorridoTransporteCreate(RecorridoTransporteBase):
 class RecorridoTransporteUpdate(BaseModel):
     descripcion: str | None = None
     precio_mensual: float | None = None
+
 
 class RecorridoTransporteResponse(RecorridoTransporteBase):
     id_recorrido: int
