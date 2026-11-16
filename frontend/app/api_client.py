@@ -1,7 +1,36 @@
 import os
 from typing import Any, Optional
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
+
+# URL usada en web/escritorio (backend en la misma máquina).
+DEFAULT_API_BASE_URL = "http://127.0.0.1:8000/api/v1"
+
+# URL por defecto en Android: IP LAN del equipo donde se levanta el servidor
+# local. Para el emulador de Android usar http://10.0.2.2:8000/api/v1.
+# También se puede cambiar desde la pantalla de login (queda guardada).
+ANDROID_API_BASE_URL = os.getenv(
+    "ANDROID_API_BASE_URL", "http://10.13.29.67:8000/api/v1"
+)
+
+# Clave de almacenamiento local donde se persiste la URL configurada.
+API_BASE_URL_STORAGE_KEY = "api_base_url"
+
+
+def normalize_base_url(url: str | None) -> str:
+    """Normaliza la URL del servidor agregando esquema y el prefijo /api/v1."""
+    value = (url or "").strip().rstrip("/")
+    if not value:
+        return DEFAULT_API_BASE_URL
+    if not value.startswith(("http://", "https://")):
+        value = f"http://{value}"
+
+    parts = urlsplit(value)
+    path = parts.path.rstrip("/")
+    if not path.endswith("/api/v1"):
+        path = f"{path}/api/v1"
+    return urlunsplit((parts.scheme, parts.netloc, path, "", ""))
 
 
 class APIClient:
@@ -9,7 +38,8 @@ class APIClient:
 
     La URL base se puede configurar con la variable de entorno API_BASE_URL
     (por defecto http://127.0.0.1:8000/api/v1) para poder desplegar el sistema
-    en otro servidor sin tocar el código.
+    en otro servidor sin tocar el código. En Android también puede modificarse
+    en tiempo de ejecución con :meth:`set_base_url`.
     """
 
     _instance: Optional["APIClient"] = None
@@ -24,12 +54,16 @@ class APIClient:
         if getattr(self, "_initialized", False):
             return
 
-        self.base_url = (
-            base_url or os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
-        ).rstrip("/")
+        self.base_url = normalize_base_url(
+            base_url or os.getenv("API_BASE_URL") or DEFAULT_API_BASE_URL
+        )
         self.token: str | None = None
         self._client: httpx.AsyncClient | None = None
         self._initialized = True
+
+    def set_base_url(self, url: str) -> None:
+        """Cambia la URL del backend (por ejemplo, el host:puerto local)."""
+        self.base_url = normalize_base_url(url)
 
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:

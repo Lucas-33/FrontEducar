@@ -1,4 +1,13 @@
+import os
+
 import flet as ft
+
+from frontend.app.api_client import (
+    ANDROID_API_BASE_URL,
+    API_BASE_URL_STORAGE_KEY,
+    DEFAULT_API_BASE_URL,
+    api_client,
+)
 
 # Componentes públicos
 from frontend.app.components.footer import create_footer
@@ -95,6 +104,21 @@ RUTA_INICIAL_POR_ROL = {
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0
+
+    # ==================== CONFIGURACIÓN DEL BACKEND ====================
+    # Prioridad: URL guardada desde el login > variable de entorno > plataforma.
+    try:
+        url_guardada = await ft.SharedPreferences().get(API_BASE_URL_STORAGE_KEY)
+    except Exception:
+        url_guardada = None
+
+    if url_guardada:
+        api_client.set_base_url(str(url_guardada))
+    elif not os.getenv("API_BASE_URL"):
+        if page.platform in (ft.PagePlatform.ANDROID, ft.PagePlatform.ANDROID_TV):
+            api_client.set_base_url(ANDROID_API_BASE_URL)
+        else:
+            api_client.set_base_url(DEFAULT_API_BASE_URL)
 
     async def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
