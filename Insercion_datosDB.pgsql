@@ -203,6 +203,72 @@ INSERT INTO asistencia (legajo_alumno, id_curso, fecha, estado, observacion, leg
 ON CONFLICT (legajo_alumno, fecha) DO NOTHING;
 
 -- ==============================================================================
+-- 6. CONFIGURACION FINANCIERA INSTITUCIONAL
+-- ==============================================================================
+
+-- Establecemos los precios base que el Admin puede modificar desde la web
+INSERT INTO configuracion_financiera (concepto, valor) VALUES 
+('CUOTA_BASE', 35000.00),
+('COMEDOR', 12000.00)
+ON CONFLICT (concepto) DO NOTHING;
+
+-- Actualizamos los precios de los servicios adicionales que creaste en el seed data
+UPDATE deporte SET precio_mensual = 8000.00 WHERE id_deporte = 1; -- Fútbol
+UPDATE deporte SET precio_mensual = 7500.00 WHERE id_deporte = 2; -- Vóleibol
+UPDATE deporte SET precio_mensual = 8500.00 WHERE id_deporte = 3; -- Básquetbol
+UPDATE recorrido_transporte SET precio_mensual = 15000.00 WHERE id_recorrido = 1; -- Centro - Norte
+UPDATE recorrido_transporte SET precio_mensual = 18000.00 WHERE id_recorrido = 2; -- Sur - Barranqueras
+
+-- ==============================================================================
+-- 2. FACTURAS HISTÓRICAS Y ACTUALES
+-- ==============================================================================
+-- Creamos 3 facturas para Tomás Martínez (legajo 1002, hijo de Roberto Martínez, id_padre 1)
+-- Él tiene: Cuota Base + Transporte (Ruta Centro-Norte) + Fútbol
+
+-- Factura de Septiembre (PAGADA)
+INSERT INTO factura (legajo_alumno, mes, anio, total, estado, fecha_emision, fecha_vencimiento)
+VALUES (1002, 9, 2026, 58000.00, 'PAGADA', '2026-09-01', '2026-09-10');
+
+-- Factura de Octubre (PAGADA)
+INSERT INTO factura (legajo_alumno, mes, anio, total, estado, fecha_emision, fecha_vencimiento)
+VALUES (1002, 10, 2026, 58000.00, 'PAGADA', '2026-10-01', '2026-10-10');
+
+-- Factura de Noviembre (PENDIENTE)
+INSERT INTO factura (legajo_alumno, mes, anio, total, estado, fecha_emision, fecha_vencimiento)
+VALUES (1002, 11, 2026, 58000.00, 'PENDIENTE', '2026-11-01', '2026-11-10');
+
+-- ==============================================================================
+-- 3. DETALLE DE ÍTEMS DE LAS FACTURAS
+-- ==============================================================================
+-- (Asumiendo que las facturas insertadas tomaron los IDs 1, 2 y 3)
+
+-- Detalle Factura 1 (Septiembre)
+INSERT INTO item_factura (id_factura, concepto, monto) VALUES 
+(1, 'Cuota Base Mensual', 35000.00),
+(1, 'Transporte: Ruta Centro - Norte', 15000.00),
+(1, 'Deporte: Fútbol', 8000.00);
+
+-- Detalle Factura 2 (Octubre)
+INSERT INTO item_factura (id_factura, concepto, monto) VALUES 
+(2, 'Cuota Base Mensual', 35000.00),
+(2, 'Transporte: Ruta Centro - Norte', 15000.00),
+(2, 'Deporte: Fútbol', 8000.00);
+
+-- Detalle Factura 3 (Noviembre - PENDIENTE)
+INSERT INTO item_factura (id_factura, concepto, monto) VALUES 
+(3, 'Cuota Base Mensual', 35000.00),
+(3, 'Transporte: Ruta Centro - Norte', 15000.00),
+(3, 'Deporte: Fútbol', 8000.00);
+
+-- ==============================================================================
+-- 4. ACTUALIZACIÓN DE SECUENCIAS
+-- ==============================================================================
+SELECT setval(pg_get_serial_sequence('configuracion_financiera', 'id_configuracion'), COALESCE(MAX(id_configuracion), 1)) FROM configuracion_financiera;
+SELECT setval(pg_get_serial_sequence('factura', 'id_factura'), COALESCE(MAX(id_factura), 1)) FROM factura;
+SELECT setval(pg_get_serial_sequence('item_factura', 'id_item'), COALESCE(MAX(id_item), 1)) FROM item_factura;
+SELECT setval(pg_get_serial_sequence('comprobante_pago', 'id_comprobante'), COALESCE(MAX(id_comprobante), 1)) FROM comprobante_pago;
+
+-- ==============================================================================
 -- 6. ACTUALIZACIÓN DE SECUENCIAS IDENTITY (PREVENCIÓN DE ERRORES)
 -- ==============================================================================
 
@@ -225,3 +291,7 @@ SELECT setval(pg_get_serial_sequence('calificacion', 'id_calificacion'), COALESC
 SELECT setval(pg_get_serial_sequence('asistencia', 'id_asistencia'), COALESCE(MAX(id_asistencia), 1)) FROM asistencia;
 
 COMMIT;
+
+
+
+

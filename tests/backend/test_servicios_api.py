@@ -1,6 +1,6 @@
 """Tests de los servicios escolares (Deportes, Transporte, Comedor)."""
 
-from backend.tests.conftest import LEGAJO_ALUMNO_1
+from tests.backend.conftest import LEGAJO_ALUMNO_1
 
 
 def test_limite_deportes_y_conflictos_horario(client, cabeceras_admin):

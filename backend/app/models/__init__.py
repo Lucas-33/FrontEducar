@@ -11,6 +11,12 @@ from backend.app.models.comunidad import (
     SolicitudInscripcion,
 )
 from backend.app.models.evaluacion import Asistencia, Calificacion
+from backend.app.models.finanzas import (
+    ComprobantePago,
+    ConfiguracionFinanciera,
+    Factura,
+    ItemFactura,
+)
 from backend.app.models.personas import Alumno, Padre, PadreAlumno, Profesor
 from backend.app.models.seguridad import Rol, Usuario
 from backend.app.models.servicios import (

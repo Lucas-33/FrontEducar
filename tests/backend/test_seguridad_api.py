@@ -1,10 +1,6 @@
 """Tests de autenticación, autorización por rol y cambio de contraseña."""
 
-from backend.tests.conftest import (
-    LEGAJO_ALUMNO_1,
-    LEGAJO_ALUMNO_2,
-    PASSWORD_PRUEBA,
-)
+from tests.backend.conftest import LEGAJO_ALUMNO_1, LEGAJO_ALUMNO_2, PASSWORD_PRUEBA
 
 
 def test_login_correcto_y_perfil(client):

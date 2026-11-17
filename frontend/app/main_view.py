@@ -1,4 +1,13 @@
+import os
+
 import flet as ft
+
+from app.api_client import (
+    ANDROID_API_BASE_URL,
+    API_BASE_URL_STORAGE_KEY,
+    DEFAULT_API_BASE_URL,
+    api_client,
+)
 
 # Componentes públicos
 from app.components.footer import create_footer
@@ -14,6 +23,7 @@ from app.pages.admin_comunidad import get_admin_comunidad_view
 from app.pages.admin_cursos import get_admin_cursos_view
 from app.pages.admin_dashboard import get_admin_dashboard_view
 from app.pages.admin_deportes import get_admin_deportes_view
+from app.pages.admin_finanzas import get_admin_finanzas_view
 from app.pages.admin_horarios import get_admin_horarios_view
 from app.pages.admin_inscripciones import get_admin_inscripciones_view
 from app.pages.admin_materias import get_admin_materias_view
@@ -35,6 +45,9 @@ from app.pages.admin_reporte_transporte_pasajeros import (
     get_admin_reporte_transporte_pasajeros_view,
 )
 from app.pages.admin_reportes import get_admin_reportes_view
+from app.pages.admin_reportes_financieros import (
+    get_admin_reportes_financieros_view,
+)
 from app.pages.admin_transporte import get_admin_transporte_view
 from app.pages.admin_usuarios import get_admin_usuarios_view
 
@@ -67,6 +80,7 @@ from app.pages.opiniones import get_opiniones_view
 from app.pages.padre_dashboard import get_padre_dashboard_view
 from app.pages.padre_deportes import get_padre_deportes_view
 from app.pages.padre_docentes import get_padre_docentes_view
+from app.pages.padre_facturas import get_padre_facturas_view
 from app.pages.padre_inscripcion import get_padre_inscripcion_view
 from app.pages.padre_notas import get_padre_notas_view
 from app.pages.padre_servicios import get_padre_servicios_view
@@ -93,6 +107,21 @@ RUTA_INICIAL_POR_ROL = {
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0
+
+    # ==================== CONFIGURACIÓN DEL BACKEND ====================
+    # Prioridad: URL guardada desde el login > variable de entorno > plataforma.
+    try:
+        url_guardada = await ft.SharedPreferences().get(API_BASE_URL_STORAGE_KEY)
+    except Exception:
+        url_guardada = None
+
+    if url_guardada:
+        api_client.set_base_url(str(url_guardada))
+    elif not os.getenv("API_BASE_URL"):
+        if page.platform in (ft.PagePlatform.ANDROID, ft.PagePlatform.ANDROID_TV):
+            api_client.set_base_url(ANDROID_API_BASE_URL)
+        else:
+            api_client.set_base_url(DEFAULT_API_BASE_URL)
 
     async def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
@@ -242,6 +271,16 @@ async def main(page: ft.Page):
             )
             page.update()
             return
+        elif ruta == "/admin/reportes-financieros":
+            vista_rep_fin = await get_admin_reportes_financieros_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_rep_fin]))
+            page.update()
+            return
+        elif ruta == "/admin/finanzas":
+            vista_finanzas = await get_admin_finanzas_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_finanzas]))
+            page.update()
+            return
         # ==================== 3. RUTAS DEL PORTAL FAMILIAS ====================
         if ruta == "/portal/padre/dashboard":
             vista_padre_dash = await get_padre_dashboard_view(page)
@@ -282,6 +321,13 @@ async def main(page: ft.Page):
             vista_padre_notas = await get_padre_notas_view(page)
             page.views.append(
                 ft.View(route=ruta, padding=0, controls=[vista_padre_notas])
+            )
+            page.update()
+            return
+        elif ruta == "/portal/padre/facturas":
+            vista_padre_facturas = await get_padre_facturas_view(page)
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_facturas])
             )
             page.update()
             return

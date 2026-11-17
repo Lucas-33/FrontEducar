@@ -123,6 +123,18 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
         aviso_error.visible = True
 
     # ==================== 1. ENCABEZADO Y ACCIONES ====================
+    async def exportar_excel_click(_):
+        await page.launch_url(
+            api_client.reporte_url("cursos-materias"),
+            web_popup_window_name="_blank",
+        )
+
+    async def imprimir_pdf_click(_):
+        await page.launch_url(
+            api_client.reporte_url("cursos-materias", formato="pdf"),
+            web_popup_window_name="_blank",
+        )
+
     header_actions = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -185,9 +197,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         style=ft.ButtonStyle(
                             shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
                         ),
-                        on_click=lambda _: page.launch_url(
-                            api_client.reporte_url("cursos-materias")
-                        ),
+                        on_click=exportar_excel_click,
                     ),
                     ft.Button(
                         content=ft.Row(
@@ -209,7 +219,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         style=ft.ButtonStyle(
                             shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
                         ),
-                        on_click=lambda _: None,
+                        on_click=imprimir_pdf_click,
                     ),
                 ],
             ),
@@ -406,7 +416,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             nombre_nivel_por_curso.get(id_curso, "Sin nivel"),
                             size=13,
-                            color=MUTED,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -415,7 +425,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                             curso.get("nombre", ""),
                             size=14,
                             weight=ft.FontWeight.W_600,
-                            color=TEAL_DARK,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -423,8 +433,8 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             str(len(alumnos_curso)),
                             size=14,
-                            weight=ft.FontWeight.W_500,
-                            color=TEXT_COLOR,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -432,8 +442,8 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             str(activos),
                             size=14,
-                            weight=ft.FontWeight.W_500,
-                            color=TEAL,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -441,7 +451,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             str(len(materias_del_curso(id_curso))),
                             size=14,
-                            color=TEXT_COLOR,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -449,7 +459,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             ", ".join(docentes) if docentes else "Sin docente asignado",
                             size=13,
-                            color=MUTED,
+                            color=ft.Colors.BLACK,
                             max_lines=2,
                             overflow=ft.TextOverflow.ELLIPSIS,
                         ),
@@ -507,7 +517,9 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                     ft.Container(
                         width=150,
                         content=ft.Text(
-                            asignacion.get("nivel") or "Sin nivel", size=13, color=MUTED
+                            asignacion.get("nivel") or "Sin nivel",
+                            size=13,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -516,7 +528,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                             asignacion.get("curso") or "—",
                             size=13,
                             weight=ft.FontWeight.W_600,
-                            color=TEXT_COLOR,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -525,7 +537,7 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                             asignacion.get("materia") or "—",
                             size=14,
                             weight=ft.FontWeight.W_600,
-                            color=TEAL_DARK,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -534,11 +546,17 @@ async def get_admin_reporte_cursos_materias_view(page: ft.Page) -> ft.Row:
                             asignacion.get("profesor") or "Sin docente asignado",
                             size=13,
                             weight=ft.FontWeight.W_500,
-                            color=TEXT_COLOR,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
-                        width=130, content=ft.Text(str(inscriptos), size=14, color=TEAL)
+                        width=130,
+                        content=ft.Text(
+                            str(inscriptos),
+                            size=14,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLACK,
+                        ),
                     ),
                 ],
             ),

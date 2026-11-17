@@ -1,6 +1,6 @@
 """Tests de calificaciones y asistencia (módulo de evaluación)."""
 
-from backend.tests.conftest import LEGAJO_ALUMNO_1, LEGAJO_ALUMNO_2, LEGAJO_PROFESOR
+from tests.backend.conftest import LEGAJO_ALUMNO_1, LEGAJO_ALUMNO_2, LEGAJO_PROFESOR
 
 
 def _crear_calificacion(client, cabeceras, **overrides):
