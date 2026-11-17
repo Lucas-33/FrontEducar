@@ -2,8 +2,8 @@ from datetime import datetime
 
 import flet as ft
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.constants import (
     BG_PAGE,
     BG_WHITE,
     BORDER_COLOR,
@@ -18,8 +18,8 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.form_controls import status_badge
-from frontend.app.components.portal_layout import portal_layout
+from app.components.form_controls import status_badge
+from app.components.portal_layout import portal_layout
 
 
 def _nombre_completo(persona: dict) -> str:

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.repositories import (
     alumno_repository,
+    curso_repository,
     deporte_repository,
     grupo_deporte_repository,
     horario_repository,
@@ -111,12 +112,25 @@ class ServiciosEscolaresService:
         return grupo
 
     def inscribir_deporte(self, db: Session, inscripcion_in: InscripcionDeporteCreate):
-        if not alumno_repository.get_by_legajo(db, inscripcion_in.legajo_alumno):
+        alumno = alumno_repository.get_by_legajo(db, inscripcion_in.legajo_alumno)
+        if not alumno:
             raise HTTPException(status_code=404, detail="El alumno no existe")
 
         nuevo_grupo = grupo_deporte_repository.get(db, inscripcion_in.id_grupo)
         if not nuevo_grupo:
             raise HTTPException(status_code=404, detail="El grupo deportivo no existe")
+
+        # El grupo deportivo pertenece a un nivel educativo: el alumno no puede
+        # inscribirse en grupos de un nivel distinto al de su curso.
+        curso = curso_repository.get(db, alumno.id_curso)
+        if curso and curso.id_nivel != nuevo_grupo.id_nivel:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "El grupo deportivo no corresponde al nivel educativo del "
+                    "alumno. Verifique el curso y el grupo seleccionado."
+                ),
+            )
 
         if inscripcion_deporte_repository.get_inscripcion(
             db, inscripcion_in.legajo_alumno, inscripcion_in.id_grupo

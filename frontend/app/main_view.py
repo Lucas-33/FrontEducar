@@ -1,76 +1,89 @@
+import os
+
 import flet as ft
 
+from app.api_client import (
+    ANDROID_API_BASE_URL,
+    API_BASE_URL_STORAGE_KEY,
+    api_client,
+)
+
 # Componentes públicos
-from frontend.app.components.footer import create_footer
-from frontend.app.components.navbar import create_navbar
+from app.components.footer import create_footer
+from app.components.navbar import create_navbar
 
 # Páginas administrativas
-from frontend.app.pages.admin_alumno_form import get_admin_alumno_form_view
-from frontend.app.pages.admin_alumnos import get_admin_alumnos_view
-from frontend.app.pages.admin_comedor import get_admin_comedor_view
+from app.pages.admin_alumno_form import get_admin_alumno_form_view
+from app.pages.admin_alumnos import get_admin_alumnos_view
+from app.pages.admin_comedor import get_admin_comedor_view
 
 # Páginas nuevas (seguridad, comunidad y notas)
-from frontend.app.pages.admin_comunidad import get_admin_comunidad_view
-from frontend.app.pages.admin_cursos import get_admin_cursos_view
-from frontend.app.pages.admin_dashboard import get_admin_dashboard_view
-from frontend.app.pages.admin_deportes import get_admin_deportes_view
-from frontend.app.pages.admin_horarios import get_admin_horarios_view
-from frontend.app.pages.admin_inscripciones import get_admin_inscripciones_view
-from frontend.app.pages.admin_materias import get_admin_materias_view
-from frontend.app.pages.admin_niveles import get_admin_niveles_view
-from frontend.app.pages.admin_profesor_form import get_admin_profesor_form_view
-from frontend.app.pages.admin_profesores import get_admin_profesores_view
+from app.pages.admin_comunidad import get_admin_comunidad_view
+from app.pages.admin_cursos import get_admin_cursos_view
+from app.pages.admin_dashboard import get_admin_dashboard_view
+from app.pages.admin_deportes import get_admin_deportes_view
+from app.pages.admin_finanzas import get_admin_finanzas_view
+from app.pages.admin_horarios import get_admin_horarios_view
+from app.pages.admin_inscripciones import get_admin_inscripciones_view
+from app.pages.admin_materias import get_admin_materias_view
+from app.pages.admin_niveles import get_admin_niveles_view
+from app.pages.admin_profesor_form import get_admin_profesor_form_view
+from app.pages.admin_profesores import get_admin_profesores_view
 
 # Reportes
-from frontend.app.pages.admin_reporte_alumnos_docentes import (
+from app.pages.admin_reporte_alumnos_docentes import (
     get_admin_reporte_alumnos_docentes_view,
 )
-from frontend.app.pages.admin_reporte_cursos_materias import (
+from app.pages.admin_reporte_cursos_materias import (
     get_admin_reporte_cursos_materias_view,
 )
-from frontend.app.pages.admin_reporte_deportes_avanzado import (
+from app.pages.admin_reporte_deportes_avanzado import (
     get_admin_reporte_deportes_avanzado_view,
 )
-from frontend.app.pages.admin_reporte_transporte_pasajeros import (
+from app.pages.admin_reporte_transporte_pasajeros import (
     get_admin_reporte_transporte_pasajeros_view,
 )
-from frontend.app.pages.admin_reportes import get_admin_reportes_view
-from frontend.app.pages.admin_transporte import get_admin_transporte_view
-from frontend.app.pages.admin_usuarios import get_admin_usuarios_view
+from app.pages.admin_reportes import get_admin_reportes_view
+from app.pages.admin_reportes_financieros import (
+    get_admin_reportes_financieros_view,
+)
+from app.pages.admin_transporte import get_admin_transporte_view
+from app.pages.admin_usuarios import get_admin_usuarios_view
 
 # Portal Alumno / Estudiante
-from frontend.app.pages.alumno_dashboard import get_alumno_dashboard_view
-from frontend.app.pages.alumno_deportes import get_alumno_deportes_view
-from frontend.app.pages.alumno_materias import get_alumno_materias_view
-from frontend.app.pages.alumno_notas import get_alumno_notas_view
-from frontend.app.pages.alumno_servicios import get_alumno_servicios_view
+from app.pages.alumno_dashboard import get_alumno_dashboard_view
+from app.pages.alumno_deportes import get_alumno_deportes_view
+from app.pages.alumno_materias import get_alumno_materias_view
+from app.pages.alumno_notas import get_alumno_notas_view
+from app.pages.alumno_servicios import get_alumno_servicios_view
 
 # Páginas públicas
-from frontend.app.pages.bienestar_estudiantil import get_bienestar_estudiantil_view
-from frontend.app.pages.contacto import get_contacto_view
+from app.pages.bienestar_estudiantil import get_bienestar_estudiantil_view
+from app.pages.contacto import get_contacto_view
 
 # Portal Docentes
-from frontend.app.pages.docente_alumnos import get_docente_alumnos_view
-from frontend.app.pages.docente_dashboard import get_docente_dashboard_view
-from frontend.app.pages.docente_deportes import get_docente_deportes_view
-from frontend.app.pages.docente_materias import get_docente_materias_view
-from frontend.app.pages.docente_notas import get_docente_notas_view
-from frontend.app.pages.empleo import get_empleo_view
-from frontend.app.pages.home import home_view
-from frontend.app.pages.inscripciones import get_inscripcion_view
-from frontend.app.pages.login import get_login_view
-from frontend.app.pages.niveles import get_niveles_view
-from frontend.app.pages.noticias import get_noticias_view
-from frontend.app.pages.opiniones import get_opiniones_view
+from app.pages.docente_alumnos import get_docente_alumnos_view
+from app.pages.docente_dashboard import get_docente_dashboard_view
+from app.pages.docente_deportes import get_docente_deportes_view
+from app.pages.docente_materias import get_docente_materias_view
+from app.pages.docente_notas import get_docente_notas_view
+from app.pages.empleo import get_empleo_view
+from app.pages.home import home_view
+from app.pages.inscripciones import get_inscripcion_view
+from app.pages.login import get_login_view
+from app.pages.niveles import get_niveles_view
+from app.pages.noticias import get_noticias_view
+from app.pages.opiniones import get_opiniones_view
 
 # Portal Familias / Padres
-from frontend.app.pages.padre_dashboard import get_padre_dashboard_view
-from frontend.app.pages.padre_deportes import get_padre_deportes_view
-from frontend.app.pages.padre_docentes import get_padre_docentes_view
-from frontend.app.pages.padre_inscripcion import get_padre_inscripcion_view
-from frontend.app.pages.padre_notas import get_padre_notas_view
-from frontend.app.pages.padre_servicios import get_padre_servicios_view
-from frontend.app.pages.quienes_somos import get_quienes_somos_view
+from app.pages.padre_dashboard import get_padre_dashboard_view
+from app.pages.padre_deportes import get_padre_deportes_view
+from app.pages.padre_docentes import get_padre_docentes_view
+from app.pages.padre_facturas import get_padre_facturas_view
+from app.pages.padre_inscripcion import get_padre_inscripcion_view
+from app.pages.padre_notas import get_padre_notas_view
+from app.pages.padre_servicios import get_padre_servicios_view
+from app.pages.quienes_somos import get_quienes_somos_view
 
 # Mapa de rol normalizado -> sección de rutas que le corresponde
 SECCION_POR_ROL = {
@@ -93,6 +106,24 @@ RUTA_INICIAL_POR_ROL = {
 async def main(page: ft.Page):
     page.title = "Educar para Transformar"
     page.padding = 0
+
+    # ==================== CONFIGURACIÓN DEL BACKEND ====================
+    # Prioridad: URL guardada desde el login > variable de entorno > plataforma.
+    try:
+        url_guardada = await ft.SharedPreferences().get(API_BASE_URL_STORAGE_KEY)
+    except Exception:
+        url_guardada = None
+
+    if url_guardada:
+        api_client.set_base_url(str(url_guardada))
+    elif not os.getenv("API_BASE_URL"):
+        # En Android el cliente ya apunta a BACKEND_PRODUCCION desde __init__
+        # (detecta sys.platform == "android"). ANDROID_API_BASE_URL permite
+        # apuntar a un servidor local solo para pruebas; por defecto es Render.
+        if page.platform in (ft.PagePlatform.ANDROID, ft.PagePlatform.ANDROID_TV):
+            api_client.set_base_url(ANDROID_API_BASE_URL)
+        # En escritorio/web no se sobrescribe: APIClient ya dejó el localhost
+        # correspondiente, salvo que sys.platform indique Android.
 
     async def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
@@ -242,6 +273,16 @@ async def main(page: ft.Page):
             )
             page.update()
             return
+        elif ruta == "/admin/reportes-financieros":
+            vista_rep_fin = await get_admin_reportes_financieros_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_rep_fin]))
+            page.update()
+            return
+        elif ruta == "/admin/finanzas":
+            vista_finanzas = await get_admin_finanzas_view(page)
+            page.views.append(ft.View(route=ruta, padding=0, controls=[vista_finanzas]))
+            page.update()
+            return
         # ==================== 3. RUTAS DEL PORTAL FAMILIAS ====================
         if ruta == "/portal/padre/dashboard":
             vista_padre_dash = await get_padre_dashboard_view(page)
@@ -282,6 +323,13 @@ async def main(page: ft.Page):
             vista_padre_notas = await get_padre_notas_view(page)
             page.views.append(
                 ft.View(route=ruta, padding=0, controls=[vista_padre_notas])
+            )
+            page.update()
+            return
+        elif ruta == "/portal/padre/facturas":
+            vista_padre_facturas = await get_padre_facturas_view(page)
+            page.views.append(
+                ft.View(route=ruta, padding=0, controls=[vista_padre_facturas])
             )
             page.update()
             return

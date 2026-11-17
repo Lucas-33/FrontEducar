@@ -1,15 +1,61 @@
 import os
+import sys
 from typing import Any, Optional
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
+
+# Backend de producción (deploy de Render). Se usa cuando la app corre
+# empaquetada en un dispositivo (APK/AAB), donde no hay backend local.
+BACKEND_PRODUCCION = "https://educar-para-transformar-zcuo.onrender.com/api/v1"
+
+# URL usada en web/escritorio (backend en la misma máquina).
+DEFAULT_API_BASE_URL = "http://127.0.0.1:8000/api/v1"
+
+# URL usada por el APK en Android. Por defecto apunta al deploy de Render,
+# porque un dispositivo no puede alcanzar el 127.0.0.1 ni una IP de LAN fuera
+# de esa red. Para pruebas locales se puede override con esta variable, por
+# ejemplo http://192.168.1.15:8000/api/v1 (emulador: http://10.0.2.2:8000/api/v1)
+# o desde la pantalla de login (queda guardada).
+ANDROID_API_BASE_URL = os.getenv("ANDROID_API_BASE_URL", BACKEND_PRODUCCION)
+
+# Clave de almacenamiento local donde se persiste la URL configurada.
+API_BASE_URL_STORAGE_KEY = "api_base_url"
+
+
+def normalize_base_url(url: str | None) -> str:
+    """Normaliza la URL del servidor agregando esquema y el prefijo /api/v1."""
+    value = (url or "").strip().rstrip("/")
+    if not value:
+        return DEFAULT_API_BASE_URL
+    if not value.startswith(("http://", "https://")):
+        # Render solo sirve por HTTPS; las IPs/servidores locales usan http.
+        esquema = "https://" if "onrender.com" in value else "http://"
+        value = f"{esquema}{value}"
+
+    parts = urlsplit(value)
+    path = parts.path.rstrip("/")
+    if not path.endswith("/api/v1"):
+        path = f"{path}/api/v1"
+    return urlunsplit((parts.scheme, parts.netloc, path, "", ""))
 
 
 class APIClient:
     """Cliente HTTP asíncrono centralizado para interactuar con la API REST de FastAPI.
 
     La URL base se puede configurar con la variable de entorno API_BASE_URL
-    (por defecto http://127.0.0.1:8000/api/v1) para poder desplegar el sistema
-    en otro servidor sin tocar el código.
+    para poder desplegar el sistema en otro servidor sin tocar el código.
+
+    Si API_BASE_URL no está definida:
+
+    - En desarrollo (interfaz sola o montada en el mismo proceso que la API)
+      se usa el puerto local (`PORT`, que Render asigna automáticamente);
+      apuntar a 127.0.0.1 evita dar una vuelta innecesaria por Internet.
+    - En un dispositivo (APK de Android) se usa el backend de producción
+      `BACKEND_PRODUCCION`, porque no hay API local disponible.
+
+    En Android también puede modificarse en tiempo de ejecución con
+    :meth:`set_base_url` (por ejemplo desde la pantalla de login).
     """
 
     _instance: Optional["APIClient"] = None
@@ -24,12 +70,48 @@ class APIClient:
         if getattr(self, "_initialized", False):
             return
 
-        self.base_url = (
-            base_url or os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
-        ).rstrip("/")
+        puerto = os.getenv("PORT", "8000")
+
+        # Detecta si la app corre en un dispositivo Android empaquetado
+        # (ANDROID_ROOT está presente en todo proceso de Android; además
+        # sys.platform == "android" en CPython >= 3.13 compilado para Android).
+        en_android = os.getenv("ANDROID_ROOT") is not None or sys.platform == "android"
+
+        if os.getenv("API_BASE_URL"):
+            base_por_defecto = os.getenv("API_BASE_URL")
+        elif en_android:
+            base_por_defecto = BACKEND_PRODUCCION
+        else:
+            base_por_defecto = f"http://127.0.0.1:{puerto}/api/v1"
+
+        self.base_url = normalize_base_url(base_url or base_por_defecto)
         self.token: str | None = None
         self._client: httpx.AsyncClient | None = None
         self._initialized = True
+
+    def set_base_url(self, url: str) -> None:
+        """Cambia la URL del backend (por ejemplo, el host:puerto local)."""
+        self.base_url = normalize_base_url(url)
+
+    @property
+    def base_url_navegador(self) -> str:
+        """Base URL que el navegador del usuario puede alcanzar.
+
+        Dentro de Render, las llamadas ``httpx`` del servidor usan
+        ``127.0.0.1:$PORT`` (más rápido y sin dar una vuelta por Internet), pero
+        los enlaces abiertos con ``page.launch_url`` se ejecutan en el navegador
+        del cliente, donde ``127.0.0.1`` apunta a la propia máquina. En ese caso
+        hay que usar la URL pública del servicio.
+        """
+        url_render = os.getenv("RENDER_EXTERNAL_URL")
+        if url_render:
+            return normalize_base_url(url_render)
+        return self.base_url
+
+    @property
+    def origin_navegador(self) -> str:
+        """Origen público sin ``/api/v1`` (rutas HTML montadas en la raíz)."""
+        return self.base_url_navegador.removesuffix("/api/v1")
 
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
@@ -57,19 +139,21 @@ class APIClient:
         response.raise_for_status()
         return response.json()
 
-    async def _post(self, path: str, data: dict[str, Any]) -> Any:
+    async def _post(self, path: str, data: dict[str, Any] | None = None) -> Any:
         client = self._get_client()
-        response = await client.post(
-            f"{self.base_url}{path}", json=data, headers=self._get_headers()
-        )
+        kwargs: dict[str, Any] = {"headers": self._get_headers()}
+        if data is not None:
+            kwargs["json"] = data
+        response = await client.post(f"{self.base_url}{path}", **kwargs)
         response.raise_for_status()
         return response.json()
 
-    async def _put(self, path: str, data: dict[str, Any]) -> Any:
+    async def _put(self, path: str, data: dict[str, Any] | None = None) -> Any:
         client = self._get_client()
-        response = await client.put(
-            f"{self.base_url}{path}", json=data, headers=self._get_headers()
-        )
+        kwargs: dict[str, Any] = {"headers": self._get_headers()}
+        if data is not None:
+            kwargs["json"] = data
+        response = await client.put(f"{self.base_url}{path}", **kwargs)
         response.raise_for_status()
         return response.json()
 
@@ -220,6 +304,10 @@ class APIClient:
 
     async def create_padre(self, data: dict[str, Any]) -> dict[str, Any]:
         return await self._post("/personas/padres", data)
+
+    async def get_mis_facturas(self):
+        """Obtiene las facturas de los hijos asociados al padre autenticado."""
+        return await self._get("/finanzas/mis-facturas")
 
     # ==================== NIVELES EDUCATIVOS ====================
     async def get_niveles(self) -> list[dict[str, Any]]:
@@ -470,10 +558,107 @@ class APIClient:
     async def get_resumen_dashboard(self) -> dict[str, Any]:
         return await self._get("/dashboard/resumen")
 
-    # ==================== REPORTES EXCEL ====================
-    def reporte_url(self, nombre: str) -> str:
-        """URL absoluta de descarga de un reporte Excel, con el token de sesión."""
-        return f"{self.base_url}/reportes/{nombre}.xlsx?token={self.token or ''}"
+    # ==================== REPORTES EXCEL Y PDF ====================
+    def reporte_url(
+        self, nombre: str, formato: str = "xlsx", params: dict[str, Any] | None = None
+    ) -> str:
+        """URL absoluta de descarga de un reporte Excel o PDF, con el token de sesión."""
+        import urllib.parse
+
+        url = (
+            f"{self.base_url_navegador}/reportes/{nombre}.{formato}"
+            f"?token={self.token or ''}"
+        )
+        if params:
+            query = urllib.parse.urlencode(
+                {k: v for k, v in params.items() if v is not None and v != ""}
+            )
+            if query:
+                url = f"{url}&{query}"
+        return url
+
+    # ==================== FINANZAS Y PRECIOS ====================
+    async def get_configuracion(self, concepto: str) -> dict[str, Any]:
+        # Si no creaste un GET en el backend, podés implementarlo rápido o usar un fallback
+        try:
+            return await self._get(f"/finanzas/configuracion/{concepto}")
+        except Exception:
+            return {"valor": 0.0}
+
+    async def update_configuracion(self, concepto: str, valor: float) -> dict[str, Any]:
+        return await self._put(
+            "/finanzas/configuracion", {"concepto": concepto, "valor": valor}
+        )
+
+    async def post_comprobante(self, id_factura: int, archivo_url: str):
+        """Envía un comprobante de pago al servidor para una factura pendiente."""
+        payload = {"id_factura": id_factura, "archivo_url": archivo_url}
+        # ACÁ ESTÁ EL CAMBIO: usamos data=payload en lugar de json=payload
+        return await self._post("/finanzas/comprobantes", data=payload)
+
+    async def upload_comprobante_pdf(
+        self, id_factura: int, nombre_archivo: str, contenido_bytes: bytes
+    ) -> dict[str, Any]:
+        """Sube un archivo PDF real de comprobante asociado a una factura."""
+        client = self._get_client()
+        headers = self._get_headers()
+        headers.pop("Content-Type", None)
+
+        files = {"archivo": (nombre_archivo, contenido_bytes, "application/pdf")}
+        data = {"id_factura": str(id_factura)}
+
+        response = await client.post(
+            f"{self.base_url}/finanzas/comprobantes/upload",
+            data=data,
+            files=files,
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== REPORTES FINANCIEROS Y DE PAGOS ====================
+    async def get_reporte_ingresos(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el reporte de ingresos por período."""
+        return await self._get("/finanzas/reportes/ingresos", params=params)
+
+    async def get_reporte_pagos_completos(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos completos discriminado por año y alumno."""
+        return await self._get("/finanzas/reportes/pagos-completos", params=params)
+
+    async def get_reporte_pagos_incompletos(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos incompletos/deuda discriminado por año y alumno."""
+        return await self._get("/finanzas/reportes/pagos-incompletos", params=params)
+
+    async def get_reporte_pagos_deportes(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos por deporte, nivel, horario y docente."""
+        return await self._get("/finanzas/reportes/deportes", params=params)
+
+    async def get_reporte_pagos_transporte(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Obtiene el listado de pagos por recorrido de transporte."""
+        return await self._get("/finanzas/reportes/transporte", params=params)
+
+    # ==================== VALIDACIÓN DE COMPROBANTES (ADMIN) ====================
+    async def get_comprobantes_pendientes(self) -> list[dict[str, Any]]:
+        """Obtiene la nómina de comprobantes en revisión esperando aprobación."""
+        return await self._get("/finanzas/comprobantes/pendientes")
+
+    async def aprobar_comprobante(self, id_comprobante: int) -> dict[str, Any]:
+        """Aprueba el comprobante y cancela la factura (PAGADA)."""
+        return await self._put(f"/finanzas/comprobantes/{id_comprobante}/aprobar")
+
+    async def rechazar_comprobante(self, id_comprobante: int) -> dict[str, Any]:
+        """Rechaza el comprobante y mantiene la factura en PENDIENTE."""
+        return await self._put(f"/finanzas/comprobantes/{id_comprobante}/rechazar")
 
 
 api_client = APIClient()

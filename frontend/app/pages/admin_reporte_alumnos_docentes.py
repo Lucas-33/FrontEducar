@@ -1,9 +1,9 @@
 import flet as ft
 import httpx
 
-from frontend.app.api_client import api_client
-from frontend.app.components.admin_layout import admin_layout
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.admin_layout import admin_layout
+from app.components.constants import (
     BADGE_RED_BG,
     BADGE_RED_TXT,
     BG_PAGE,
@@ -19,8 +19,8 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.form_controls import status_badge
-from frontend.app.components.table_view import (
+from app.components.form_controls import status_badge
+from app.components.table_view import (
     create_pagination_bar,
     create_table_container,
     create_table_header,
@@ -114,6 +114,18 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
         aviso_error.visible = True
 
     # ==================== 1. ENCABEZADO Y ACCIONES ====================
+    async def exportar_excel_click(_):
+        await page.launch_url(
+            api_client.reporte_url("alumnos"),
+            web_popup_window_name="_blank",
+        )
+
+    async def imprimir_pdf_click(_):
+        await page.launch_url(
+            api_client.reporte_url("alumnos", formato="pdf"),
+            web_popup_window_name="_blank",
+        )
+
     header_actions = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -176,9 +188,7 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                         style=ft.ButtonStyle(
                             shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
                         ),
-                        on_click=lambda _: page.launch_url(
-                            api_client.reporte_url("alumnos")
-                        ),
+                        on_click=exportar_excel_click,
                     ),
                     ft.Button(
                         content=ft.Row(
@@ -200,7 +210,7 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                         style=ft.ButtonStyle(
                             shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
                         ),
-                        on_click=lambda _: None,
+                        on_click=imprimir_pdf_click,
                     ),
                 ],
             ),
@@ -528,7 +538,9 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                 controls=[
                     ft.Container(
                         width=150,
-                        content=ft.Text(nivel_del_alumno(item), size=13, color=MUTED),
+                        content=ft.Text(
+                            nivel_del_alumno(item), size=13, color=ft.Colors.BLACK
+                        ),
                     ),
                     ft.Container(
                         width=150,
@@ -536,13 +548,16 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                             nombre_curso(item.get("id_curso")),
                             size=13,
                             weight=ft.FontWeight.W_600,
-                            color=TEAL_DARK,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
                         width=100,
                         content=ft.Text(
-                            f"#{legajo}", size=13, weight=ft.FontWeight.BOLD, color=TEAL
+                            f"#{legajo}",
+                            size=13,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -551,17 +566,18 @@ async def get_admin_reporte_alumnos_docentes_view(page: ft.Page) -> ft.Row:
                             item.get("apellido", ""),
                             size=14,
                             weight=ft.FontWeight.W_600,
-                            color=TEXT_COLOR,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
                         width=160,
                         content=ft.Text(
-                            item.get("nombre", ""), size=14, color=TEXT_COLOR
+                            item.get("nombre", ""), size=14, color=ft.Colors.BLACK
                         ),
                     ),
                     ft.Container(
-                        width=240, content=ft.Text(contacto, size=13, color=MUTED)
+                        width=240,
+                        content=ft.Text(contacto, size=13, color=ft.Colors.BLACK),
                     ),
                     ft.Container(
                         width=130,

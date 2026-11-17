@@ -1,8 +1,8 @@
 import flet as ft
 import httpx
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import API_BASE_URL_STORAGE_KEY, api_client
+from app.components.constants import (
     BADGE_RED_TXT,
     BG_WHITE,
     BORDER_COLOR,
@@ -12,7 +12,7 @@ from frontend.app.components.constants import (
     TEAL_DARK,
     TEXT_COLOR,
 )
-from frontend.app.components.constants import (
+from app.components.constants import (
     BG_PAGE_ALT as BG_PAGE,
 )
 
@@ -114,7 +114,8 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
             btn_submit.disabled = False
             btn_submit.text = "INGRESAR A LA PLATAFORMA"
             error_banner.value = (
-                "No se pudo conectar con el servidor backend en http://127.0.0.1:8000."
+                f"No se pudo conectar con el servidor en {api_client.base_url}. "
+                "Verifique que el backend esté corriendo y la dirección configurada."
             )
             error_banner.visible = True
             page.update()
@@ -150,6 +151,96 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
         content_padding=ft.Padding(12, 12, 12, 12),
         height=41,
         on_submit=on_submit,
+    )
+
+    # ==================== CONFIGURACIÓN DEL SERVIDOR ====================
+    # Por defecto la app apunta al backend de producción en Render (también
+    # desde el APK). Solo cambiar esta URL para probar con un servidor local.
+    servidor_label = ft.Text(
+        f"Servidor: {api_client.base_url}",
+        size=12,
+        color=MUTED,
+        text_align=ft.TextAlign.CENTER,
+    )
+
+    servidor_field = ft.TextField(
+        label="Servidor (host:puerto)",
+        value=api_client.base_url,
+        hint_text="https://educar-para-transformar-zcuo.onrender.com/api/v1",
+        hint_style=ft.TextStyle(size=13, color=MUTED),
+        text_size=13,
+        color=TEXT_COLOR,
+        bgcolor=BG_PAGE,
+        border_color=BORDER_COLOR,
+        focused_border_color=TEAL,
+        border_radius=8,
+        content_padding=ft.Padding(12, 12, 12, 12),
+        height=41,
+    )
+
+    servidor_status = ft.Text("", size=12, color=TEAL_DARK, visible=False)
+
+    btn_aplicar_servidor = ft.Button(
+        "APLICAR SERVIDOR",
+        bgcolor=BG_PAGE,
+        color=TEAL_DARK,
+        height=36,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=8),
+            text_style=ft.TextStyle(size=12, weight=ft.FontWeight.W_600),
+        ),
+    )
+
+    async def on_aplicar_servidor(e):
+        api_client.set_base_url(servidor_field.value or "")
+        servidor_field.value = api_client.base_url
+        servidor_label.value = f"Servidor: {api_client.base_url}"
+        servidor_status.value = "Servidor actualizado."
+        servidor_status.visible = True
+        try:
+            await ft.SharedPreferences().set(
+                API_BASE_URL_STORAGE_KEY, api_client.base_url
+            )
+        except Exception:
+            pass
+        page.update()
+
+    servidor_field.on_submit = on_aplicar_servidor
+    btn_aplicar_servidor.on_click = on_aplicar_servidor
+
+    editar_servidor = ft.Column(
+        spacing=8,
+        visible=False,
+        controls=[servidor_field, btn_aplicar_servidor, servidor_status],
+    )
+
+    def on_toggle_servidor(e):
+        editar_servidor.visible = not editar_servidor.visible
+        servidor_field.value = api_client.base_url
+        servidor_status.visible = False
+        page.update()
+
+    servidor_section = ft.Column(
+        spacing=4,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            ft.Row(
+                alignment=ft.MainAxisAlignment.CENTER,
+                controls=[
+                    servidor_label,
+                    ft.TextButton(
+                        "Cambiar",
+                        style=ft.ButtonStyle(
+                            padding=0,
+                            color=ORANGE,
+                            overlay_color="transparent",
+                        ),
+                        on_click=on_toggle_servidor,
+                    ),
+                ],
+            ),
+            editar_servidor,
+        ],
     )
 
     login_card = ft.Container(
@@ -238,6 +329,7 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
                         btn_submit,
                     ],
                 ),
+                servidor_section,
                 ft.Text(
                     "Centro Educativo Educar para Transformar · Resistencia",
                     size=12,

@@ -1,7 +1,7 @@
 import flet as ft
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.constants import (
     BG_WHITE,
     BORDER_COLOR,
     MUTED,
@@ -12,7 +12,7 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.password_dialog import abrir_cambio_password
+from app.components.password_dialog import abrir_cambio_password
 
 
 def create_sidebar(
@@ -36,6 +36,7 @@ def create_sidebar(
         ("Comunidad", "/admin/comunidad", ft.Icons.FORUM_OUTLINED),
         ("Transporte", "/admin/transporte", ft.Icons.DIRECTIONS_BUS_OUTLINED),
         ("Comedor", "/admin/comedor", ft.Icons.RESTAURANT_OUTLINED),
+        ("Precios y Finanzas", "/admin/finanzas", ft.Icons.ATTACH_MONEY),
         ("Usuarios y Permisos", "/admin/usuarios", ft.Icons.LOCK_OUTLINE),
         ("Reportes", "/admin/reportes", ft.Icons.BAR_CHART_OUTLINED),
     ]

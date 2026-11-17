@@ -1,7 +1,7 @@
 import flet as ft
 
-from frontend.app.api_client import api_client
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.constants import (
     BADGE_GREEN_BG,
     BADGE_GREEN_TXT,
     BADGE_RED_TXT,
@@ -17,7 +17,7 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.portal_layout import portal_layout
+from app.components.portal_layout import portal_layout
 
 # Icono representativo por disciplina deportiva registrada en el backend
 ICONOS_DEPORTE = {

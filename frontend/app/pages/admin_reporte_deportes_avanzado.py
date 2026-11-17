@@ -1,9 +1,9 @@
 import flet as ft
 import httpx
 
-from frontend.app.api_client import api_client
-from frontend.app.components.admin_layout import admin_layout
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.admin_layout import admin_layout
+from app.components.constants import (
     BADGE_RED_TXT,
     BG_WHITE,
     BORDER_COLOR,
@@ -17,7 +17,7 @@ from frontend.app.components.constants import (
     TEAL_LIGHT,
     TEXT_COLOR,
 )
-from frontend.app.components.table_view import (
+from app.components.table_view import (
     create_pagination_bar,
     create_table_container,
     create_table_header,
@@ -122,6 +122,18 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
         aviso_error.visible = True
 
     # ==================== 1. ENCABEZADO Y ACCIONES ====================
+    async def exportar_excel_click(_):
+        await page.launch_url(
+            api_client.reporte_url("deportes"),
+            web_popup_window_name="_blank",
+        )
+
+    async def imprimir_pdf_click(_):
+        await page.launch_url(
+            api_client.reporte_url("deportes", formato="pdf"),
+            web_popup_window_name="_blank",
+        )
+
     header_actions = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -184,9 +196,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         style=ft.ButtonStyle(
                             shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
                         ),
-                        on_click=lambda _: page.launch_url(
-                            api_client.reporte_url("deportes")
-                        ),
+                        on_click=exportar_excel_click,
                     ),
                     ft.Button(
                         content=ft.Row(
@@ -208,7 +218,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         style=ft.ButtonStyle(
                             shape=ft.RoundedRectangleBorder(radius=BORDER_RADIUS)
                         ),
-                        on_click=lambda _: None,
+                        on_click=imprimir_pdf_click,
                     ),
                 ],
             ),
@@ -548,13 +558,15 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                             inscripcion.get("deporte") or "—",
                             size=13,
                             weight=ft.FontWeight.W_600,
-                            color=TEAL_DARK,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
                         width=130,
                         content=ft.Text(
-                            grupo.get("nivel") or "Sin nivel", size=13, color=MUTED
+                            grupo.get("nivel") or "Sin nivel",
+                            size=13,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -562,7 +574,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             curso_del_alumno(inscripcion.get("legajo_alumno")),
                             size=13,
-                            color=TEXT_COLOR,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -571,7 +583,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                             f"#{inscripcion.get('legajo_alumno', '')}",
                             size=13,
                             weight=ft.FontWeight.BOLD,
-                            color=TEAL,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -579,8 +591,8 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             str(inscripcion.get("alumno", "")).split(" (")[0],
                             size=14,
-                            weight=ft.FontWeight.W_500,
-                            color=TEXT_COLOR,
+                            weight=ft.FontWeight.W_600,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                     ft.Container(
@@ -588,7 +600,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             grupo.get("horario") or "Sin horario asignado",
                             size=12,
-                            color=TEXT_COLOR,
+                            color=ft.Colors.BLACK,
                             max_lines=1,
                             overflow=ft.TextOverflow.ELLIPSIS,
                         ),
@@ -598,7 +610,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             responsable,
                             size=13,
-                            color=MUTED,
+                            color=ft.Colors.BLACK,
                             max_lines=1,
                             overflow=ft.TextOverflow.ELLIPSIS,
                         ),
@@ -608,7 +620,7 @@ async def get_admin_reporte_deportes_avanzado_view(page: ft.Page) -> ft.Row:
                         content=ft.Text(
                             formatear_fecha(inscripcion.get("fecha_inscripcion")),
                             size=12,
-                            color=MUTED,
+                            color=ft.Colors.BLACK,
                         ),
                     ),
                 ],

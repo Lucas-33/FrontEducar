@@ -1,8 +1,8 @@
 import flet as ft
 
-from frontend.app.api_client import api_client
-from frontend.app.components.admin_layout import admin_layout
-from frontend.app.components.constants import (
+from app.api_client import api_client
+from app.components.admin_layout import admin_layout
+from app.components.constants import (
     AMBER_STATE,
     BADGE_YELLOW_BG,
     BG_PAGE,

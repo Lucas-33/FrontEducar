@@ -1,0 +1,28 @@
+# Configuración de empaquetado Flet cuando se compila desde este directorio
+# (la app Python que se empaqueta en el APK/AAB es el contenido de frontend/).
+#
+# Importante: NO agregar [project] con dependencias aquí. Para el APK solo se
+# empaqueta `flet` (y sus dependencias, incluido httpx que usa api_client.py);
+# las dependencias del backend (psycopg2, bcrypt, etc.) no tienen wheels de
+# Android y no son necesarias en la app móvil.
+#
+# Build:  uv run flet build apk frontend --python-version 3.12
+
+[tool.flet]
+org = "com.educar"
+product = "educar-para-transformar"
+company = "Educar para Transformar"
+copyright = "Copyright (C) 2026 by Educar para Transformar"
+
+[tool.flet.app]
+
+[tool.flet.android.gradle_properties]
+# Defaults de flet (-Xmx8G -XX:MaxMetaspaceSize=4G) exceden la RAM disponible
+# en esta máquina (~7.5 GB) y el OOM killer mata el daemon de Gradle.
+# Nota: las claves con puntos van entre comillas para que TOML no las
+# interprete como tablas anidadas.
+"org.gradle.jvmargs" = "-Xmx3G -XX:MaxMetaspaceSize=1G -XX:ReservedCodeCacheSize=256m -XX:+HeapDumpOnOutOfMemoryError"
+# Kotlin daemon: limitar también para no competir por memoria con Gradle.
+"kotlin.daemon.jvmargs" = "-Xmx1536m"
+# Menos workers en paralelo reduce el pico de memoria del build.
+"org.gradle.workers.max" = "2"

@@ -1,6 +1,6 @@
 import flet as ft
 
-from frontend.app.components.password_dialog import abrir_cambio_password
+from app.components.password_dialog import abrir_cambio_password
 
 # Paleta y tokens visuales del CSS
 BG_WHITE = "#FFFFFF"
