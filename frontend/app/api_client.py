@@ -12,12 +12,12 @@ BACKEND_PRODUCCION = "https://educar-para-transformar-zcuo.onrender.com/api/v1"
 # URL usada en web/escritorio (backend en la misma máquina).
 DEFAULT_API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
-# URL por defecto en Android: IP LAN del equipo donde se levanta el servidor
-# local. Para el emulador de Android usar http://10.0.2.2:8000/api/v1.
-# También se puede cambiar desde la pantalla de login (queda guardada).
-ANDROID_API_BASE_URL = os.getenv(
-    "ANDROID_API_BASE_URL", "http://10.13.29.67:8000/api/v1"
-)
+# URL usada por el APK en Android. Por defecto apunta al deploy de Render,
+# porque un dispositivo no puede alcanzar el 127.0.0.1 ni una IP de LAN fuera
+# de esa red. Para pruebas locales se puede override con esta variable, por
+# ejemplo http://192.168.1.15:8000/api/v1 (emulador: http://10.0.2.2:8000/api/v1)
+# o desde la pantalla de login (queda guardada).
+ANDROID_API_BASE_URL = os.getenv("ANDROID_API_BASE_URL", BACKEND_PRODUCCION)
 
 # Clave de almacenamiento local donde se persiste la URL configurada.
 API_BASE_URL_STORAGE_KEY = "api_base_url"
@@ -29,7 +29,9 @@ def normalize_base_url(url: str | None) -> str:
     if not value:
         return DEFAULT_API_BASE_URL
     if not value.startswith(("http://", "https://")):
-        value = f"http://{value}"
+        # Render solo sirve por HTTPS; las IPs/servidores locales usan http.
+        esquema = "https://" if "onrender.com" in value else "http://"
+        value = f"{esquema}{value}"
 
     parts = urlsplit(value)
     path = parts.path.rstrip("/")

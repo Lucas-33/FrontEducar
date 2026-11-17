@@ -1,7 +1,31 @@
 import os
 from typing import Any, Optional
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
+
+# Backend de producción (deploy de Render). Es el destino por defecto de la app
+# móvil: un celular no puede alcanzar el 127.0.0.1 de la PC ni una IP de LAN
+# cuando está fuera de esa red. Los datos se leen directamente de Neon a través
+# de este backend.
+BACKEND_PRODUCCION = "https://educar-para-transformar-zcuo.onrender.com/api/v1"
+
+
+def normalize_base_url(url: str | None) -> str:
+    """Normaliza la URL del servidor agregando esquema y el prefijo /api/v1."""
+    value = (url or "").strip().rstrip("/")
+    if not value:
+        return BACKEND_PRODUCCION
+    if not value.startswith(("http://", "https://")):
+        # Render solo sirve por HTTPS; las IPs/servidores locales usan http.
+        esquema = "https://" if "onrender.com" in value else "http://"
+        value = f"{esquema}{value}"
+
+    parts = urlsplit(value)
+    path = parts.path.rstrip("/")
+    if not path.endswith("/api/v1"):
+        path = f"{path}/api/v1"
+    return urlunsplit((parts.scheme, parts.netloc, path, "", ""))
 
 
 class MobileAPIClient:
@@ -19,22 +43,23 @@ class MobileAPIClient:
         if getattr(self, "_initialized", False):
             return
 
-        self.base_url = (
-            base_url or os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
-        ).rstrip("/")
+        self.base_url = normalize_base_url(
+            base_url or os.getenv("API_BASE_URL") or BACKEND_PRODUCCION
+        )
         self.token: str | None = None
         self._client: httpx.AsyncClient | None = None
         self._initialized = True
 
     def set_base_url(self, url: str) -> None:
-        """Permite cambiar la IP del backend (vital para pruebas en teléfono físico vía WiFi)."""
-        clean_url = url.strip().rstrip("/")
-        if not clean_url.endswith("/api/v1"):
-            clean_url = f"{clean_url}/api/v1"
-        self.base_url = clean_url
+        """Cambia el backend (por defecto, Render; útil para pruebas locales por WiFi)."""
+        self.base_url = normalize_base_url(url)
 
     def get_server_url(self, page_host: str | None = None) -> str:
-        """Devuelve la URL raíz del servidor (sin /api/v1), garantizando que sea accesible desde dispositivos móviles en la red local."""
+        """Devuelve la URL raíz del servidor (sin /api/v1) para links del navegador.
+
+        Con el backend de Render devuelve directamente la URL HTTPS pública.
+        Solo reemplaza el loopback por la IP de red cuando se prueba en local.
+        """
         import socket
         from urllib.parse import urlparse
 

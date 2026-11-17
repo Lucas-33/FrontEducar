@@ -5,7 +5,6 @@ import flet as ft
 from app.api_client import (
     ANDROID_API_BASE_URL,
     API_BASE_URL_STORAGE_KEY,
-    DEFAULT_API_BASE_URL,
     api_client,
 )
 
@@ -118,10 +117,13 @@ async def main(page: ft.Page):
     if url_guardada:
         api_client.set_base_url(str(url_guardada))
     elif not os.getenv("API_BASE_URL"):
+        # En Android el cliente ya apunta a BACKEND_PRODUCCION desde __init__
+        # (detecta sys.platform == "android"). ANDROID_API_BASE_URL permite
+        # apuntar a un servidor local solo para pruebas; por defecto es Render.
         if page.platform in (ft.PagePlatform.ANDROID, ft.PagePlatform.ANDROID_TV):
             api_client.set_base_url(ANDROID_API_BASE_URL)
-        else:
-            api_client.set_base_url(DEFAULT_API_BASE_URL)
+        # En escritorio/web no se sobrescribe: APIClient ya dejó el localhost
+        # correspondiente, salvo que sys.platform indique Android.
 
     async def route_change(e: ft.RouteChangeEvent):
         page.views.clear()

@@ -119,7 +119,9 @@ def get_login_page(page: ft.Page, on_login_success) -> ft.Container:
             spacing=10,
             controls=[
                 ft.Text(
-                    "Si probás desde un celular físico por WiFi, colocá la IP de tu PC (ej: http://192.168.1.15:8000/api/v1):",
+                    "La app ya está conectada al servidor de producción (Render) y lee los datos desde la base en la nube. "
+                    "Solo cambiá esta URL si estás probando con un servidor local: usá la IP de tu PC en la misma WiFi "
+                    "(ej: http://192.168.1.15:8000/api/v1).",
                     size=12,
                     color=MUTED,
                 ),
@@ -188,7 +190,10 @@ def get_login_page(page: ft.Page, on_login_success) -> ft.Container:
 
         except httpx.RequestError as ex:
             btn_ingresar.disabled = False
-            error_text.value = f"No se pudo conectar a {mobile_api.base_url}. Verifique que el backend esté activo y configure la IP."
+            error_text.value = (
+                f"No se pudo conectar a {mobile_api.base_url}. "
+                "Verificá tu conexión a Internet; si estás probando en local, revisá la URL del servidor."
+            )
             error_banner.visible = True
             page.update()
 
@@ -252,7 +257,7 @@ def get_login_page(page: ft.Page, on_login_success) -> ft.Container:
                         spacing=6,
                         controls=[
                             ft.Icon(ft.Icons.SETTINGS_ETHERNET, size=14, color=MUTED),
-                            ft.Text("Configurar IP de Conexión", size=12, color=MUTED),
+                            ft.Text("Configurar Servidor", size=12, color=MUTED),
                         ],
                     ),
                     on_click=abrir_config_servidor,

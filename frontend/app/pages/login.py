@@ -154,8 +154,8 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
     )
 
     # ==================== CONFIGURACIÓN DEL SERVIDOR ====================
-    # Permite apuntar la app al backend local desde el propio dispositivo
-    # (por ejemplo, el celular en la misma red WiFi o el emulador).
+    # Por defecto la app apunta al backend de producción en Render (también
+    # desde el APK). Solo cambiar esta URL para probar con un servidor local.
     servidor_label = ft.Text(
         f"Servidor: {api_client.base_url}",
         size=12,
@@ -166,7 +166,7 @@ def get_login_view(page: ft.Page) -> list[ft.Control]:
     servidor_field = ft.TextField(
         label="Servidor (host:puerto)",
         value=api_client.base_url,
-        hint_text="http://10.13.29.67:8000/api/v1",
+        hint_text="https://educar-para-transformar-zcuo.onrender.com/api/v1",
         hint_style=ft.TextStyle(size=13, color=MUTED),
         text_size=13,
         color=TEXT_COLOR,

@@ -261,10 +261,19 @@ mkdir -p ~/flutter/3.44.8 && tar -xf flutter_linux_3.44.8-stable.tar.xz -C ~/flu
 
 ### Backend en el móvil
 
-La app móvil consume la API con `API_BASE_URL` (ver
-`frontend/app/api_client.py`). El APK usa por defecto el backend de
-producción (`https://educar-para-transformar-zcuo.onrender.com/api/v1`);
-en desarrollo local sigue usando `127.0.0.1` automáticamente.
+Ambos APKs (el de `frontend/` y la app de familias de `mobile/`) consumen la
+API con `API_BASE_URL` (ver `frontend/app/api_client.py` y
+`mobile/api_client.py`). **Por defecto apuntan al backend de producción en
+Render** (`https://educar-para-transformar-zcuo.onrender.com/api/v1`), así que
+el celular lee los datos directamente de la base de Neon sin importar la red
+desde la que se conecte.
+
+En desarrollo local, la versión de escritorio/web sigue usando `127.0.0.1`
+automáticamente. Si querés probar un APK contra un servidor local, cambiá la
+URL desde la pantalla de login (o seteá la variable `API_BASE_URL` / para el
+frontend `ANDROID_API_BASE_URL` al compilar), por ejemplo
+`http://192.168.1.15:8000/api/v1` (emulador: `http://10.0.2.2:8000/api/v1`).
+Un `127.0.0.1` en el celular apunta al propio teléfono, no a tu PC.
 
 ### Ajuste de memoria de Gradle
 
