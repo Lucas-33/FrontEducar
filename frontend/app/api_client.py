@@ -93,6 +93,26 @@ class APIClient:
         """Cambia la URL del backend (por ejemplo, el host:puerto local)."""
         self.base_url = normalize_base_url(url)
 
+    @property
+    def base_url_navegador(self) -> str:
+        """Base URL que el navegador del usuario puede alcanzar.
+
+        Dentro de Render, las llamadas ``httpx`` del servidor usan
+        ``127.0.0.1:$PORT`` (más rápido y sin dar una vuelta por Internet), pero
+        los enlaces abiertos con ``page.launch_url`` se ejecutan en el navegador
+        del cliente, donde ``127.0.0.1`` apunta a la propia máquina. En ese caso
+        hay que usar la URL pública del servicio.
+        """
+        url_render = os.getenv("RENDER_EXTERNAL_URL")
+        if url_render:
+            return normalize_base_url(url_render)
+        return self.base_url
+
+    @property
+    def origin_navegador(self) -> str:
+        """Origen público sin ``/api/v1`` (rutas HTML montadas en la raíz)."""
+        return self.base_url_navegador.removesuffix("/api/v1")
+
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(timeout=10.0)
@@ -545,7 +565,10 @@ class APIClient:
         """URL absoluta de descarga de un reporte Excel o PDF, con el token de sesión."""
         import urllib.parse
 
-        url = f"{self.base_url}/reportes/{nombre}.{formato}?token={self.token or ''}"
+        url = (
+            f"{self.base_url_navegador}/reportes/{nombre}.{formato}"
+            f"?token={self.token or ''}"
+        )
         if params:
             query = urllib.parse.urlencode(
                 {k: v for k, v in params.items() if v is not None and v != ""}

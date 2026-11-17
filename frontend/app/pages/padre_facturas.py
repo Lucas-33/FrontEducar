@@ -67,7 +67,8 @@ async def get_padre_facturas_view(page: ft.Page) -> ft.Container:
             return
         token = getattr(page, "auth_token", "") or ""
         url = (
-            f"/subir-comprobante?factura_id={factura_seleccionada['id']}&token={token}"
+            f"{api_client.origin_navegador}/subir-comprobante"
+            f"?factura_id={factura_seleccionada['id']}&token={token}"
         )
         await page.launch_url(url)
 

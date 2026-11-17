@@ -298,7 +298,10 @@ async def get_admin_finanzas_view(page: ft.Page) -> ft.Row:
 
                 async def ver_pdf_click(_, cid=c_id):
                     token = getattr(page, "auth_token", "") or ""
-                    url_pdf = f"{api_client.base_url}/finanzas/comprobantes/{cid}/archivo?token={token}"
+                    url_pdf = (
+                        f"{api_client.base_url_navegador}"
+                        f"/finanzas/comprobantes/{cid}/archivo?token={token}"
+                    )
                     await page.launch_url(url_pdf, web_popup_window_name="_blank")
 
                 def abrir_modal_aprobar(_, c=comp):
