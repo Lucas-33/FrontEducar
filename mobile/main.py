@@ -6,12 +6,24 @@ Ejecución local para emulador o celular con Flet (desde la raíz del proyecto):
 """
 
 import sys
+import types
 from pathlib import Path
 
 # Permite resolver imports de mobile.* independientemente de cómo se invoque el script
-raiz_proyecto = Path(__file__).resolve().parent.parent
-if str(raiz_proyecto) not in sys.path:
-    sys.path.insert(0, str(raiz_proyecto))
+raiz_app = Path(__file__).resolve().parent
+raiz_proyecto = raiz_app.parent
+for ruta in (str(raiz_proyecto), str(raiz_app)):
+    if ruta not in sys.path:
+        sys.path.insert(0, ruta)
+
+# Dentro del APK, Flet empaqueta el CONTENIDO de mobile/ en la raíz del bundle
+# (main.py, api_client.py, pages/, components/), por lo que ya no existe el
+# directorio `mobile`. Registramos un paquete sintético que apunta a esa raíz
+# para que los imports `mobile.*` funcionen también en el dispositivo.
+if raiz_app.name != "mobile" and "mobile" not in sys.modules:
+    paquete_mobile = types.ModuleType("mobile")
+    paquete_mobile.__path__ = [str(raiz_app)]
+    sys.modules["mobile"] = paquete_mobile
 
 import flet as ft
 
